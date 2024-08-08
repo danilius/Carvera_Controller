@@ -1,4 +1,7 @@
 import os
+import quicklz
+import struct
+from kivy.uix.popup import Popup
 
 def is_android():
     return 'ANDROID_ARGUMENT' in os.environ or 'ANDROID_PRIVATE' in os.environ or 'ANDROID_APP_PATH' in os.environ
@@ -40,7 +43,7 @@ import datetime
 import threading
 import logging
 
-VERSION = '0.9.6'
+VERSION = '0.9.8'
 FW_UPD_ADDRESS = 'https://raw.githubusercontent.com/MakeraInc/CarveraFirmware/main/version.txt'
 CTL_UPD_ADDRESS = 'https://raw.githubusercontent.com/MakeraInc/CarveraController/main/version.txt'
 DOWNLOAD_ADDRESS = 'https://www.makera.com/pages/software'
@@ -207,6 +210,9 @@ GCODE_VIEW_SPEED = 1
 
 LOAD_INTERVAL = 10000 # must be divisible by MAX_LOAD_LINES
 MAX_LOAD_LINES = 10000
+
+1# 定义块大小
+BLOCK_SIZE = 4096
 
 HALT_REASON = {
     # Just need to unlock the mahchine
@@ -448,12 +454,22 @@ class CoordPopup(ModalView):
     origin_popup = ObjectProperty()
     zprobe_popup = ObjectProperty()
     auto_level_popup = ObjectProperty()
+    setx_popup = ObjectProperty()
+    sety_popup = ObjectProperty()
+    setz_popup = ObjectProperty()
+    seta_popup = ObjectProperty()
+    MoveA_popup = ObjectProperty()
 
     def __init__(self, config, **kwargs):
         self.config = config
         self.origin_popup = OriginPopup(self)
         self.zprobe_popup = ZProbePopup(self)
         self.auto_level_popup = AutoLevelPopup(self)
+        self.setx_popup = SetXPopup(self)
+        self.sety_popup = SetYPopup(self)
+        self.setz_popup = SetZPopup(self)
+        self.seta_popup = SetAPopup(self)
+        self.MoveA_popup = MoveAPopup(self)
         self.mode = 'Run' # 'Margin' / 'ZProbe' / 'Leveling'
         super(CoordPopup, self).__init__(**kwargs)
 
@@ -549,6 +565,30 @@ class ConfigPopup(ModalView):
     def on_dismiss(self):
         pass
 
+class SetXPopup(ModalView):
+    def __init__(self, coord_popup, **kwargs):
+        self.coord_popup = coord_popup
+        super(SetXPopup, self).__init__(**kwargs)
+
+class SetYPopup(ModalView):
+    def __init__(self, coord_popup, **kwargs):
+        self.coord_popup = coord_popup
+        super(SetYPopup, self).__init__(**kwargs)
+
+class SetZPopup(ModalView):
+    def __init__(self, coord_popup, **kwargs):
+        self.coord_popup = coord_popup
+        super(SetZPopup, self).__init__(**kwargs)
+
+class SetAPopup(ModalView):
+    def __init__(self, coord_popup, **kwargs):
+        self.coord_popup = coord_popup
+        super(SetAPopup, self).__init__(**kwargs)
+
+class MoveAPopup(ModalView):
+    def __init__(self, coord_popup, **kwargs):
+        self.coord_popup = coord_popup
+        super(MoveAPopup, self).__init__(**kwargs)
 class MakeraConfigPanel(SettingsWithSidebar):
     def on_config_change(self, config, section, key, value):
         app = App.get_running_app()
@@ -1224,6 +1264,12 @@ class Makera(RelativeLayout):
     fw_version_checking = False
     fw_version_checked = False
 
+    filetype_support = 'nc'
+    filetype = ''
+
+    fileCompressionBlocks = 0    #文件压缩后的块数
+    decompercent = 0    #carvera解压压缩文件的块数
+
     ctl_upd_text = ''
     ctl_version_new = ''
     ctl_version_old = VERSION
@@ -1781,6 +1827,15 @@ class Makera(RelativeLayout):
                     if remote_model != None:
                         Clock.schedule_once(partial(self.setUIForModel, remote_model[0].split('=')[1]), 0)
 
+                    remote_filetype = re.search('ftype = [a-zA-Z0-9]+', line)
+                    if remote_filetype != None:
+                        self.filetype = remote_filetype[0].split('=')[1]
+
+                    remote_decompercent = re.search('decompart = [0-9.]+', line)
+                    if remote_decompercent != None:
+                        self.decompercent = int(remote_decompercent[0].split('=')[1])
+                        self.updateCompressProgress(self.decompercent)
+
                     # hanlde specific messages
                     if 'WP PAIR SUCCESS' in line:
                         self.pairing_popup.pairing_success = True
@@ -2082,6 +2137,7 @@ class Makera(RelativeLayout):
             self.controller.pauseStream(0.2)
             download_result = self.controller.stream.download(tmp_filename, md5, self.downloadCallback)
         except:
+            print(sys.exc_info()[1])
             self.controller.resumeStream()
             self.downloading = False
 
@@ -2115,6 +2171,8 @@ class Makera(RelativeLayout):
                 Clock.schedule_once(self.controller.queryTime, 0.1)
                 Clock.schedule_once(self.controller.queryModel, 0.2)
                 Clock.schedule_once(self.controller.queryVersion, 0.3)
+                self.filetype = ''
+                Clock.schedule_once(self.controller.queryFtype, 0.4)
             else:
                 Clock.schedule_once(partial(self.progressUpdate, 0, tr._('Open cached file') + ' \n%s' % app.selected_local_filename, True), 0)
                 # Clock.schedule_once(self.load_selected_gcode_file, 0.1)
@@ -2314,8 +2372,55 @@ class Makera(RelativeLayout):
         self.message_popup.open()
 
     # -----------------------------------------------------------------------
+    def compress_file(self,input_filename):
+        try:
+            # 如果上传的文件为固件，则直接返回原文件名不进行压缩
+            if input_filename.find('.bin') != -1:
+                return input_filename
+            # 打开输入文件和输出文件
+            output_filename = input_filename + '.lz'
+            sum = 0
+            self.fileCompressionBlocks = 0
+            self.decompercent = 0
+            with open(input_filename, 'rb') as f_in, open(output_filename, 'wb') as f_out:
+                while True:
+                    # 读取块数据
+                    block = f_in.read(BLOCK_SIZE)
+                    if not block:
+                        break
+                    # 计算sum和
+                    for byte in block:
+                        sum += byte
+                    # 压缩块数据
+                    compressed_block = quicklz.compress(block)
+
+                    # 计算压缩后数据库的大小
+                    cmprs_size = len(compressed_block)
+                    buffer_hdr = struct.pack('>I', cmprs_size)
+                    # 写入压缩后的块数据的长度到输出文件
+                    f_out.write(buffer_hdr)
+                    # 写入压缩后的块数据到输出文件
+                    f_out.write(compressed_block)
+                    self.fileCompressionBlocks += 1
+                # 写入校验和
+                sumdata = struct.pack('>H', sum & 0xffff)
+                f_out.write(sumdata)
+
+            print(f"Compression completed. Compressed file saved as '{output_filename}'.")
+            return output_filename
+
+        except Exception as e:
+            print(f"Compression failed: {e}")
+            if os.path.exists(output_filename):
+                os.remove(output_filename)
+            return None
+    # -----------------------------------------------------------------------
     def uploadLocalFile(self, filepath):
         self.uploading_file = filepath
+        if 'lz' in self.filetype:               #如果固件支持的上传文件类型为.lz，则进行压缩
+            qlzfilename = self.compress_file(filepath)
+            if qlzfilename:
+                self.uploading_file = qlzfilename
         threading.Thread(target=self.doUpload).start()
 
     # -----------------------------------------------------------------------
@@ -2338,6 +2443,9 @@ class Makera(RelativeLayout):
             self.controller.resumeStream()
             self.uploading = False
 
+        #如果为压缩后的'.lz'文件则删除此临时文件
+        if self.uploading_file.endswith('.lz'):
+            os.remove(self.uploading_file)
         self.controller.resumeStream()
         self.uploading = False
 
@@ -2364,6 +2472,11 @@ class Makera(RelativeLayout):
             # update recent folder
             if not self.file_popup.firmware_mode:
                 self.update_recent_local_dir_list(os.path.dirname(self.uploading_file))
+
+            # 如果为压缩后的'.lz'文件则等待解压缩完成
+            self.log = logging.getLogger('File.Decompress')
+            if self.uploading_file.endswith('.lz'):
+                Clock.schedule_once(partial(self.progressStart, tr._('Decompressing') + '\n%s' % self.uploading_file, False), 0.5)
 
 
     # -----------------------------------------------------------------------
@@ -2466,6 +2579,12 @@ class Makera(RelativeLayout):
     # --------------------------------------------------------------`---------
     def progressFinish(self, *args):
         self.progress_popup.dismiss()
+
+    # --------------------------------------------------------------`---------
+    def updateCompressProgress(self, value):
+        Clock.schedule_once(partial(self.progressUpdate, value * 100.0 / self.fileCompressionBlocks, '', True), 0)
+        if value == self.fileCompressionBlocks:
+            Clock.schedule_once(self.progressFinish, 0)
 
     # -----------------------------------------------------------------------
     def updateStatus(self, *args):

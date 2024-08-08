@@ -993,3 +993,7 @@ msgstr ""
 #: makera.kv:3590
 msgid "SettingPage"
 msgstr ""
+
+#: makera.py:2428
+msgid "Decompressing"
+msgstr ""

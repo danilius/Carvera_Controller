@@ -74,6 +74,7 @@ CONN_WIFI = 1
 class Controller:
     MSG_NORMAL = 0
     MSG_ERROR = 1
+    MSG_INTERIOR = 2
 
     stop = threading.Event()
     usb_stream = None
@@ -219,6 +220,9 @@ class Controller:
 
     def queryModel(self, *args):
         self.executeCommand("model")
+
+    def queryFtype(self, *args):
+        self.executeCommand("ftype")
 
 
     # # ----------------------------------------------------------------------
@@ -773,12 +777,19 @@ class Controller:
 
     def wcsSetA(self, a = None):
         cmd = "G92.4"
-        if a is not None and abs(a) < 10000.0: cmd += "A" + str(round(a, 5))
+        if a is not None and abs(a) < 3600000.0: cmd += "A" + str(round(a, 5))
 
         self.sendGCode(cmd)
 
     def shrinkA(self):
         self.sendGCode("G92.4 A0 S0")
+
+    def RapMoveA(self, a = None):
+        cmd = "G90G0"
+        cmd += "X"  + str(round(a, 5))
+        cmd = "G92.4"
+        cmd += " A " + str(round(a, 5)) + " R0"
+        if a is not None and abs(a) < 3600000.0: self.sendGCode(cmd)
 
     def wcsSet(self, x = None, y = None, z = None, a = None):
         cmd = "G10L20P0"
@@ -787,7 +798,7 @@ class Controller:
         if x is not None and abs(x) < 10000.0: pos += "X" + str(round(x, 4))
         if y is not None and abs(y) < 10000.0: pos += "Y" + str(round(y, 4))
         if z is not None and abs(z) < 10000.0: pos += "Z" + str(round(z, 4))
-        if a is not None and abs(a) < 10000.0: pos += "A" + str(round(a, 4))
+        if a is not None and abs(a) < 3600000.0: pos += "A" + str(round(a, 4))
         cmd += pos
 
         self.sendGCode(cmd)
@@ -800,7 +811,7 @@ class Controller:
         if x is not None and abs(x) < 10000.0: pos += "X" + str(round(x, 4))
         if y is not None and abs(y) < 10000.0: pos += "Y" + str(round(y, 4))
         if z is not None and abs(z) < 10000.0: pos += "Z" + str(round(z, 4))
-        if a is not None and abs(a) < 10000.0: pos += "A" + str(round(a, 4))
+        if a is not None and abs(a) < 3600000.0: pos += "A" + str(round(a, 4))
         cmd += pos
 
         self.sendGCode(cmd)
@@ -838,6 +849,8 @@ class Controller:
                 self.log.put((self.MSG_NORMAL, line))
             else:
                 self.parseBigParentheses(line)
+        elif line[0] == "#":
+            self.log.put((self.MSG_INTERIOR, line))
         elif "error" in line.lower() or "alarm" in line.lower():
             self.log.put((self.MSG_ERROR, line))
         else:

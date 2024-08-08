@@ -207,7 +207,7 @@ class XMODEM(object):
         for _ in range(count):
             self.putc(CAN, timeout)
 
-    def send(self, stream, md5, retry=16, timeout=1, quiet=False, callback=None):
+    def send(self, stream, md5, retry=16, timeout=5, quiet=False, callback=None):
         '''
         Send a stream via the XMODEM protocol.
 
@@ -401,7 +401,7 @@ class XMODEM(object):
             _bytes.append(crc)
         return bytearray(_bytes)
 
-    def recv(self, stream, md5 = '', crc_mode=1, retry=16, timeout=1, delay=1, quiet=0, callback=None):
+    def recv(self, stream, md5 = '', crc_mode=1, retry=16, timeout=1, delay=0.1, quiet=0, callback=None):
         '''
         Receive a stream via the XMODEM protocol.
 
@@ -452,14 +452,14 @@ class XMODEM(object):
                 if not self.putc(CRC):
                     self.log.debug('recv error: putc failed, '
                                    'sleeping for %d', delay)
-                    time.sleep(delay)
+                    time.sleep(0.1)   #time.sleep(delay)
                     error_count += 1
             else:
                 crc_mode = 0
                 if not self.putc(NAK):
                     self.log.debug('recv error: putc failed, '
                                    'sleeping for %d', delay)
-                    time.sleep(delay)
+                    time.sleep(0.1)   #time.sleep(delay)
                     error_count += 1
 
             char = self.getc(1, timeout)
@@ -549,8 +549,8 @@ class XMODEM(object):
                                       retry)
                         self.abort()
                         return None
-                    # get next start-of-header byte
-                    char = self.getc(1, timeout)
+                    # get next start-of-header bytexs
+                    char = self.getc(1, 0.5)    #char = self.getc(1, timeout)
                     continue
                 else:
                     err_msg = ('recv error: expected SOH, EOT; '
@@ -558,8 +558,17 @@ class XMODEM(object):
                     if not quiet:
                         print(err_msg, file = sys.stderr)
                     self.log.warn(err_msg)
-                    self.abort()
-                    return None
+                    error_count += 1
+                    if error_count > retry:
+                        self.abort()
+                        return None
+                    else:
+                        while True:
+                            if self.getc(1, timeout) == None:
+                                break
+                        self.putc(NAK)
+                        char = self.getc(1, timeout)
+                    continue
 
             # read sequence
             error_count = 0
@@ -591,7 +600,12 @@ class XMODEM(object):
                 # packet_size + checksum
                 # self.log.warn('Got sequence %d', sequence)
                 data = self.getc(1 + is_stx + packet_size + 1 + crc_mode, timeout)
-                valid, data = self._verify_recv_checksum(crc_mode, data)
+                if data is None:
+                    self.log.warn('recv error: We got a data as None')
+                    valid = None
+                else:
+                    valid, data = self._verify_recv_checksum(crc_mode, data)
+
 
                 # valid data, append chunk
                 if valid:

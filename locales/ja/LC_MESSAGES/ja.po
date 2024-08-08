@@ -448,45 +448,62 @@ msgstr ""
 msgid "X = 0"
 msgstr ""
 
-#: makera.kv:331
+#: makera.kv:323
+msgid "Set X"
+msgstr ""
+
+#: makera.kv:340
 msgid "Set Y Origin"
 msgstr ""
 
-#: makera.kv:333
+#: makera.kv:342
 msgid "Y = 0"
 msgstr ""
 
 #: makera.kv:351
+msgid "Set Y"
+msgstr ""
+
+#: makera.kv:369
 msgid "Set Z Origin"
 msgstr ""
 
-#: makera.kv:353
+#: makera.kv:371
 msgid "Z = 0"
 msgstr ""
 
-#: makera.kv:362
+#: makera.kv:380
+msgid "Set Z"
+msgstr ""
+
+#: makera.kv:389
 msgid "Auto Leveling"
 msgstr ""
 
-#: makera.kv:376
+#: makera.kv:403
 msgid "max:"
 msgstr ""
 
-#: makera.kv:380
+#: makera.kv:407
 msgid "Clear"
 msgstr ""
 
-#: makera.kv:397
+#: makera.kv:424
 msgid "Set A Origin"
 msgstr ""
 
-#: makera.kv:399
+#: makera.kv:426
 msgid "A = 0"
 msgstr ""
 
-#: makera.kv:408
+#: makera.kv:435
+msgid "Set A"
+msgstr ""
+
+#: makera.kv:444
 msgid "Shrink"
 msgstr ""
+
 
 #: makera.kv:430
 msgid "Feed Status"
@@ -574,7 +591,7 @@ msgstr ""
 
 #: makera.kv:887
 msgid "WIFI..."
-msgstr "無線…"
+msgstr ""
 
 #: makera.kv:894
 msgid " USB..."
@@ -987,4 +1004,35 @@ msgstr ""
 
 #: makera.kv:3590
 msgid "SettingPage"
+msgstr ""
+
+#: makera.py:2428
+msgid "Decompressing"
+msgstr ""
+#: makera.py:3786
+msgid "Set X Current Pos"
+msgstr ""
+#: makera.py:3786
+msgid "Set Y Current Pos"
+msgstr ""
+#: makera.py:3786
+msgid "Set Z Current Pos"
+msgstr ""
+#: makera.py:3786
+msgid "Set A Current Pos"
+msgstr ""
+#: makera.kv:3799
+msgid "Enter X Pos"
+msgstr ""
+msgid "Enter Y Pos"
+msgstr ""
+msgid "Enter Z Pos"
+msgstr ""
+msgid "Enter A Pos"
+msgstr ""
+#: makera.kv:453
+msgid "Fast Move"
+msgstr ""
+#: makera.kv:4021
+msgid "Rapidly move the A to"
 msgstr ""

@@ -66,11 +66,11 @@ class WIFIStream:
 
         self.modem = XMODEM(self.getc, self.putc, 'xmodem8k')
 
-        # handler = logging.StreamHandler(sys.stdout)
-        # handler.setLevel(logging.DEBUG)
-        # formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        # handler.setFormatter(formatter)
-        # self.modem.log.addHandler(handler)
+        handler = logging.StreamHandler(sys.stdout)
+        handler.setLevel(logging.WARNING)
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        handler.setFormatter(formatter)
+        self.modem.log.addHandler(handler)
 
     # ----------------------------------------------------------------------
     def send(self, data):
@@ -84,7 +84,7 @@ class WIFIStream:
     def open(self, address):
         self.socket = socket.socket(family=socket.AF_INET, type=socket.SOCK_STREAM)
         ip_port = address.split(':')
-        self.socket.settimeout(1)
+        self.socket.settimeout(2)
         self.socket.connect((address.split(':')[0], (int)(address.split(':')[1]) if len(ip_port) > 1 else TCP_PORT))
         self.socket.settimeout(SOCKET_TIMEOUT)
 

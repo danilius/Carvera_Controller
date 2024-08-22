@@ -67,6 +67,20 @@
 
     {
         "type": "title",
+        "title": "Other",
+        "section": "Basic"
+    },
+    {
+        "type": "bool",
+        "title": "Main button special function Enable",
+        "desc": "When the Main button long press,Enalbe the special function",
+        "section": "Basic",
+        "key": "main_button_long_press_enable",
+        "default": "false"
+    },
+
+    {
+        "type": "title",
         "title": "Coordinates",
         "section": "Advanced"
     },

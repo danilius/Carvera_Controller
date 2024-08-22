@@ -1,7 +1,6 @@
 import os
 import quicklz
 import struct
-from kivy.uix.popup import Popup
 
 def is_android():
     return 'ANDROID_ARGUMENT' in os.environ or 'ANDROID_PRIVATE' in os.environ or 'ANDROID_APP_PATH' in os.environ
@@ -187,7 +186,7 @@ from kivy.config import ConfigParser
 from CNC import CNC
 from GcodeViewer import GCodeViewer
 from Controller import Controller, NOT_CONNECTED, STATECOLOR, STATECOLORDEF,\
-    LOAD_DIR, LOAD_MV, LOAD_RM, LOAD_MKDIR, LOAD_WIFI, LOAD_CONN_WIFI, CONN_USB, CONN_WIFI
+    LOAD_DIR, LOAD_MV, LOAD_RM, LOAD_MKDIR, LOAD_WIFI, LOAD_CONN_WIFI, CONN_USB, CONN_WIFI, SEND_FILE
 
 #Config.set('graphics', 'width', '960')
 #Config.set('graphics', 'height', '432')
@@ -213,6 +212,7 @@ MAX_LOAD_LINES = 10000
 
 1# 定义块大小
 BLOCK_SIZE = 4096
+BLOCK_HEADER_SIZE = 4
 
 HALT_REASON = {
     # Just need to unlock the mahchine
@@ -451,6 +451,7 @@ class FilePopup(ModalView):
 class CoordPopup(ModalView):
     config = {}
     mode = StringProperty()
+    vacuummode = ObjectProperty()
     origin_popup = ObjectProperty()
     zprobe_popup = ObjectProperty()
     auto_level_popup = ObjectProperty()
@@ -490,6 +491,12 @@ class CoordPopup(ModalView):
         self.origin_popup.txt_y_offset.text = str(self.config['origin']['y_offset'])
 
         self.load_origin_label()
+
+
+        if CNC.vars["vacuummode"] == 1:
+            self.vacuummode = True
+        else:
+            self.vacuummode = False
 
         # init margin widgets
         self.cbx_margin.active = self.config['margin']['active']
@@ -2037,6 +2044,7 @@ class Makera(RelativeLayout):
             else:
                 self.uploadLocalFile(filepath)
 
+
     # -----------------------------------------------------------------------
     def open_local_file(self):
         filepath = self.file_popup.local_rv.curr_selected_file
@@ -2415,7 +2423,54 @@ class Makera(RelativeLayout):
                 os.remove(output_filename)
             return None
     # -----------------------------------------------------------------------
+    def decompress_file(self,input_filename,output_filename):
+        try:
+            # 打开输入文件和输出文件
+            sum = 0
+            read_size = 0
+            with open(input_filename, 'rb') as f_in, open(output_filename, 'wb') as f_out:
+                # 获取文件大小（以字节为单位）
+                file_size = os.path.getsize(input_filename)
+                while True:
+                    if read_size == (file_size-2):
+                        break
+                    # 读取块数据长度
+                    block = f_in.read(BLOCK_HEADER_SIZE)
+                    if not block:
+                        break
+                    blocksize = struct.unpack('>I', block)[0]
+                    read_size += BLOCK_HEADER_SIZE + blocksize
+                    # 读取块数据
+                    block = f_in.read(blocksize)
+                    # 解压缩数据
+                    decompressed_block = quicklz.decompress(block)
+                    # 计算sum和
+                    for byte in decompressed_block:
+                        sum += byte
+                    # 写入解压缩后的块数据的长度到输出文件
+                    f_out.write(decompressed_block)
+            # 判断校验和
+            with open(input_filename, 'rb') as f_in:
+                f_in.seek(-2, 2)  # 从文件末尾向前移动2个字节
+                sumfile = f_in.read(2)
+            sumfile = struct.unpack('>H', sumfile)[0]
+            sumdata = sum & 0xffff
+
+            if(sumfile != sumdata):
+                print(f"deCompress failed: sum checksum mismatch")
+                return False
+
+            print(f"deCompress completed. deCompressed file saved as '{output_filename}'.")
+            return True
+
+        except Exception as e:
+            print(f"deCompress failed: {e}")
+            if os.path.exists(output_filename):
+                os.remove(output_filename)
+            return False
+    # -----------------------------------------------------------------------
     def uploadLocalFile(self, filepath):
+        self.controller.sendNUM = SEND_FILE
         self.uploading_file = filepath
         if 'lz' in self.filetype:               #如果固件支持的上传文件类型为.lz，则进行压缩
             qlzfilename = self.compress_file(filepath)
@@ -2429,13 +2484,17 @@ class Makera(RelativeLayout):
         remotename = os.path.join(self.file_popup.remote_rv.curr_dir, os.path.basename(os.path.normpath(self.uploading_file)))
         if self.file_popup.firmware_mode:
             remotename = '/sd/firmware.bin'
-
-        Clock.schedule_once(partial(self.progressStart, tr._('Uploading') + '\n%s' % self.uploading_file, self.cancelProcessingFile), 0)
+        displayname = self.uploading_file
+        if displayname.endswith(".lz"):
+            # 删除 ".lz" 后缀
+            displayname = displayname[:-3]
+        Clock.schedule_once(partial(self.progressStart, tr._('Uploading') + '\n%s' % displayname, self.cancelProcessingFile), 0)
         self.uploading = True
         self.controller.pauseStream(1)
         upload_result = None
         try:
-            md5 = Utils.md5(self.uploading_file)
+            #md5 = Utils.md5(self.uploading_file)
+            md5 = Utils.md5(displayname)
             self.controller.uploadCommand(os.path.normpath(remotename))
             upload_result = self.controller.stream.upload(self.uploading_file, md5, self.uploadCallback)
         except:
@@ -2443,9 +2502,6 @@ class Makera(RelativeLayout):
             self.controller.resumeStream()
             self.uploading = False
 
-        #如果为压缩后的'.lz'文件则删除此临时文件
-        if self.uploading_file.endswith('.lz'):
-            os.remove(self.uploading_file)
         self.controller.resumeStream()
         self.uploading = False
 
@@ -2464,9 +2520,25 @@ class Makera(RelativeLayout):
             remote_post_path = remote_path.replace('/sd/', '').replace('\\sd\\', '')
             local_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), remote_post_path)
             if self.uploading_file != local_path and not self.file_popup.firmware_mode:
-                if not os.path.exists(os.path.dirname(local_path)):
-                    os.mkdir(os.path.dirname(local_path))
-                shutil.copyfile(self.uploading_file, local_path)
+                if self.uploading_file.endswith('.lz'):
+                    #copy lz file to .lz dir
+                    lzpath, filename = os.path.split(local_path)
+                    lzpath = os.path.join(lzpath, ".lz")
+                    lzpath = os.path.join(lzpath, filename)
+                    if not os.path.exists(os.path.dirname(lzpath)):
+                        os.mkdir(os.path.dirname(lzpath))
+                    shutil.copyfile(self.uploading_file, lzpath)
+
+                    #copy the origin file
+                    origin_file = self.uploading_file[0:-3]
+                    origin_path = local_path[0:-3]
+                    if not os.path.exists(os.path.dirname(origin_path)):
+                        os.mkdir(os.path.dirname(origin_path))
+                    shutil.copyfile(origin_file, origin_path)
+                else:
+                    if not os.path.exists(os.path.dirname(local_path)):
+                        os.mkdir(os.path.dirname(local_path))
+                    shutil.copyfile(self.uploading_file, local_path)
             if self.file_popup.firmware_mode:
                 Clock.schedule_once(self.confirm_reset, 0)
             # update recent folder
@@ -2474,9 +2546,12 @@ class Makera(RelativeLayout):
                 self.update_recent_local_dir_list(os.path.dirname(self.uploading_file))
 
             # 如果为压缩后的'.lz'文件则等待解压缩完成
-            self.log = logging.getLogger('File.Decompress')
             if self.uploading_file.endswith('.lz'):
-                Clock.schedule_once(partial(self.progressStart, tr._('Decompressing') + '\n%s' % self.uploading_file, False), 0.5)
+                self.log = logging.getLogger('File.Decompress')
+                Clock.schedule_once(partial(self.progressStart, tr._('Decompressing') + '\n%s' % displayname, False), 0.5)
+                os.remove(self.uploading_file)
+
+        self.controller.sendNUM = 0
 
 
     # -----------------------------------------------------------------------
@@ -3385,6 +3460,21 @@ class Makera(RelativeLayout):
         Clock.schedule_once(self.load_start)
         f = None
         try:
+            with open(filepath, "rb") as f:
+                # 读取文件开头的两个字节
+                first_two_bytes = f.read(2)
+            if first_two_bytes == b'\x00\x00':  #we just confirm this is a file compressed by quicklz
+                # copy lz file to .lz dir
+                lzpath, filename = os.path.split(filepath)
+                lzpath = os.path.join(lzpath, ".lz")
+                lzpath = os.path.join(lzpath, filename)
+                if not os.path.exists(os.path.dirname(lzpath)):
+                    os.mkdir(os.path.dirname(lzpath))
+                lzpath = lzpath + ".lz"
+                shutil.copyfile(filepath, lzpath)
+                if  not self.decompress_file(lzpath,filepath):
+                    return
+
             self.cnc.init()
             f = open(filepath, "r", encoding = 'utf-8')
             self.lines = f.readlines()

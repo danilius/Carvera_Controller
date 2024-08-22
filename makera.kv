@@ -2443,6 +2443,40 @@
                 orientation: 'vertical'
 
                 BoxLayout:
+                    padding: '0.5dp'
+                    size_hint_y: None
+                    height: '30dp'
+                    disabled: app.model == 'CA1'
+                    Label:
+                        text: tr._("Auto Vacuum")
+                        halign: "left"
+                        valign: "middle"
+                        font_size: '13sp'
+                        text_size: self.size
+
+                        canvas.before:
+                            Color:
+                                rgba: 50/255, 50/255, 50/255, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Switch:
+                        id: vacuum_switch_play
+                        canvas.before:
+                            Color:
+                                rgba: 50/255, 50/255, 50/255, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                        active: True if root.vacuummode == 1 else False
+                        on_active:
+                            app.root.update_control('vacuum_mode', self.active)
+
+                Label:
+                    size_hint_y: None
+                    height: '15dp'
+
+                BoxLayout:
                     size_hint_y: None
                     height: '25dp'
                     canvas.before:
@@ -2628,6 +2662,37 @@
                         font_size: '13sp'
                         disabled:  (root.mode != 'Run' and root.mode != 'Leveling') or app.has_4axis
                         on_release: root.auto_level_popup.init_and_open(False)
+
+#                BoxLayout:
+#                    size_hint_y: None
+#                    height: '25dp'
+#                    disabled: app.model == 'CA1'
+#                    canvas.before:
+#                        Color:
+#                            rgba: 65/255, 65/255, 65/255, 1
+#                        Rectangle:
+#                            pos: self.pos
+#                            size: self.size
+#                    MCQCheckBox:
+#                        id: cbx_vacuum
+#                        active: False
+#                        on_active:
+#                            #root.set_config('margin', 'active', self.active)
+#                            #root.toggle_config()
+#                            #app.root.update_control('vacuum_mode', self.active)
+#                    MCQLabel:
+#                        on_press: cbx_vacuum._do_press()
+#                        text: tr._('Auto Vacuum')
+#                    Widget:
+#                        size_hint_x: None
+#                        width: '25dp'
+#                        canvas.before:
+#                            Color:
+#                                rgba: 255/255,255/255, 255/255, 1
+#                            Ellipse:
+#                                pos: self.center_x - dp(2.5), self.center_y - dp(5)
+#                                size: dp(10), dp(10)
+
 
                 Label:
 

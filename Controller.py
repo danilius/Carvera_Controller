@@ -65,6 +65,8 @@ LOAD_MKDIR = 4
 LOAD_WIFI  = 7
 LOAD_CONN_WIFI = 8
 
+SEND_FILE = 1
+
 CONN_USB = 0
 CONN_WIFI = 1
 
@@ -167,13 +169,22 @@ class Controller:
     # Execute a single command
     # ----------------------------------------------------------------------
     def executeCommand(self, line):
+        if self.sio_status != False or self.sio_diagnose != False:      #wait for the ? or * command
+            time.sleep(0.5)
         if self.stream and line:
             try:
                 if line[-1] != '\n':
                     line += "\n"
                 self.stream.send(line.encode())
                 if self.execCallback:
-                    self.execCallback(line)
+                    # 检查文件名是否以 ".lz" 结尾
+                    if line.endswith(".lz\n"):
+                        # 删除 ".lz" 后缀
+                        new_line = line[:-5] + "\n"
+                    else:
+                        # 如果没有 ".lz" 后缀，直接赋值
+                        new_line = line
+                    self.execCallback(new_line)
             except:
                 self.log.put((Controller.MSG_ERROR, str(sys.exc_info()[1])))
 
@@ -697,13 +708,15 @@ class Controller:
         self.stream.flush()
 
     def viewStatusReport(self, sio_status):
-        self.stream.send(b"?")
-        self.sio_status = sio_status
+        if self.loadNUM == 0 and self.sendNUM == 0:
+            self.stream.send(b"?")
+            self.sio_status = sio_status
 
     def viewDiagnoseReport(self, sio_diagnose):
-        # self.stream.send(b"diagnose\n")
-        self.stream.send(b"*")
-        self.sio_diagnose = sio_diagnose
+        if self.loadNUM == 0 and self.sendNUM == 0:
+            # self.stream.send(b"diagnose\n")
+            self.stream.send(b"*")
+            self.sio_diagnose = sio_diagnose
 
     # ----------------------------------------------------------------------
     def hardReset(self):
@@ -844,11 +857,13 @@ class Controller:
             return True
         elif line[0] == "<":
             self.parseBracketAngle(line)
+            self.sio_status = False
         elif line[0] == "{":
             if not self.sio_diagnose:
                 self.log.put((self.MSG_NORMAL, line))
             else:
                 self.parseBigParentheses(line)
+                self.sio_diagnose = False
         elif line[0] == "#":
             self.log.put((self.MSG_INTERIOR, line))
         elif "error" in line.lower() or "alarm" in line.lower():
@@ -900,12 +915,17 @@ class Controller:
             # refresh machine position?
             running = self.sendNUM > 0 or self.loadNUM > 0 or self.pausing
             try:
-                if t - tr > STREAM_POLL and not running:
-                    self.viewStatusReport(True)
+                if not running:
+                    if t - tr > STREAM_POLL:
+                        self.viewStatusReport(True)
+                        tr = t
+                    if self.diagnosing and t - td > DIAGNOSE_POLL:
+                        self.viewDiagnoseReport(True)
+                        td = t
+                else:
                     tr = t
-                if self.diagnosing and t - td > DIAGNOSE_POLL and not running:
-                    self.viewDiagnoseReport(True)
                     td = t
+
                 if self.stream.waiting_for_recv():
                     received = [bytes([b]) for b in self.stream.recv()]
                     for c in received:

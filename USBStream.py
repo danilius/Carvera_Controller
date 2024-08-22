@@ -21,7 +21,7 @@ class USBStream:
     def __init__(self):
         self.modem = XMODEM(self.getc, self.putc, 'xmodem')
         handler = logging.StreamHandler(sys.stdout)
-        handler.setLevel(logging.DEBUG)
+        handler.setLevel(logging.WARNING)
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         handler.setFormatter(formatter)
         self.modem.log.addHandler(handler)

@@ -169,8 +169,8 @@ class Controller:
     # Execute a single command
     # ----------------------------------------------------------------------
     def executeCommand(self, line):
-        if self.sio_status != False or self.sio_diagnose != False:      #wait for the ? or * command
-            time.sleep(0.5)
+        #if self.sio_status != False or self.sio_diagnose != False:      #wait for the ? or * command
+        #    time.sleep(0.5)
         if self.stream and line:
             try:
                 if line[-1] != '\n':
@@ -946,8 +946,15 @@ class Controller:
                                 if self.loadNUM == 0 or '|MPos' in line.decode(errors='ignore'):
                                     self.parseLine(line.decode(errors='ignore'))
                                 else:
-                                    self.load_buffer.put(line.decode(errors='ignore'))
-                                    self.load_buffer_size += len(line) + 1
+                                    # 将字节串解码为字符串
+                                    decoded_line = line.decode(errors='ignore')
+                                    # 使用正则表达式去除以"<"开头，以">"结尾的部分
+                                    cleaned_line = re.sub(r'<.*?>', '', decoded_line)
+                                    # 去除多余的空格（如果需要）
+                                    cleaned_line = cleaned_line.strip()
+                                    if len(cleaned_line) != 0:
+                                        self.load_buffer.put(cleaned_line)
+                                        self.load_buffer_size += len(cleaned_line) + 1
                                 line = b''
                             else:
                                 line += c

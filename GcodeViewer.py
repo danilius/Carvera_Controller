@@ -804,7 +804,7 @@ class GCodeViewer(Widget):
         #显示mesh
         ff = [
             (b'my_vertex_position', 3, 'float'),
-            (b'color', 3, 'float'),
+            (b'color_att', 3, 'float'),
             (b'type', 1, 'float'),
             (b'vertex_id', 1, 'float'),
             (b'distance_id', 1, 'float'),
@@ -984,7 +984,7 @@ class GCodeViewer(Widget):
             #显示mesh
             ff = [
                 (b'my_vertex_position', 3, 'float'),
-                (b'color', 3, 'float'),
+                (b'color_att', 3, 'float'),
                 (b'type', 1, 'float'),
                 (b'vertex_id', 1, 'float'),
                 (b'distance_id', 1, 'float'),
@@ -1369,7 +1369,7 @@ class GCodeViewer(Widget):
 
         ff = [
             (b'my_vertex_position',3,'float'),
-            (b'color',3,'float'),
+            (b'color_att',3,'float'),
             (b'type',1,'float'),
             (b'vertex_id',1,'float'),
             (b'distance_id',1,'float'),
@@ -1569,7 +1569,7 @@ class GCodeViewer(Widget):
 
         ff = [
             (b'my_vertex_position',3,'float'),
-            (b'color',3,'float'),
+            (b'color_att',3,'float'),
             (b'type',1,'float'),
             (b'vertex_id',1,'float'),
             (b'distance_id',1,'float'),

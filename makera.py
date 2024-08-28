@@ -138,7 +138,7 @@ if not Config.has_section('carvera') or not Config.has_option('carvera', 'versio
     Config.set('graphics', 'width', '960')
     Config.set('graphics', 'height', '600')
     Config.set('graphics', 'allow_screensaver', '0')
-    Config.set('input', 'mouse', 'mouse, multitouch_on_demand')
+    #Config.set('input', 'mouse', 'mouse, multitouch_on_demand')
     Config.write()
 
 Config.set('kivy', 'exit_on_escape', '1')
@@ -1276,6 +1276,9 @@ class Makera(RelativeLayout):
 
     fileCompressionBlocks = 0    #文件压缩后的块数
     decompercent = 0    #carvera解压压缩文件的块数
+    decompercentlast = 0  # carvera解压压缩文件的块数
+    decompstatus = False
+    decomptime = 0
 
     ctl_upd_text = ''
     ctl_version_new = ''
@@ -1841,7 +1844,6 @@ class Makera(RelativeLayout):
                     remote_decompercent = re.search('decompart = [0-9.]+', line)
                     if remote_decompercent != None:
                         self.decompercent = int(remote_decompercent[0].split('=')[1])
-                        self.updateCompressProgress(self.decompercent)
 
                     # hanlde specific messages
                     if 'WP PAIR SUCCESS' in line:
@@ -1854,6 +1856,16 @@ class Makera(RelativeLayout):
                 except:
                     print(sys.exc_info()[1])
                     break
+            # Update Decompress status bar
+            if self.decompstatus == True:
+                if self.decompercent != self.decompercentlast:
+                    self.updateCompressProgress(self.decompercent)
+                    self.decompercentlast = self.decompercent
+                    self.decomptime = time.time()
+                else:
+                    t = time.time()
+                    if t - self.decomptime > 8:
+                        self.updateCompressProgress(self.fileCompressionBlocks)
 
             # Update position if needed
             if self.controller.posUpdate:
@@ -2390,6 +2402,7 @@ class Makera(RelativeLayout):
             sum = 0
             self.fileCompressionBlocks = 0
             self.decompercent = 0
+            self.decompercentlast = 0
             with open(input_filename, 'rb') as f_in, open(output_filename, 'wb') as f_out:
                 while True:
                     # 读取块数据
@@ -2548,8 +2561,10 @@ class Makera(RelativeLayout):
             # 如果为压缩后的'.lz'文件则等待解压缩完成
             if self.uploading_file.endswith('.lz'):
                 self.log = logging.getLogger('File.Decompress')
-                Clock.schedule_once(partial(self.progressStart, tr._('Decompressing') + '\n%s' % displayname, False), 0.5)
+                self.decompstatus = True
                 os.remove(self.uploading_file)
+                self.decomptime = time.time()
+                Clock.schedule_once(partial(self.progressStart, tr._('Decompressing') + '\n%s' % displayname, False), 0.2)
 
         self.controller.sendNUM = 0
 
@@ -2660,6 +2675,7 @@ class Makera(RelativeLayout):
         Clock.schedule_once(partial(self.progressUpdate, value * 100.0 / self.fileCompressionBlocks, '', True), 0)
         if value == self.fileCompressionBlocks:
             Clock.schedule_once(self.progressFinish, 0)
+            self.decompstatus = False
 
     # -----------------------------------------------------------------------
     def updateStatus(self, *args):

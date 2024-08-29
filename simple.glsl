@@ -5,10 +5,9 @@ simple diffuse lighting based on laberts cosine law; see e.g.:
     http://en.wikipedia.org/wiki/Lambert%27s_cosine_law
 */
 ---VERTEX SHADER-------------------------------------------------------
-$HEADER$
-// #ifdef GL_ES
-//     precision highp float;
-// #endif
+#ifdef GL_ES
+    precision highp float;
+#endif
 
 attribute vec3  v_pos;
 attribute vec3  v_normal;
@@ -16,8 +15,8 @@ attribute vec3  v_normal;
 uniform vec3 offset;// = vec3(0,0,0);
 uniform mat4 rotation;
 
-// uniform mat4 modelview_mat;
-// uniform mat4 projection_mat;
+uniform mat4 modelview_mat;
+uniform mat4 projection_mat;
 
 varying vec4 normal_vec;
 varying vec4 vertex_pos;
@@ -34,10 +33,9 @@ void main (void) {
 
 
 ---FRAGMENT SHADER-----------------------------------------------------
-$HEADER$
-// #ifdef GL_ES
-//     precision highp float;
-// #endif
+#ifdef GL_ES
+    precision highp float;
+#endif
 
 varying vec4 normal_vec;
 varying vec4 vertex_pos;
@@ -47,5 +45,5 @@ void main (void){
     float dot_val = dot(normal_vec.xyz,vec3(1.0,1.0,1.0));
     vec3 color= vec3(0.3,0.3,1.0)*abs(dot_val);
     
-    gl_FragColor = vec4( color,1.0)*texture2D(texture0, tex_coord0);
+    gl_FragColor = vec4( color,1.0);
 }

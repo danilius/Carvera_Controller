@@ -12,6 +12,7 @@ from kivy.graphics.transformation import Matrix
 from kivy.graphics import *
 from kivy.graphics.opengl import *
 from kivy.clock import Clock
+from kivy.utils import platform
 import os
 from math import *
 
@@ -727,10 +728,14 @@ class GCodeViewer(Widget):
     def __init__(self):
         super().__init__()
         self.canvas = RenderContext()
-
-        glsl1 = 'hello_cube.glsl'
-        glsl2 = 'simple.glsl'
-        glsl3 = 'axis_helper.glsl'
+        if platform != 'android':
+            glsl1 = 'hello_cube.glsl'
+            glsl2 = 'simple.glsl'
+            glsl3 = 'axis_helper.glsl'
+        else:
+            glsl1 = 'hello_cube_apk.glsl'
+            glsl2 = 'simple_apk.glsl'
+            glsl3 = 'axis_helper_apk.glsl'
         if not os.path.exists(glsl1):
             glsl1 = os.path.join(os.path.dirname(sys.executable), glsl1)
             glsl2 = os.path.join(os.path.dirname(sys.executable), glsl2)
@@ -802,14 +807,25 @@ class GCodeViewer(Widget):
         self.meshmanager.add_lines(lines)
 
         #显示mesh
-        ff = [
-            (b'my_vertex_position', 3, 'float'),
-            (b'color_att', 3, 'float'),
-            (b'type', 1, 'float'),
-            (b'vertex_id', 1, 'float'),
-            (b'distance_id', 1, 'float'),
-            (b'vertex_tool', 1, 'float')
-        ]
+
+        if platform != 'android':
+            ff = [
+                (b'my_vertex_position', 3, 'float'),
+                (b'color', 3, 'float'),
+                (b'type', 1, 'float'),
+                (b'vertex_id', 1, 'float'),
+                (b'distance_id', 1, 'float'),
+                (b'vertex_tool', 1, 'float')
+            ]
+        else:
+            ff = [
+                (b'my_vertex_position', 3, 'float'),
+                (b'color_att', 3, 'float'),
+                (b'type', 1, 'float'),
+                (b'vertex_id', 1, 'float'),
+                (b'distance_id', 1, 'float'),
+                (b'vertex_tool', 1, 'float')
+            ]
 
         self.lengths = self.meshmanager.lengths
         self.vertex_types = self.meshmanager.vertex_types
@@ -982,14 +998,24 @@ class GCodeViewer(Widget):
         # get_elapsed("add line data")
         if is_end:
             #显示mesh
-            ff = [
-                (b'my_vertex_position', 3, 'float'),
-                (b'color_att', 3, 'float'),
-                (b'type', 1, 'float'),
-                (b'vertex_id', 1, 'float'),
-                (b'distance_id', 1, 'float'),
-                (b'vertex_tool', 1, 'float')
-            ]
+            if platform != 'android':
+                ff = [
+                    (b'my_vertex_position', 3, 'float'),
+                    (b'color', 3, 'float'),
+                    (b'type', 1, 'float'),
+                    (b'vertex_id', 1, 'float'),
+                    (b'distance_id', 1, 'float'),
+                    (b'vertex_tool', 1, 'float')
+                ]
+            else:
+                ff = [
+                    (b'my_vertex_position', 3, 'float'),
+                    (b'color_att', 3, 'float'),
+                    (b'type', 1, 'float'),
+                    (b'vertex_id', 1, 'float'),
+                    (b'distance_id', 1, 'float'),
+                    (b'vertex_tool', 1, 'float')
+                ]
 
             self.lengths = self.meshmanager.lengths
             self.vertex_types = self.meshmanager.vertex_types
@@ -1366,15 +1392,24 @@ class GCodeViewer(Widget):
         #记录临时变量
         last_color = ''
         last_line = ''
-
-        ff = [
-            (b'my_vertex_position',3,'float'),
-            (b'color_att',3,'float'),
-            (b'type',1,'float'),
-            (b'vertex_id',1,'float'),
-            (b'distance_id',1,'float'),
-            (b'vertex_tool',1,'float')
-        ]
+        if platform != 'android':
+            ff = [
+                (b'my_vertex_position',3,'float'),
+                (b'color',3,'float'),
+                (b'type',1,'float'),
+                (b'vertex_id',1,'float'),
+                (b'distance_id',1,'float'),
+                (b'vertex_tool',1,'float')
+            ]
+        else:
+            ff = [
+                (b'my_vertex_position', 3, 'float'),
+                (b'color_att', 3, 'float'),
+                (b'type', 1, 'float'),
+                (b'vertex_id', 1, 'float'),
+                (b'distance_id', 1, 'float'),
+                (b'vertex_tool', 1, 'float')
+            ]
         #every 65535
         meshes = []
         lines = []
@@ -1566,15 +1601,24 @@ class GCodeViewer(Widget):
         self.canvas.add(self.axisxmesh)
         self.canvas.add(self.axisymesh)
         self.canvas.add(self.axiszmesh)
-
-        ff = [
-            (b'my_vertex_position',3,'float'),
-            (b'color_att',3,'float'),
-            (b'type',1,'float'),
-            (b'vertex_id',1,'float'),
-            (b'distance_id',1,'float'),
-            (b'vertex_tool',1,'float')
-        ]
+        if platform != 'android':
+            ff = [
+                (b'my_vertex_position',3,'float'),
+                (b'color',3,'float'),
+                (b'type',1,'float'),
+                (b'vertex_id',1,'float'),
+                (b'distance_id',1,'float'),
+                (b'vertex_tool',1,'float')
+            ]
+        else:
+            ff = [
+                (b'my_vertex_position', 3, 'float'),
+                (b'color_att', 3, 'float'),
+                (b'type', 1, 'float'),
+                (b'vertex_id', 1, 'float'),
+                (b'distance_id', 1, 'float'),
+                (b'vertex_tool', 1, 'float')
+            ]
         
         [is_4_axis,meshes,vert_center,total_line_count,lengths,vertex_types,raw_linenumbers,positions,position_scale,angles_of_vertices] = load_data(lines)
         print("how many meshes:",len(meshes))

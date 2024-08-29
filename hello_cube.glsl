@@ -1,10 +1,9 @@
 ---vertex
-$HEADER$
 #ifdef GL_ES
     precision highp float;
 #endif
 attribute vec3 my_vertex_position;
-attribute vec3 color_att;
+attribute vec3 color;
 attribute float type;
 attribute float vertex_id;
 attribute float distance_id;
@@ -21,7 +20,7 @@ varying float vs_distance_id;
 varying float vs_vertex_type;
 void main()
 {
-    vs_color = color_att;
+    vs_color = color;
     vs_vertex_id = vertex_id;
     vs_vertex_type = vertex_tool;//type;
 
@@ -38,7 +37,6 @@ void main()
 }
 
 ---fragment
-$HEADER$
 #ifdef GL_ES
     precision highp float;
 #endif
@@ -90,5 +88,5 @@ void main()
     vec3 fs_color = vs_color;
     //no lerp color
     if(fs_color.r > 0.0) fs_color = vec3(1.0,0.0,0.0);
-    gl_FragColor = vec4(fs_color,1.0)*texture2D(texture0, tex_coord0);
+    gl_FragColor = vec4(fs_color,1.0);
 }

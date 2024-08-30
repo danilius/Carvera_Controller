@@ -2140,7 +2140,8 @@ class Makera(RelativeLayout):
     def doDownload(self):
         app = App.get_running_app()
         if not self.downloading_config and not os.path.exists(os.path.dirname(app.selected_local_filename)):
-            os.mkdir(os.path.dirname(app.selected_local_filename))
+            #os.mkdir(os.path.dirname(app.selected_local_filename))
+            os.makedirs(os.path.dirname(app.selected_local_filename))
         if os.path.exists(app.selected_local_filename):
             shutil.copyfile(app.selected_local_filename, app.selected_local_filename + '.tmp')
 
@@ -2539,18 +2540,21 @@ class Makera(RelativeLayout):
                     lzpath = os.path.join(lzpath, ".lz")
                     lzpath = os.path.join(lzpath, filename)
                     if not os.path.exists(os.path.dirname(lzpath)):
-                        os.mkdir(os.path.dirname(lzpath))
+                        #os.mkdir(os.path.dirname(lzpath))
+                        os.makedirs(os.path.dirname(lzpath))
                     shutil.copyfile(self.uploading_file, lzpath)
 
                     #copy the origin file
                     origin_file = self.uploading_file[0:-3]
                     origin_path = local_path[0:-3]
                     if not os.path.exists(os.path.dirname(origin_path)):
-                        os.mkdir(os.path.dirname(origin_path))
+                        #os.mkdir(os.path.dirname(origin_path))
+                        os.makedirs(os.path.dirname(origin_path))
                     shutil.copyfile(origin_file, origin_path)
                 else:
                     if not os.path.exists(os.path.dirname(local_path)):
-                        os.mkdir(os.path.dirname(local_path))
+                        #os.mkdir(os.path.dirname(local_path))
+                        os.makedirs(os.path.dirname(local_path))
                     shutil.copyfile(self.uploading_file, local_path)
             if self.file_popup.firmware_mode:
                 Clock.schedule_once(self.confirm_reset, 0)
@@ -3485,7 +3489,8 @@ class Makera(RelativeLayout):
                 lzpath = os.path.join(lzpath, ".lz")
                 lzpath = os.path.join(lzpath, filename)
                 if not os.path.exists(os.path.dirname(lzpath)):
-                    os.mkdir(os.path.dirname(lzpath))
+                    #os.mkdir(os.path.dirname(lzpath))
+                    os.makedirs(os.path.dirname(lzpath))
                 lzpath = lzpath + ".lz"
                 shutil.copyfile(filepath, lzpath)
                 if  not self.decompress_file(lzpath,filepath):

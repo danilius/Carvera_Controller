@@ -180,7 +180,7 @@ class Controller:
                     # 检查文件名是否以 ".lz" 结尾
                     if line.endswith(".lz\n"):
                         # 删除 ".lz" 后缀
-                        new_line = line[:-5] + "\n"
+                        new_line = line[:-4] + "\n"
                     else:
                         # 如果没有 ".lz" 后缀，直接赋值
                         new_line = line

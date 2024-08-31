@@ -141,7 +141,7 @@ if not Config.has_section('carvera') or not Config.has_option('carvera', 'versio
     #Config.set('input', 'mouse', 'mouse, multitouch_on_demand')
     Config.write()
 
-Config.set('kivy', 'exit_on_escape', '1')
+Config.set('kivy', 'exit_on_escape', '0')
 import json
 import re
 from kivy.app import App
@@ -2525,7 +2525,13 @@ class Makera(RelativeLayout):
 
         if upload_result is None:
             self.controller.log.put((Controller.MSG_NORMAL, tr._('Uploading is canceled manually.')))
+            # 如果为压缩后的'.lz'文件则删除该文件
+            if self.uploading_file.endswith('.lz'):
+                os.remove(self.uploading_file)
         elif not upload_result:
+            # 如果为压缩后的'.lz'文件则删除该文件
+            if self.uploading_file.endswith('.lz'):
+                os.remove(self.uploading_file)
             # show message popup
             Clock.schedule_once(partial(self.show_message_popup, tr._("Upload file error!"), False), 0)
         else:

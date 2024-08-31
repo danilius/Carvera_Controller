@@ -67,16 +67,17 @@
 
     {
         "type": "title",
-        "title": "Other",
+        "title": "Main button",
         "section": "Basic"
     },
     {
-        "type": "bool",
-        "title": "Main button special function Enable",
-        "desc": "When the Main button long press,Enalbe the special function",
+        "type": "options",
+        "title": "Main button long press function",
+        "desc": "Triggered after 3 seconds when pressing\nNone   ------Do Nothing\nSleep  ------Enter sleep mode\nRepeat------Repeat Last Job",
         "section": "Basic",
         "key": "main_button_long_press_enable",
-        "default": "false"
+        "options": ["None", "Sleep", "Repeat"],
+        "default": "None"
     },
 
     {

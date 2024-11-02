@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "carveracontroller-community"
+authors = [""]
+description = "Controller for the Carvera CNC"
+version = "0.0.0"
+license = "GPL-2.0"
+readme = "README.md"
+packages = [{include = "carveracontroller", from = "."}]
+
+[tool.poetry.dependencies]
+python = "<3.14,>=3.8"
+Kivy = "^2.3.0"
+pyserial = "^3.5"
+pyquicklz = "^1.4.1"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

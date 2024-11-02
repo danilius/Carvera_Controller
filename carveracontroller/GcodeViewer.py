@@ -737,9 +737,9 @@ class GCodeViewer(Widget):
             glsl2 = 'simple_apk.glsl'
             glsl3 = 'axis_helper_apk.glsl'
         if not os.path.exists(glsl1):
-            glsl1 = os.path.join(os.path.dirname(sys.executable), glsl1)
-            glsl2 = os.path.join(os.path.dirname(sys.executable), glsl2)
-            glsl3 = os.path.join(os.path.dirname(sys.executable), glsl3)
+            glsl1 = os.path.join(os.path.dirname(__file__), glsl1) # adjacent to code
+            glsl2 = os.path.join(os.path.dirname(__file__), glsl2)
+            glsl3 = os.path.join(os.path.dirname(__file__), glsl3)
 
         self.linemesh = RenderContext()
         self.linemesh.shader.source = glsl1

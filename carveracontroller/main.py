@@ -1349,7 +1349,6 @@ class Makera(RelativeLayout):
         super(Makera, self).__init__()
 
         self.temp_dir = tempfile.mkdtemp()
-        print(f"temp dir: {self.temp_dir}")  # TODO: Remove
 
         self.file_popup = FilePopup()
 

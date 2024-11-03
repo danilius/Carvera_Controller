@@ -173,6 +173,7 @@ from serial.tools.list_ports import comports
 from functools import partial
 from WIFIStream import MachineDetector
 from kivy.core.window import Window
+from kivy.core.text import LabelBase
 from kivy.network.urlrequest import UrlRequest
 import webbrowser
 from pathlib import Path
@@ -239,6 +240,22 @@ HALT_REASON = {
     # Need to power off/on the machine
     41: tr._("Spindle Alarm, power off/on needed"),
 }
+
+def app_base_path():
+    """
+    The base path should be used for reference for any bundled assets.
+    This should be done via __file__ since this will work in situations
+    where the application is both frozen in pyinstaller, and when run normally
+    """
+    return os.path.abspath(os.path.dirname(__file__))
+
+def register_fonts(base_path):
+    """
+    To support both frozen and normal execution of the application font locations
+    should be registered
+    """
+    arialuni_location = os.path.abspath(os.path.join(os.path.dirname(__file__), "ARIALUNI.ttf"))
+    LabelBase.register(name='ARIALUNI', fn_regular=arialuni_location)
 
 class GcodePlaySlider(Slider):
     def on_touch_down(self, touch):
@@ -3628,5 +3645,10 @@ class MakeraApp(App):
 
         return Makera()
 
-if __name__ == '__main__':
+def main():
+    base_path = app_base_path()
+    register_fonts(base_path)
     MakeraApp().run()
+
+if __name__ == '__main__':
+    main()

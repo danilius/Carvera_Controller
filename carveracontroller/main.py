@@ -144,6 +144,7 @@ if not Config.has_section('carvera') or not Config.has_option('carvera', 'versio
 Config.set('kivy', 'exit_on_escape', '0')
 import json
 import re
+import tempfile
 from kivy.app import App
 from kivy.clock import Clock
 from kivy.uix.widget import Widget
@@ -173,6 +174,8 @@ from serial.tools.list_ports import comports
 from functools import partial
 from WIFIStream import MachineDetector
 from kivy.core.window import Window
+from kivy.core.text import LabelBase
+from kivy.resources import resource_add_path
 from kivy.network.urlrequest import UrlRequest
 import webbrowser
 from pathlib import Path
@@ -239,6 +242,32 @@ HALT_REASON = {
     # Need to power off/on the machine
     41: tr._("Spindle Alarm, power off/on needed"),
 }
+
+def app_base_path():
+    """
+    The base path should be used for reference for any bundled assets.
+    This should be done via __file__ since this will work in situations
+    where the application is both frozen in pyinstaller, and when run normally
+    """
+    return os.path.abspath(os.path.dirname(__file__))
+
+def register_fonts(base_path):
+    """
+    To support both frozen and normal execution of the application font locations
+    should be registered
+    """
+    arialuni_location = os.path.abspath(os.path.join(os.path.dirname(__file__), "ARIALUNI.ttf"))
+    LabelBase.register(name='ARIALUNI', fn_regular=arialuni_location)
+
+
+def register_images(base_path):
+    """
+    To support both frozen and normal execution of the application image locations
+    should be registered
+    """
+    icons_path = os.path.join(base_path)
+    resource_add_path(icons_path)
+
 
 class GcodePlaySlider(Slider):
     def on_touch_down(self, touch):
@@ -1027,7 +1056,7 @@ class LocalRV(DataRV):
 
         self.curr_dir = os.path.abspath('./gcodes')
         if not os.path.exists(self.curr_dir):
-            self.curr_dir = os.path.join(os.path.dirname(sys.executable), 'gcodes')
+            self.curr_dir = os.path.join(os.path.dirname(__file__), 'gcodes')
         self.curr_dir_name = os.path.basename(os.path.normpath(self.curr_dir))
 
     # -----------------------------------------------------------------------
@@ -1318,6 +1347,9 @@ class Makera(RelativeLayout):
 
     def __init__(self):
         super(Makera, self).__init__()
+
+        self.temp_dir = tempfile.mkdtemp()
+
         self.file_popup = FilePopup()
 
         self.cnc = CNC()
@@ -1428,6 +1460,13 @@ class Makera(RelativeLayout):
         #
         threading.Thread(target=self.monitorSerial).start()
 
+    def __del__(self):
+        # Cleanup the temporary directory when the app is closed
+        try:
+            shutil.rmtree(self.temp_dir)
+        except Exception as e:
+            print(f"Error cleaning up temporary directory: {e}")
+    
     def open_download(self):
         webbrowser.open(DOWNLOAD_ADDRESS, new = 2)
 
@@ -2083,7 +2122,7 @@ class Makera(RelativeLayout):
         remote_path = self.file_popup.remote_rv.curr_selected_file
         remote_size = self.file_popup.remote_rv.curr_selected_filesize
         remote_post_path = remote_path.replace('/sd/', '').replace('\\sd\\', '')
-        local_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), remote_post_path)
+        local_path = os.path.join(self.temp_dir, remote_post_path)
         app = App.get_running_app()
         app.selected_local_filename = local_path
         app.selected_remote_filename = remote_path
@@ -2097,7 +2136,7 @@ class Makera(RelativeLayout):
     # -----------------------------------------------------------------------
     def download_config_file(self):
         app = App.get_running_app()
-        app.selected_local_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'config.txt')
+        app.selected_local_filename = os.path.join(self.temp_dir, 'config.txt')
         self.downloading_file = '/sd/config.txt'
         self.downloading_size = 1024 * 5
         self.downloading_config = True
@@ -2108,7 +2147,7 @@ class Makera(RelativeLayout):
         if success:
             self.setting_list.clear()
             # caching config file
-            config_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'config.txt')
+            config_path = os.path.join(self.temp_dir, 'config.txt')
             with open(config_path, 'r') as f:
                 config_string = '[dummy_section]\n' + f.read()
             # remove notes
@@ -2538,7 +2577,7 @@ class Makera(RelativeLayout):
             # copy file to application directory if needed
             remote_path = os.path.join(self.file_popup.remote_rv.curr_dir, os.path.basename(os.path.normpath(self.uploading_file)))
             remote_post_path = remote_path.replace('/sd/', '').replace('\\sd\\', '')
-            local_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), remote_post_path)
+            local_path = os.path.join(self.temp_dir, remote_post_path)
             if self.uploading_file != local_path and not self.file_popup.firmware_mode:
                 if self.uploading_file.endswith('.lz'):
                     #copy lz file to .lz dir
@@ -3217,7 +3256,7 @@ class Makera(RelativeLayout):
             # no panels, create new
             config_file = 'config.json'
             if not os.path.exists(config_file):
-                config_file = os.path.join(os.path.dirname(sys.executable), config_file)
+                config_file = os.path.join(os.path.dirname(__file__), config_file)
             if not os.path.exists(config_file):
                 self.controller.log.put(
                     (Controller.MSG_ERROR, tr._('Load config error, Key:') + ' {}'.format(child.key)))
@@ -3628,5 +3667,11 @@ class MakeraApp(App):
 
         return Makera()
 
-if __name__ == '__main__':
+def main():
+    base_path = app_base_path()
+    register_fonts(base_path)
+    register_images(base_path)
     MakeraApp().run()
+
+if __name__ == '__main__':
+    main()

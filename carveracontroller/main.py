@@ -174,6 +174,7 @@ from functools import partial
 from WIFIStream import MachineDetector
 from kivy.core.window import Window
 from kivy.core.text import LabelBase
+from kivy.resources import resource_add_path
 from kivy.network.urlrequest import UrlRequest
 import webbrowser
 from pathlib import Path
@@ -256,6 +257,16 @@ def register_fonts(base_path):
     """
     arialuni_location = os.path.abspath(os.path.join(os.path.dirname(__file__), "ARIALUNI.ttf"))
     LabelBase.register(name='ARIALUNI', fn_regular=arialuni_location)
+
+
+def register_images(base_path):
+    """
+    To support both frozen and normal execution of the application image locations
+    should be registered
+    """
+    icons_path = os.path.join(base_path)
+    resource_add_path(icons_path)
+
 
 class GcodePlaySlider(Slider):
     def on_touch_down(self, touch):
@@ -3648,6 +3659,7 @@ class MakeraApp(App):
 def main():
     base_path = app_base_path()
     register_fonts(base_path)
+    register_images(base_path)
     MakeraApp().run()
 
 if __name__ == '__main__':

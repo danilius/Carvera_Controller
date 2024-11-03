@@ -845,8 +845,8 @@ class GCodeViewer(Widget):
         obj1 = 'pointer.obj'
         obj2 = 'axis.obj'
         if not os.path.exists(obj1):
-            obj1 = os.path.join(os.path.dirname(sys.executable), obj1)
-            obj2 = os.path.join(os.path.dirname(sys.executable), obj2)
+            obj1 = os.path.join(os.path.dirname(__file__), obj1)
+            obj2 = os.path.join(os.path.dirname(__file__), obj2)
 
         self.pointer = ObjFile(obj1)
         self.axis_obj = ObjFile(obj2)
@@ -1034,8 +1034,8 @@ class GCodeViewer(Widget):
             obj1 = 'pointer.obj'
             obj2 = 'axis.obj'
             if not os.path.exists(obj1):
-                obj1 = os.path.join(os.path.dirname(sys.executable), obj1)
-                obj2 = os.path.join(os.path.dirname(sys.executable), obj2)
+                obj1 = os.path.join(os.path.dirname(__file__), obj1)
+                obj2 = os.path.join(os.path.dirname(__file__), obj2)
 
             self.pointer = ObjFile(obj1)
             self.axis_obj = ObjFile(obj2)
@@ -1638,8 +1638,8 @@ class GCodeViewer(Widget):
         obj1 = 'pointer.obj'
         obj2 = 'axis.obj'
         if not os.path.exists(obj1):
-            obj1 = os.path.join(os.path.dirname(sys.executable), obj1)
-            obj2 = os.path.join(os.path.dirname(sys.executable), obj2)
+            obj1 = os.path.join(os.path.dirname(__file__), obj1)
+            obj2 = os.path.join(os.path.dirname(__file__), obj2)
 
         self.pointer = ObjFile(obj1)
 

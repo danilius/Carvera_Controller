@@ -70,3 +70,8 @@ dmypy.json
 
 # IDEs
 .idea/
+
+# appimage-builder related
+AppDir/
+appimage-build/
+AppDir.squashfs

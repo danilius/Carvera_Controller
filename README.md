@@ -10,6 +10,7 @@ To contribute to this project or set up a local development environment, follow 
 
 - Ensure you have [Python](https://www.python.org/downloads/) installed on your system (preferably version 3.8 or later).
 - [Poetry](https://python-poetry.org/) is required for dependency management. Poetry simplifies packaging and simplifies the management of Python dependencies.
+- [Squashfs-tools](https://github.com/plougher/squashfs-tools) is required if building Linux AppImages. On Debian based systems it's provided by the package `squashfs-tools`
 
 ### Installing Poetry
 
@@ -62,7 +63,7 @@ poetry run python carveracontroller/main.py
 
 ### Local Packaging
 
-The application is packaged using PyInstaller. An build helper script is configured with poetry and can be run with
+The application is packaged using PyInstaller. This tool converts Python applications into a standalone executable, so it can be run on systems without requiring management of a installed Python interpreter or dependent libraries. An build helper script is configured with Poetry and can be run with:
 
 ```bash
 poetry run build --os ["windows", "linux", "macos"]

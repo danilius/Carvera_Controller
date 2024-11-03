@@ -3,12 +3,12 @@ from __future__ import annotations
 
 import argparse
 import logging
-
+import subprocess
+import sys
 from pathlib import Path
 
 import PyInstaller.__main__
 import pyinstaller_versionfile
-
 from setuptools_scm import get_version
 
 from . import patch_pyinstaller
@@ -110,6 +110,13 @@ def generate_versionfile(package_version: str, output_filename: str) -> Path:
 
     return versionfile_path
 
+def run_appimage_builder()-> None:
+    command = "appimage-builder --recipe packaging_assets/AppImageBuilder.yml"
+    result = subprocess.run(command, shell=True, capture_output=False, text=True)
+    if result.returncode != 0:
+        logger.error(f"Error executing command: {command}")
+        logger.error(f"stderr: {result.stderr}")
+        sys.exit(result.returncode)
 
 def main():
     parser = argparse.ArgumentParser()
@@ -129,7 +136,7 @@ def main():
     args = parser.parse_args()
     os = args.os
     package_version = get_version_info()
-    output_filename = PACKAGE_NAME.title()
+    output_filename = PACKAGE_NAME
     versionfile_path = None
 
     if os == "windows":
@@ -144,6 +151,9 @@ def main():
         versionfile_path=versionfile_path,
     )
     run_pyinstaller(build_args=build_args)
+
+    if os == "linux":
+        run_appimage_builder()
 
 if __name__ == "__main__":
     main()

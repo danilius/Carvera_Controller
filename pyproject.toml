@@ -13,7 +13,7 @@ Kivy = "^2.3.0"
 pyserial = "^3.5"
 pyquicklz = "^1.4.1"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 pyinstaller = "^6.11.0"
 pyinstaller-versionfile = "^2.1.1"
 appimage-builder = "^1.1.0"
@@ -25,3 +25,5 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 build = "scripts.build:main"
+
+[tool.setuptools_scm]

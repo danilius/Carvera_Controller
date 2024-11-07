@@ -394,7 +394,7 @@ class Controller:
     # escape special characters
     # ------------------------------------------------------------------------------
     def escape(self, value):
-        return value.replace('?', '\x02').replace('*', '\x03').replace('!', '\x04').replace('~', '\x05')
+        return value.replace('?', '\x02').replace('&', '\x03').replace('!', '\x04').replace('~', '\x05')
 
     def lsCommand(self, ls_dir):
         ls_command = "ls -e -s %s\n" % ls_dir.replace(' ', '\x01')
@@ -715,7 +715,7 @@ class Controller:
     def viewDiagnoseReport(self, sio_diagnose):
         if self.loadNUM == 0 and self.sendNUM == 0:
             # self.stream.send(b"diagnose\n")
-            self.stream.send(b"*")
+            self.stream.send(b"&")
             self.sio_diagnose = sio_diagnose
 
     # ----------------------------------------------------------------------

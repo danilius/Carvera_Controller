@@ -183,6 +183,7 @@ jobs:
     runs-on: ubuntu-20.04
     permissions:
       id-token: write
+      contents: read
 
     defaults:
       run:
@@ -203,8 +204,12 @@ jobs:
     - name: Build python package
       run: poetry build
 
-    - name: Publish package to PyPI
-      uses: pypa/gh-action-pypi-publish@release/v1
+    - name: Mint Pypi token
+      id: mint
+      uses: tschm/token-mint-action@v1.0.3
+
+    - name: Publish the package with poetry
+      run: poetry publish -u __token__ -p '${{ steps.mint.outputs.api-token }}'
 
 
   publish-release:

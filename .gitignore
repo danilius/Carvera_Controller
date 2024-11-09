@@ -70,6 +70,7 @@ dmypy.json
 
 # IDEs
 .idea/
+.vscode/
 
 # appimage-builder related
 AppDir/

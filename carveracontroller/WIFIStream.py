@@ -20,6 +20,14 @@ class MachineDetector:
     def __init__(self):
         pass
 
+    def is_machine_busy(self, addr):
+        """Tries to connect to the machine, if machine is available returns true else false"""
+        try:
+            with socket.create_connection((addr, "2222"), timeout=1):
+                return False
+        except (socket.timeout, socket.error) as e:
+            return True
+
     def get_machine_list(self):
         UDP_IP = "0.0.0.0"
         machine_list = []

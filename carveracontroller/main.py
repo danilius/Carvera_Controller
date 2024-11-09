@@ -1268,6 +1268,7 @@ class Makera(RelativeLayout):
     }
 
     status_index = 0
+    past_machine_addr = None
 
     def __init__(self, ctl_version):
         super(Makera, self).__init__()
@@ -1375,6 +1376,9 @@ class Makera(RelativeLayout):
         self.upgrade_popup.cbx_check_at_startup.active = self.show_update
         if self.show_update:
             self.check_for_updates()
+
+        if Config.has_option('carvera', 'address'):
+            self.past_machine_addr = Config.get('carvera', 'address')
 
         # blink timer
         Clock.schedule_interval(self.blink_state, 0.5)
@@ -1725,9 +1729,19 @@ class Makera(RelativeLayout):
         self.remote_dir_drop_down.open(button)
 
     # -----------------------------------------------------------------------
+    def reconnect_wifi_conn(self, button):
+        if self.past_machine_addr:
+            if not self.machine_detector.is_machine_busy(self.past_machine_addr):
+                self.openWIFI(self.past_machine_addr)
+            else: 
+                Clock.schedule_once(partial(self.show_message_popup, tr._("Cannot connect, machine is busy or not availiable."), False), 0)
+        else:
+            Clock.schedule_once(partial(self.show_message_popup, tr._("No previous machine network address stored."), False), 0)
+            self.manually_input_ip()
+
     def open_wifi_conn_drop_down(self, button):
         self.wifi_conn_drop_down.clear_widgets()
-        btn = MachineButton(text=tr._('Searching nearby machines...'), size_hint_y=None, height='35dp',
+        btn = MachineButton(text=tr._('Searching for nearby machines...'), size_hint_y=None, height='35dp',
                             color=(180 / 255, 180 / 255, 180 / 255, 1))
         self.wifi_conn_drop_down.add_widget(btn)
         self.wifi_conn_drop_down.open(button)
@@ -1737,7 +1751,7 @@ class Makera(RelativeLayout):
         self.wifi_conn_drop_down.clear_widgets()
         machines = self.machine_detector.get_machine_list()
         if len(machines) == 0:
-            btn = MachineButton(text=tr._('Not found, enter IP manually...'), size_hint_y=None, height='35dp',
+            btn = MachineButton(text=tr._('None found, enter address manually...'), size_hint_y=None, height='35dp',
                                 color=(225 / 255, 225 / 255, 225 / 255, 1))
             btn.bind(on_release=lambda btn: self.manually_input_ip())
             self.wifi_conn_drop_down.add_widget(btn)
@@ -1751,8 +1765,11 @@ class Makera(RelativeLayout):
 
     # -----------------------------------------------------------------------
     def manually_input_ip(self):
-        self.input_popup.lb_title.text = tr._('Input IP address:')
-        self.input_popup.txt_content.text = ''
+        self.input_popup.lb_title.text = tr._('Input machine network address:')
+        if self.past_machine_addr:
+            self.input_popup.txt_content.text = self.past_machine_addr
+        else:
+            self.input_popup.txt_content.text = ''
         self.input_popup.txt_content.password = False
         self.input_popup.confirm = self.manually_open_wifi
         self.input_popup.open(self)
@@ -1764,7 +1781,13 @@ class Makera(RelativeLayout):
         self.input_popup.dismiss()
         if not ip:
             return False
+        self.store_machine_address(ip)
         self.openWIFI(ip)
+    
+    def store_machine_address(self, address):
+        Config.set('carvera', 'address', address)
+        Config.write()
+        self.past_machine_addr = address
 
     # -----------------------------------------------------------------------
     def update_coord_config(self):

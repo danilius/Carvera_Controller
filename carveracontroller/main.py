@@ -1737,7 +1737,7 @@ class Makera(RelativeLayout):
         self.wifi_conn_drop_down.clear_widgets()
         machines = self.machine_detector.get_machine_list()
         if len(machines) == 0:
-            btn = MachineButton(text=tr._('Not found, enter IP manually...'), size_hint_y=None, height='35dp',
+            btn = MachineButton(text=tr._('None found, enter address manually...'), size_hint_y=None, height='35dp',
                                 color=(225 / 255, 225 / 255, 225 / 255, 1))
             btn.bind(on_release=lambda btn: self.manually_input_ip())
             self.wifi_conn_drop_down.add_widget(btn)
@@ -1751,8 +1751,11 @@ class Makera(RelativeLayout):
 
     # -----------------------------------------------------------------------
     def manually_input_ip(self):
-        self.input_popup.lb_title.text = tr._('Input IP address:')
-        self.input_popup.txt_content.text = ''
+        self.input_popup.lb_title.text = tr._('Input machine network address:')
+        if Config.has_option('carvera', 'address'):
+            self.input_popup.txt_content.text = Config.get('carvera', 'address')
+        else:
+            self.input_popup.txt_content.text = ''
         self.input_popup.txt_content.password = False
         self.input_popup.confirm = self.manually_open_wifi
         self.input_popup.open(self)
@@ -1764,7 +1767,12 @@ class Makera(RelativeLayout):
         self.input_popup.dismiss()
         if not ip:
             return False
+        self.store_machine_address(ip)
         self.openWIFI(ip)
+    
+    def store_machine_address(self, address):
+        Config.set('carvera', 'address', address)
+        Config.write()
 
     # -----------------------------------------------------------------------
     def update_coord_config(self):

@@ -934,10 +934,19 @@
             pos: self.pos
             size: self.size
     Button:
+        id: btn_reconnect_wifi
+        text: tr._('Reconnect')
+        size_hint_y: None
+        height: '40dp'
+        disabled: app.state != 'N/A'
+        on_release:
+            app.root.reconnect_wifi_conn(self)
+
+    Button:
         id: btn_connect_wifi
         size_hint_y: None
         height: '40dp'
-        text: tr._('WIFI...')
+        text: tr._('Scan Wi-Fi...')
         on_release:
             app.root.open_wifi_conn_drop_down(self)
     Button:

@@ -3,7 +3,7 @@
 
 OS_NAME=${1:?"missing arg 1 for OS_NAME"}
 
-VERSION=$(python -m setuptools_scm)
+VERSION=$(poetry version -s)
 
 case "$OS_NAME" in
     "macos")

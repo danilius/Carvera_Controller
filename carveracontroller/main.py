@@ -2,8 +2,6 @@ import os
 import quicklz
 import struct
 
-
-
 # import os
 # os.environ["KIVY_METRICS_DENSITY"] = '1'
 
@@ -114,7 +112,7 @@ from .CNC import CNC
 from .GcodeViewer import GCodeViewer
 from .Controller import Controller, NOT_CONNECTED, STATECOLOR, STATECOLORDEF,\
     LOAD_DIR, LOAD_MV, LOAD_RM, LOAD_MKDIR, LOAD_WIFI, LOAD_CONN_WIFI, CONN_USB, CONN_WIFI, SEND_FILE
-
+from .__version__ import __version__
 
 
 def load_halt_translations(tr: Lang):
@@ -3614,7 +3612,7 @@ class MakeraApp(App):
         self.use_kivy_settings = True
         self.title = tr._('Carvera Controller Community')
 
-        return Makera(ctl_version=VERSION)
+        return Makera(ctl_version=__version__)
 
 def android_tweaks():
     """Android specific app changes"""
@@ -3639,10 +3637,10 @@ def android_tweaks():
 
 def set_config_defaults(default_lang):
     Config.set('kivy', 'exit_on_escape', '0')
-    if not Config.has_section('carvera') or not Config.has_option('carvera', 'version') or Config.get('carvera', 'version') != VERSION:
+    if not Config.has_section('carvera') or not Config.has_option('carvera', 'version') or Config.get('carvera', 'version') != __version__:
         if not Config.has_section('carvera'):
             Config.add_section('carvera')
-        Config.set('carvera', 'version', VERSION)
+        Config.set('carvera', 'version', __version__)
         if not Config.has_option('carvera', 'show_update'): Config.set('carvera', 'show_update', '1')
         if not Config.has_option('carvera', 'language'): Config.set('carvera', 'language', default_lang)
         if not Config.has_option('carvera', 'local_folder_1'): Config.set('carvera', 'local_folder_1', '')
@@ -3681,17 +3679,17 @@ def load_constants():
     global BLOCK_SIZE
     global BLOCK_HEADER_SIZE
 
-    global VERSION
     global FW_UPD_ADDRESS
     global CTL_UPD_ADDRESS
     global DOWNLOAD_ADDRESS
 
     global LANGS
 
-    VERSION = '0.9.8'
-    FW_UPD_ADDRESS = 'https://raw.githubusercontent.com/MakeraInc/CarveraFirmware/main/version.txt'
+    FW_UPD_ADDRESS = 'https://raw.githubusercontent.com/carvera-community/carvera_community_firmware/master/version.txt'
+    # CTL_UPD_ADDRESS = 'https://raw.githubusercontent.com/carvera-community/carvera_controller/main/CHANGELOG.md'
     CTL_UPD_ADDRESS = 'https://raw.githubusercontent.com/MakeraInc/CarveraController/main/version.txt'
-    DOWNLOAD_ADDRESS = 'https://www.makera.com/pages/software'
+    DOWNLOAD_ADDRESS = 'https://github.com/carvera-community/carvera_controller/releases/latest'
+
 
     LANGS = {
         'en':  'English',

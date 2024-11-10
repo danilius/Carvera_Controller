@@ -2,6 +2,7 @@
 - Fix: A axis rotation in the 3d viewer was incorrect. Previously was CW, not matching the machine since this was changed in FW 0.9.6
 - Change: Increase the feed rate scaling range from 50-200 to 10-300. The stepping is still in 10% increments
 - Change: Use the Carvera-Community URLs for update checking
+- Fix: Show the top of update log on load instead of the bottom
 
 [0.3.1]
 - Fix: MacOS dmg background image and icon locations

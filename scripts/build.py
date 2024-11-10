@@ -12,7 +12,7 @@ from pathlib import Path
 
 import PyInstaller.__main__
 import pyinstaller_versionfile
-from setuptools_scm import get_version
+from dunamai import Version
 from ruamel.yaml import YAML
 
 import patch_pyinstaller
@@ -98,7 +98,7 @@ def run_pyinstaller(build_args: list[str]) -> None:
     PyInstaller.__main__.run(build_args)
 
 def get_version_info() -> str:
-    version_str = get_version(root='..', relative_to=__file__)
+    version_str = Version.from_any_vcs().serialize()
     logger.info(f"Version determined to be {version_str}")
     return version_str
 

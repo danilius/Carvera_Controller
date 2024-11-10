@@ -36,6 +36,9 @@ jobs:
         curl -L --output mesa.7z --url https://github.com/pal1000/mesa-dist-win/releases/download/24.2.5/mesa3d-24.2.5-release-msvc.7z
         7z x mesa.7z -o*
         powershell.exe mesa\\systemwidedeploy.cmd 1
+    
+    - name: Generate version strings
+      run: poetry dynamic-versioning
 
     - name: Build release
       run: poetry run python scripts/build.py --os windows
@@ -77,6 +80,9 @@ jobs:
       uses: ./.github/actions/bootstrap-poetry
       with:
         os: macos
+    
+    - name: Generate version strings
+      run: poetry dynamic-versioning
 
     - name: Build release
       run: poetry run python scripts/build.py --os macos
@@ -127,6 +133,9 @@ jobs:
     
     - name: Install MTDev
       run: sudo apt-get install -y mtdev-tools
+    
+    - name: Generate version strings
+      run: poetry dynamic-versioning
 
     - name: Build release
       run: xvfb-run poetry run python scripts/build.py --os linux
@@ -162,6 +171,7 @@ jobs:
           export PATH="/home/runner/.local/bin:$PATH"
           poetry config virtualenvs.in-project true
           poetry install
+          poetry dynamic-versioning
           xvfb-run poetry run python scripts/build.py --os linux
           poetry run bash ./scripts/rename-release-file.sh linux
 

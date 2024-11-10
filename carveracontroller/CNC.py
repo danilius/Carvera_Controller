@@ -292,7 +292,7 @@ class CNC:
 
             elif c == "A":
                 self.has_4axis = True
-                self.aval = value * self.unit
+                self.aval = value * self.unit * -1  # Right Hand Rule rotation. A+ movement when looking at rotary jaws is CCW rotation
                 if not self.absolute:
                     self.aval += self.a
                 self.da = self.aval - self.a

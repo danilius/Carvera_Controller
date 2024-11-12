@@ -39,7 +39,7 @@ jobs:
 
     - name: Generate version strings
       run: |
-        poetry dynamic-versioning enable
+        poetry self add "poetry-dynamic-versioning[plugin]"
         poetry dynamic-versioning
 
     - name: Build release
@@ -85,7 +85,7 @@ jobs:
     
     - name: Generate version strings
       run: |
-        poetry dynamic-versioning enable
+        poetry self add "poetry-dynamic-versioning[plugin]"
         poetry dynamic-versioning
 
     - name: Build release
@@ -140,7 +140,7 @@ jobs:
     
     - name: Generate version strings
       run: |
-        poetry dynamic-versioning enable
+        poetry self add "poetry-dynamic-versioning[plugin]"
         poetry dynamic-versioning
 
     - name: Build release
@@ -177,7 +177,7 @@ jobs:
           export PATH="/home/runner/.local/bin:$PATH"
           poetry config virtualenvs.in-project true
           poetry install
-          poetry dynamic-versioning enable
+          poetry self add "poetry-dynamic-versioning[plugin]"
           poetry dynamic-versioning
           xvfb-run poetry run python scripts/build.py --os linux
           poetry run bash ./scripts/rename-release-file.sh linux

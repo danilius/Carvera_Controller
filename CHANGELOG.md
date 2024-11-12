@@ -5,6 +5,7 @@
 - Fix: Show the top of update log on load instead of the bottom
 - Change: Renamed the UI button in the local file browser called "Open" to "View" to make it more clear that it's just opening the file for viewing in the controller, not uploading it to the machine.
 - Enhancement: Adds a button to the local file browser screen "Upload and Select" which uploads the selected local file and selects it in the controller for playing once uploaded.
+- Change: Local file browser defaults to the last directory that had been opened. If the directory doesn't exist, try the next previous etc.
 
 [0.3.1]
 - Fix: MacOS dmg background image and icon locations

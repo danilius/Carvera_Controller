@@ -2223,6 +2223,13 @@
                                 app.root.open_local_dir_drop_down(self)
                     Label:
                     Button:
+                        id: btn_view
+                        size_hint_x: None
+                        width: '100dp'
+                        text: tr._("Download") if root.firmware_mode else tr._("View")
+                        on_release:
+                            app.root.view_local_file()
+                    Button:
                         id: btn_upload
                         size_hint_x: None
                         width: '100dp'
@@ -2230,12 +2237,13 @@
                         on_release:
                             app.root.check_and_upload()
                     Button:
-                        id: btn_view
+                        id: btn_upload_and_select
                         size_hint_x: None
-                        width: '100dp'
-                        text: tr._("Download") if root.firmware_mode else tr._("View")
+                        width: '130dp'
+                        text: tr._("Upload and Select")
                         on_release:
-                            app.root.view_local_file()
+                            app.root.check_upload_and_select()
+                            root.dismiss()
                     Button:
                         size_hint_x: None
                         width: '100dp'

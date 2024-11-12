@@ -2041,6 +2041,29 @@ class Makera(RelativeLayout):
                 self.confirm_popup.open(self)
             else:
                 self.uploadLocalFile(filepath)
+    
+    def check_upload_and_select(self):
+        filepath = self.file_popup.local_rv.curr_selected_file
+        filename = os.path.basename(os.path.normpath(filepath))
+        if len(list(filter(lambda person: person['filename'] == filename, self.file_popup.remote_rv.data))) > 0:
+            # show message popup
+            self.confirm_popup.lb_title.text = tr._('File Already Exists')
+            self.confirm_popup.lb_content.text = tr._('Confirm to overwrite file:') + ' \n \'%s\'?' % (filename)
+            self.confirm_popup.cancel = None
+            self.confirm_popup.confirm = partial(self.uploadLocalFile, filepath)
+            self.confirm_popup.open(self)
+        else:
+            self.uploadLocalFile(filepath)
+
+
+        remote_path = os.path.join(self.file_popup.remote_rv.curr_dir, filename)
+        app = App.get_running_app()
+        app.selected_local_filename = filepath
+        app.selected_remote_filename = remote_path
+        self.wpb_play.value = 0
+
+        Clock.schedule_once(partial(self.progressUpdate, 0, tr._('Loading file') + ' \n%s' % app.selected_local_filename, True), 0)
+        self.load_selected_gcode_file()
 
 
     # -----------------------------------------------------------------------

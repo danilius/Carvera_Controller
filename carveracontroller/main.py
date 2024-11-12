@@ -382,7 +382,7 @@ class FilePopup(ModalView):
             if self.local_rv.view_adapter.views[key].selected and not self.local_rv.view_adapter.views[key].selected_dir:
                has_select = True
                break
-        self.btn_open.disabled = (not self.firmware_mode and not has_select) or (self.firmware_mode and app.state != 'Idle')
+        self.btn_view.disabled = (not self.firmware_mode and not has_select) or (self.firmware_mode and app.state != 'Idle')
         self.btn_upload.disabled = not has_select or app.state != 'Idle'
 
     # -----------------------------------------------------------------------
@@ -2044,7 +2044,7 @@ class Makera(RelativeLayout):
 
 
     # -----------------------------------------------------------------------
-    def open_local_file(self):
+    def view_local_file(self):
         filepath = self.file_popup.local_rv.curr_selected_file
         app = App.get_running_app()
         app.selected_local_filename = filepath
@@ -2053,7 +2053,7 @@ class Makera(RelativeLayout):
 
         self.progress_popup.progress_value = 0
         self.progress_popup.btn_cancel.disabled = True
-        self.progress_popup.progress_text = tr._('Openning local file') + '\n%s' % filepath
+        self.progress_popup.progress_text = tr._('Opening local file') + '\n%s' % filepath
         self.progress_popup.open()
 
         threading.Thread(target=self.load_selected_gcode_file).start()

@@ -1937,7 +1937,7 @@
 
     remote_rv: remote_rv
     local_rv: local_rv
-    btn_open: btn_open
+    btn_view: btn_view
     btn_rename: btn_rename
     btn_select: btn_select
     btn_delete: btn_delete
@@ -2230,12 +2230,12 @@
                         on_release:
                             app.root.check_and_upload()
                     Button:
-                        id: btn_open
+                        id: btn_view
                         size_hint_x: None
                         width: '100dp'
-                        text: tr._("Download") if root.firmware_mode else tr._("Open")
+                        text: tr._("Download") if root.firmware_mode else tr._("View")
                         on_release:
-                            app.root.open_local_file()
+                            app.root.view_local_file()
                     Button:
                         size_hint_x: None
                         width: '100dp'

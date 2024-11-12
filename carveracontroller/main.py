@@ -2,8 +2,6 @@ import os
 import quicklz
 import struct
 
-
-
 # import os
 # os.environ["KIVY_METRICS_DENSITY"] = '1'
 
@@ -114,7 +112,7 @@ from .CNC import CNC
 from .GcodeViewer import GCodeViewer
 from .Controller import Controller, NOT_CONNECTED, STATECOLOR, STATECOLORDEF,\
     LOAD_DIR, LOAD_MV, LOAD_RM, LOAD_MKDIR, LOAD_WIFI, LOAD_CONN_WIFI, CONN_USB, CONN_WIFI, SEND_FILE
-
+from .__version__ import __version__
 
 
 def load_halt_translations(tr: Lang):
@@ -384,7 +382,7 @@ class FilePopup(ModalView):
             if self.local_rv.view_adapter.views[key].selected and not self.local_rv.view_adapter.views[key].selected_dir:
                has_select = True
                break
-        self.btn_open.disabled = (not self.firmware_mode and not has_select) or (self.firmware_mode and app.state != 'Idle')
+        self.btn_view.disabled = (not self.firmware_mode and not has_select) or (self.firmware_mode and app.state != 'Idle')
         self.btn_upload.disabled = not has_select or app.state != 'Idle'
 
     # -----------------------------------------------------------------------
@@ -1422,6 +1420,7 @@ class Makera(RelativeLayout):
 
     def check_fw_version(self):
         self.upgrade_popup.fw_upd_text.text = self.fw_upd_text
+        self.upgrade_popup.fw_upd_text.cursor = (0, 0)  # Position the cursor at the top of the text
         versions = re.search('\[[0-9]+\.[0-9]+\.[0-9]+\]', self.fw_upd_text)
         if versions != None:
             self.fw_version_new = versions[0][1 : len(versions[0]) - 1]
@@ -1450,6 +1449,7 @@ class Makera(RelativeLayout):
 
     def check_ctl_version(self, *args):
         self.upgrade_popup.ctl_upd_text.text = self.ctl_upd_text
+        self.upgrade_popup.ctl_upd_text.cursor = (0, 0)  # Position the cursor at the top of the text
         versions = re.search('\[[0-9]+\.[0-9]+\.[0-9]+\]', self.ctl_upd_text)
         if versions != None:
             self.ctl_version_new = versions[0][1 : len(versions[0]) - 1]
@@ -1997,6 +1997,16 @@ class Makera(RelativeLayout):
         self.controller.unlock()
 
     # -----------------------------------------------------------------------
+    def set_local_folder_to_last_opened(self):
+        self.fetch_recent_local_dir_list()
+
+        local_path = ''
+        # Find more recent directory that is still present
+        for dir in self.recent_local_dir_list:
+            if os.path.isdir(dir):
+                break
+        self.file_popup.local_rv.child_dir(dir)
+
     def open_rename_input_popup(self):
         self.input_popup.lb_title.text = tr._('Change name') +'\'%s\' to:' % (self.file_popup.remote_rv.curr_selected_file)
         self.input_popup.txt_content.text = ''
@@ -2042,9 +2052,31 @@ class Makera(RelativeLayout):
             else:
                 self.uploadLocalFile(filepath)
 
+    def select_file(self, remote_path, local_cached_file_path):
+        """Select a file that is already present both locally and remotely"""
+        app = App.get_running_app()
+        app.selected_local_filename = local_cached_file_path
+        app.selected_remote_filename = remote_path
+        self.wpb_play.value = 0
+
+        Clock.schedule_once(partial(self.progressUpdate, 0, tr._('Loading file') + ' \n%s' % app.selected_local_filename, True), 0)
+        self.load_selected_gcode_file()
+
+    def check_upload_and_select(self):
+        filepath = self.file_popup.local_rv.curr_selected_file
+        filename = os.path.basename(os.path.normpath(filepath))
+        if len(list(filter(lambda person: person['filename'] == filename, self.file_popup.remote_rv.data))) > 0:
+            # show message popup
+            self.confirm_popup.lb_title.text = tr._('File Already Exists')
+            self.confirm_popup.lb_content.text = tr._('Confirm to overwrite file:') + ' \n \'%s\'?' % (filename)
+            self.confirm_popup.cancel = None
+            self.confirm_popup.confirm = partial(self.uploadLocalFile, filepath, self.select_file)
+            self.confirm_popup.open(self)
+        else:
+            self.uploadLocalFile(filepath, self.select_file)
 
     # -----------------------------------------------------------------------
-    def open_local_file(self):
+    def view_local_file(self):
         filepath = self.file_popup.local_rv.curr_selected_file
         app = App.get_running_app()
         app.selected_local_filename = filepath
@@ -2053,7 +2085,7 @@ class Makera(RelativeLayout):
 
         self.progress_popup.progress_value = 0
         self.progress_popup.btn_cancel.disabled = True
-        self.progress_popup.progress_text = tr._('Openning local file') + '\n%s' % filepath
+        self.progress_popup.progress_text = tr._('Opening local file') + '\n%s' % filepath
         self.progress_popup.open()
 
         threading.Thread(target=self.load_selected_gcode_file).start()
@@ -2469,17 +2501,17 @@ class Makera(RelativeLayout):
                 os.remove(output_filename)
             return False
     # -----------------------------------------------------------------------
-    def uploadLocalFile(self, filepath):
+    def uploadLocalFile(self, filepath, callback):
         self.controller.sendNUM = SEND_FILE
         self.uploading_file = filepath
         if 'lz' in self.filetype:               #如果固件支持的上传文件类型为.lz，则进行压缩
             qlzfilename = self.compress_file(filepath)
             if qlzfilename:
                 self.uploading_file = qlzfilename
-        threading.Thread(target=self.doUpload).start()
+        threading.Thread(target=self.doUpload,args=(callback,)).start()
 
     # -----------------------------------------------------------------------
-    def doUpload(self):
+    def doUpload(self, callback):
         self.uploading_size = os.path.getsize(self.uploading_file)
         remotename = os.path.join(self.file_popup.remote_rv.curr_dir, os.path.basename(os.path.normpath(self.uploading_file)))
         if self.file_popup.firmware_mode:
@@ -2563,6 +2595,8 @@ class Makera(RelativeLayout):
                 Clock.schedule_once(partial(self.progressStart, tr._('Decompressing') + '\n%s' % displayname, False), 0.2)
 
         self.controller.sendNUM = 0
+        if upload_result and callback:  # Only run callback if upload succeeded
+            callback(remotename, local_path)
 
 
     # -----------------------------------------------------------------------
@@ -3612,7 +3646,7 @@ class MakeraApp(App):
         self.use_kivy_settings = True
         self.title = tr._('Carvera Controller Community')
 
-        return Makera(ctl_version=VERSION)
+        return Makera(ctl_version=__version__)
 
 def android_tweaks():
     """Android specific app changes"""
@@ -3637,10 +3671,10 @@ def android_tweaks():
 
 def set_config_defaults(default_lang):
     Config.set('kivy', 'exit_on_escape', '0')
-    if not Config.has_section('carvera') or not Config.has_option('carvera', 'version') or Config.get('carvera', 'version') != VERSION:
+    if not Config.has_section('carvera') or not Config.has_option('carvera', 'version') or Config.get('carvera', 'version') != __version__:
         if not Config.has_section('carvera'):
             Config.add_section('carvera')
-        Config.set('carvera', 'version', VERSION)
+        Config.set('carvera', 'version', __version__)
         if not Config.has_option('carvera', 'show_update'): Config.set('carvera', 'show_update', '1')
         if not Config.has_option('carvera', 'language'): Config.set('carvera', 'language', default_lang)
         if not Config.has_option('carvera', 'local_folder_1'): Config.set('carvera', 'local_folder_1', '')
@@ -3679,17 +3713,17 @@ def load_constants():
     global BLOCK_SIZE
     global BLOCK_HEADER_SIZE
 
-    global VERSION
     global FW_UPD_ADDRESS
     global CTL_UPD_ADDRESS
     global DOWNLOAD_ADDRESS
 
     global LANGS
 
-    VERSION = '0.9.8'
-    FW_UPD_ADDRESS = 'https://raw.githubusercontent.com/MakeraInc/CarveraFirmware/main/version.txt'
+    FW_UPD_ADDRESS = 'https://raw.githubusercontent.com/carvera-community/carvera_community_firmware/master/version.txt'
+    # CTL_UPD_ADDRESS = 'https://raw.githubusercontent.com/carvera-community/carvera_controller/main/CHANGELOG.md'
     CTL_UPD_ADDRESS = 'https://raw.githubusercontent.com/MakeraInc/CarveraController/main/version.txt'
-    DOWNLOAD_ADDRESS = 'https://www.makera.com/pages/software'
+    DOWNLOAD_ADDRESS = 'https://github.com/carvera-community/carvera_controller/releases/latest'
+
 
     LANGS = {
         'en':  'English',

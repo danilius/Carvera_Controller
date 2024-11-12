@@ -47,6 +47,10 @@ Once installed it can be run via the module
 python3 -m carveracontroller
 ```
 
+## Contributing
+
+Review this guide for [how to contribute](CONTRIBUTING.md) to this codebase.
+
 ## Development Environment Setup
 
 To contribute to this project or set up a local development environment, follow these steps to install dependencies and prepare your environment.

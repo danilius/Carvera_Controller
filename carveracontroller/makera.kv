@@ -1937,7 +1937,7 @@
 
     remote_rv: remote_rv
     local_rv: local_rv
-    btn_open: btn_open
+    btn_view: btn_view
     btn_rename: btn_rename
     btn_select: btn_select
     btn_delete: btn_delete
@@ -2013,7 +2013,7 @@
                             root.popup_manager.transition.direction = 'left'
                             root.popup_manager.transition.duration = 0.3
                             root.popup_manager.current = 'local_page'
-                            root.local_rv.child_dir('')
+                            app.root.set_local_folder_to_last_opened()
                 BoxLayout:
                     size_hint_y: None
                     height: '5dp'
@@ -2223,6 +2223,13 @@
                                 app.root.open_local_dir_drop_down(self)
                     Label:
                     Button:
+                        id: btn_view
+                        size_hint_x: None
+                        width: '100dp'
+                        text: tr._("Download") if root.firmware_mode else tr._("View")
+                        on_release:
+                            app.root.view_local_file()
+                    Button:
                         id: btn_upload
                         size_hint_x: None
                         width: '100dp'
@@ -2230,12 +2237,14 @@
                         on_release:
                             app.root.check_and_upload()
                     Button:
-                        id: btn_open
+                        id: btn_upload_and_select
                         size_hint_x: None
-                        width: '100dp'
-                        text: tr._("Download") if root.firmware_mode else tr._("Open")
+                        width: '130dp'
+                        text: tr._("Upload and Select")
+                        disabled: root.firmware_mode
                         on_release:
-                            app.root.open_local_file()
+                            app.root.check_upload_and_select()
+                            root.dismiss()
                     Button:
                         size_hint_x: None
                         width: '100dp'

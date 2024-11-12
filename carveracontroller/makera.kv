@@ -2241,6 +2241,7 @@
                         size_hint_x: None
                         width: '130dp'
                         text: tr._("Upload and Select")
+                        disabled: root.firmware_mode
                         on_release:
                             app.root.check_upload_and_select()
                             root.dismiss()

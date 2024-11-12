@@ -1997,6 +1997,16 @@ class Makera(RelativeLayout):
         self.controller.unlock()
 
     # -----------------------------------------------------------------------
+    def set_local_folder_to_last_opened(self):
+        self.fetch_recent_local_dir_list()
+
+        local_path = ''
+        # Find more recent directory that is still present
+        for dir in self.recent_local_dir_list:
+            if os.path.isdir(dir):
+                break
+        self.file_popup.local_rv.child_dir(dir)
+
     def open_rename_input_popup(self):
         self.input_popup.lb_title.text = tr._('Change name') +'\'%s\' to:' % (self.file_popup.remote_rv.curr_selected_file)
         self.input_popup.txt_content.text = ''

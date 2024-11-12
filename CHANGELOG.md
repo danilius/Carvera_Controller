@@ -3,6 +3,7 @@
 - Change: Increase the feed rate scaling range from 50-200 to 10-300. The stepping is still in 10% increments
 - Change: Use the Carvera-Community URLs for update checking
 - Fix: Show the top of update log on load instead of the bottom
+- Change: Local file browser defaults to the last directory that had been opened. If the directory doesn't exist, try the next previous etc.
 
 [0.3.1]
 - Fix: MacOS dmg background image and icon locations

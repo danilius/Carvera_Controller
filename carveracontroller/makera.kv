@@ -2013,7 +2013,7 @@
                             root.popup_manager.transition.direction = 'left'
                             root.popup_manager.transition.duration = 0.3
                             root.popup_manager.current = 'local_page'
-                            root.local_rv.child_dir('')
+                            app.root.set_local_folder_to_last_opened()
                 BoxLayout:
                     size_hint_y: None
                     height: '5dp'

@@ -2051,7 +2051,17 @@ class Makera(RelativeLayout):
                 self.confirm_popup.open(self)
             else:
                 self.uploadLocalFile(filepath)
-    
+
+    def select_file(self, remote_path, local_cached_file_path):
+        """Select a file that is already present both locally and remotely"""
+        app = App.get_running_app()
+        app.selected_local_filename = local_cached_file_path
+        app.selected_remote_filename = remote_path
+        self.wpb_play.value = 0
+
+        Clock.schedule_once(partial(self.progressUpdate, 0, tr._('Loading file') + ' \n%s' % app.selected_local_filename, True), 0)
+        self.load_selected_gcode_file()
+
     def check_upload_and_select(self):
         filepath = self.file_popup.local_rv.curr_selected_file
         filename = os.path.basename(os.path.normpath(filepath))
@@ -2060,21 +2070,10 @@ class Makera(RelativeLayout):
             self.confirm_popup.lb_title.text = tr._('File Already Exists')
             self.confirm_popup.lb_content.text = tr._('Confirm to overwrite file:') + ' \n \'%s\'?' % (filename)
             self.confirm_popup.cancel = None
-            self.confirm_popup.confirm = partial(self.uploadLocalFile, filepath)
+            self.confirm_popup.confirm = partial(self.uploadLocalFile, filepath, self.select_file)
             self.confirm_popup.open(self)
         else:
-            self.uploadLocalFile(filepath)
-
-
-        remote_path = os.path.join(self.file_popup.remote_rv.curr_dir, filename)
-        app = App.get_running_app()
-        app.selected_local_filename = filepath
-        app.selected_remote_filename = remote_path
-        self.wpb_play.value = 0
-
-        Clock.schedule_once(partial(self.progressUpdate, 0, tr._('Loading file') + ' \n%s' % app.selected_local_filename, True), 0)
-        self.load_selected_gcode_file()
-
+            self.uploadLocalFile(filepath, self.select_file)
 
     # -----------------------------------------------------------------------
     def view_local_file(self):
@@ -2502,17 +2501,17 @@ class Makera(RelativeLayout):
                 os.remove(output_filename)
             return False
     # -----------------------------------------------------------------------
-    def uploadLocalFile(self, filepath):
+    def uploadLocalFile(self, filepath, callback):
         self.controller.sendNUM = SEND_FILE
         self.uploading_file = filepath
         if 'lz' in self.filetype:               #如果固件支持的上传文件类型为.lz，则进行压缩
             qlzfilename = self.compress_file(filepath)
             if qlzfilename:
                 self.uploading_file = qlzfilename
-        threading.Thread(target=self.doUpload).start()
+        threading.Thread(target=self.doUpload,args=(callback,)).start()
 
     # -----------------------------------------------------------------------
-    def doUpload(self):
+    def doUpload(self, callback):
         self.uploading_size = os.path.getsize(self.uploading_file)
         remotename = os.path.join(self.file_popup.remote_rv.curr_dir, os.path.basename(os.path.normpath(self.uploading_file)))
         if self.file_popup.firmware_mode:
@@ -2596,6 +2595,8 @@ class Makera(RelativeLayout):
                 Clock.schedule_once(partial(self.progressStart, tr._('Decompressing') + '\n%s' % displayname, False), 0.2)
 
         self.controller.sendNUM = 0
+        if upload_result and callback:  # Only run callback if upload succeeded
+            callback(remotename, local_path)
 
 
     # -----------------------------------------------------------------------

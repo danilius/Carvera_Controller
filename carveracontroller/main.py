@@ -3178,6 +3178,7 @@ class Makera(RelativeLayout):
         try:
             self.controller.open(CONN_WIFI, address)
             self.controller.connection_type = CONN_WIFI
+            self.store_machine_address(address.split(':')[0])
         except:
             print(sys.exc_info()[1])
         self.updateStatus()

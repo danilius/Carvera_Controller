@@ -3721,8 +3721,7 @@ def load_constants():
     global LANGS
 
     FW_UPD_ADDRESS = 'https://raw.githubusercontent.com/carvera-community/carvera_community_firmware/master/version.txt'
-    # CTL_UPD_ADDRESS = 'https://raw.githubusercontent.com/carvera-community/carvera_controller/main/CHANGELOG.md'
-    CTL_UPD_ADDRESS = 'https://raw.githubusercontent.com/MakeraInc/CarveraController/main/version.txt'
+    CTL_UPD_ADDRESS = 'https://raw.githubusercontent.com/carvera-community/carvera_controller/main/CHANGELOG.md'
     DOWNLOAD_ADDRESS = 'https://github.com/carvera-community/carvera_controller/releases/latest'
 
 

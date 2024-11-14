@@ -1,5 +1,8 @@
 [Unreleased]
 - Change: Replace Makera logos on icons.
+- Change: Improved text on Diagnostics screen
+- Change: Allow the us of '*' character in MDI
+- Change: Use the command 'diagnose' instead of '*' to poll machine status. This makes the Diagnostics screen cross-compatible with Makera and Community firmware
 
 [0.4.0]
 - Fix: A axis rotation in the 3d viewer was incorrect. Previously was CW, not matching the machine since this was changed in FW 0.9.6

@@ -712,8 +712,7 @@ class Controller:
 
     def viewDiagnoseReport(self, sio_diagnose):
         if self.loadNUM == 0 and self.sendNUM == 0:
-            # self.stream.send(b"diagnose\n")
-            self.stream.send(b"&")
+            self.stream.send(b"diagnose\n")
             self.sio_diagnose = sio_diagnose
 
     # ----------------------------------------------------------------------

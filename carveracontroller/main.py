@@ -3646,6 +3646,7 @@ class MakeraApp(App):
         self.settings_cls = SettingsWithSidebar
         self.use_kivy_settings = True
         self.title = tr._('Carvera Controller Community')
+        self.icon = os.path.join(os.path.dirname(__file__), 'icon.png')
 
         return Makera(ctl_version=__version__)
 

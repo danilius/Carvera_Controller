@@ -2806,9 +2806,8 @@
 
     # switch widget variables
     sw_spindle: sw_spindle
-    sw_spindlefan: sw_spindlefan
-    sw_vacuum: sw_vacuum
     sw_laser: sw_laser
+
     sw_light: sw_light
     sw_tool_sensor_pwr: sw_tool_sensor_pwr
     sw_air: sw_air
@@ -2853,14 +2852,12 @@
                     id: sw_spindle
                     label: tr._('Spindle Motor')
                     control_name: 'spindle_switch'
-                SwitchBox:
+                Label:
                     id: sw_spindlefan
-                    label: tr._('Spindle Fan')
-                    control_name: 'spindlefan_switch'
-                SwitchBox:
+                    text: tr._('Spindle Fan')
+                Label:
                     id: sw_vacuum
-                    label: tr._('Vacuum') if app.model != 'CA1' else tr._('PowerFan')
-                    control_name: 'vacuum_switch'
+                    text: tr._('Vacuum') if app.model != 'CA1' else tr._('PowerFan')
                 SwitchBox:
                     id: sw_laser
                     label: tr._('Engraving Laser')
@@ -2884,15 +2881,16 @@
                     control_name: 'spindle_slider'
                 SliderBox:
                     id: sl_spindlefan
-                    step: 5
+                    step: 10
                     control_name: 'spindlefan_slider'
+                    label: tr._('Spindle Fan')
                 SliderBox:
                     id: sl_vacuum
-                    step: 5
+                    step: 10
                     control_name: 'vacuum_slider'
                 SliderBox:
                     id: sl_laser
-                    step: 5
+                    step: 10
                     control_name: 'laser_slider'
                 SwitchBox:
                     id: sw_tool_sensor_pwr
@@ -2946,7 +2944,7 @@
             size_hint_y: None
             height: '20dp'
             Label:
-                text: tr._("Changes in values are applied after 3 seconds.")
+                text: tr._("Changes in values are applied after 2 seconds.")
                 halign: "right"
                 valign: "middle"
                 text_size: self.size

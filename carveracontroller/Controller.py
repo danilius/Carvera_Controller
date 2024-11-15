@@ -296,20 +296,20 @@ class Controller:
         else:
             self.executeCommand("M5\n")
 
-    def setVacuumSwitch(self, switch, power):
-        if switch:
+    def setVacuumPower(self, power=0):
+        if power > 0:
             self.executeCommand("M801 S%d\n" % (power))
         else:
             self.executeCommand("M802\n")
 
-    def setSpindlefanSwitch(self, switch, power):
-        if switch:
+    def setSpindlefanPower(self, power=0):
+        if power > 0:
             self.executeCommand("M811 S%d\n" % (power))
         else:
             self.executeCommand("M812\n")
 
-    def setLaserSwitch(self, switch, power):
-        if switch:
+    def setLaserPower(self, power=0):
+        if power > 0:
             self.executeCommand("M3 S%g\n" % (power * 1.0 / 100))
         else:
             self.executeCommand("M5\n")

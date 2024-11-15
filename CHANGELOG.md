@@ -1,4 +1,4 @@
-[Unreleased]
+[0.5.0]
 - Change: Replace Makera logos on icons.
 - Change: Improved text on Diagnostics screen
 - Change: Allow the use of '*' character in MDI

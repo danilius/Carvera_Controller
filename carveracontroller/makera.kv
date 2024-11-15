@@ -712,7 +712,22 @@
             if self.text != tr._("Set..."): app.root.controller.setToolCommand(self.text[-1])
             if self.text != tr._("Set..."): self.text = tr._('Set...')
             root.select('Third Item')
-
+    Button:
+        text: tr._('Clamp')
+        size_hint_y: None
+        height: '40dp' if app.model != 'CA1' else '0dp'
+        opacity: 1 if app.model != 'CA1' else 0
+        on_release:
+            root.select('Third Item')
+            app.root.controller.clampToolCommand()
+    Button:
+        text: tr._('Unclamp')
+        size_hint_y: None
+        height: '40dp' if app.model != 'CA1' else '0dp'
+        opacity: 1 if app.model != 'CA1' else 0
+        on_release:
+            root.select('Third Item')
+            app.root.controller.unclampToolCommand()
 
 <LaserDropDown>:
     switch: switch

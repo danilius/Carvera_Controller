@@ -367,6 +367,12 @@ class Controller:
     def calibrateToolCommand(self):
         self.executeCommand("M491\n")
 
+    def clampToolCommand(self):
+        self.executeCommand("M490.1\n")
+    
+    def unclampToolCommand(self):
+        self.executeCommand("M490.2\n")
+
     def changeToolCommand(self, tool):
         if tool == 'e':
             self.executeCommand("M6T0\n")

@@ -7,6 +7,7 @@
 - Enhancement: Confirm before entering laser mode
 - Fix: Sliders in Diagnostics screen for Spindle Fan and Vacuum. Used to have broken UX requiring enabling and setting value within 2s. Now enable/disable toggles removed leaving slider to exclusively control value.
 - Enhancement: Added Clamp and Unclamp buttons to the Tool Changer drop down
+- Enhancement: Added bug report button to menu drop down. Please open github issues for any thing not working correctly.
 
 [0.4.0]
 - Fix: A axis rotation in the 3d viewer was incorrect. Previously was CW, not matching the machine since this was changed in FW 0.9.6

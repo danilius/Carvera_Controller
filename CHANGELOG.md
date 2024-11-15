@@ -1,3 +1,14 @@
+[0.5.0]
+- Change: Replace Makera logos on icons.
+- Change: Improved text on Diagnostics screen
+- Change: Allow the use of '*' character in MDI
+- Change: Use the command 'diagnose' instead of '*' to poll machine status. This makes the Diagnostics screen cross-compatible with Makera and Community firmware
+- Fix: Actually use the Carvera-Community URL for loading this change log
+- Enhancement: Confirm before entering laser mode
+- Fix: Sliders in Diagnostics screen for Spindle Fan and Vacuum. Used to have broken UX requiring enabling and setting value within 2s. Now enable/disable toggles removed leaving slider to exclusively control value.
+- Enhancement: Added Clamp and Unclamp buttons to the Tool Changer drop down
+- Enhancement: Added bug report button to menu drop down. Please open github issues for any thing not working correctly.
+
 [0.4.0]
 - Fix: A axis rotation in the 3d viewer was incorrect. Previously was CW, not matching the machine since this was changed in FW 0.9.6
 - Change: Increase the feed rate scaling range from 50-200 to 10-300. The stepping is still in 10% increments

@@ -1253,9 +1253,7 @@ class Makera(RelativeLayout):
         'laser_test':         [0.0, 0],
         'spindle_switch':     [0.0, 0],
         'spindle_slider':     [0.0, 0],
-        'spindlefan_switch':  [0.0, 0],
         'spindlefan_slider':  [0.0, 0],
-        'vacuum_switch':      [0.0, 0],
         'vacuum_slider':      [0.0, 0],
         'laser_switch':       [0.0, 0],
         'laser_slider':       [0.0, 0],
@@ -2904,7 +2902,10 @@ class Makera(RelativeLayout):
             elapsed = now - self.control_list['laser_mode'][0]
             if elapsed < 2:
                 if elapsed > 0.5:
-                    self.controller.setLaserMode(self.control_list['laser_mode'][1])
+                    if self.control_list['laser_mode'][1]:
+                        self.enable_laser_mode_confirm_popup()
+                    else:
+                        self.controller.setLaserMode(False)
                     self.control_list['laser_mode'][0] = now - 2
             elif elapsed > 3:
                 if self.laser_drop_down.switch.active != CNC.vars["lasermode"]:
@@ -3024,19 +3025,11 @@ class Makera(RelativeLayout):
                     self.diagnose_popup.sl_spindle.slider.value = CNC.vars["sl_spindle"]
 
             # control spindle fan
-            elapsed = now - self.control_list['spindlefan_switch'][0]
-            if elapsed < 2:
-                if elapsed > 0.5:
-                    self.controller.setSpindlefanSwitch(self.control_list['spindlefan_switch'][1], self.diagnose_popup.sl_spindlefan.slider.value)
-                    self.control_list['spindlefan_switch'][0] = now - 2
-            elif elapsed > 3:
-                if self.diagnose_popup.sw_spindlefan.switch.active != CNC.vars["sw_spindlefan"]:
-                    self.diagnose_popup.sw_spindlefan.set_flag = True
-                    self.diagnose_popup.sw_spindlefan.switch.active = CNC.vars["sw_spindlefan"]
+            self.diagnose_popup.sl_spindlefan.disabled = CNC.vars['lasermode']
             elapsed = now - self.control_list['spindlefan_slider'][0]
             if elapsed < 2:
                 if elapsed > 0.5:
-                    self.controller.setSpindlefanSwitch(self.diagnose_popup.sw_spindlefan.switch.active, self.control_list['spindlefan_slider'][1])
+                    self.controller.setSpindlefanPower(self.control_list['spindlefan_slider'][1])
                     self.control_list['spindlefan_slider'][0] = now - 2
             elif elapsed > 3:
                 if self.diagnose_popup.sl_spindlefan.slider.value != CNC.vars["sl_spindlefan"]:
@@ -3044,43 +3037,36 @@ class Makera(RelativeLayout):
                     self.diagnose_popup.sl_spindlefan.slider.value = CNC.vars["sl_spindlefan"]
 
             # control vacuum
-            elapsed = now - self.control_list['vacuum_switch'][0]
-            if elapsed < 2:
-                if elapsed > 0.5:
-                    self.controller.setVacuumSwitch(self.control_list['vacuum_switch'][1],
-                                                    self.diagnose_popup.sl_vacuum.slider.value)
-                    self.control_list['vacuum_switch'][0] = now - 2
-            elif elapsed > 3:
-                if self.diagnose_popup.sw_vacuum.switch.active != CNC.vars["sw_vacuum"]:
-                    self.diagnose_popup.sw_vacuum.set_flag = True
-                    self.diagnose_popup.sw_vacuum.switch.active = CNC.vars["sw_vacuum"]
             elapsed = now - self.control_list['vacuum_slider'][0]
             if elapsed < 2:
                 if elapsed > 0.5:
-                    self.controller.setVacuumSwitch(self.diagnose_popup.sw_vacuum.switch.active,
-                                                    self.control_list['vacuum_slider'][1])
+                    self.controller.setVacuumPower(self.control_list['vacuum_slider'][1])
                     self.control_list['vacuum_slider'][0] = now - 2
             elif elapsed > 3:
                 if self.diagnose_popup.sl_vacuum.slider.value != CNC.vars["sl_vacuum"]:
                     self.diagnose_popup.sl_vacuum.set_flag = True
                     self.diagnose_popup.sl_vacuum.slider.value = CNC.vars["sl_vacuum"]
 
-            # control laser
-            self.diagnose_popup.sw_laser.disabled = not CNC.vars['lasermode']
-            self.diagnose_popup.sl_laser.disabled = not CNC.vars['lasermode']
+            # control laser mode
             elapsed = now - self.control_list['laser_switch'][0]
             if elapsed < 2:
                 if elapsed > 0.5:
-                    self.controller.setLaserSwitch(self.control_list['laser_switch'][1], self.diagnose_popup.sl_laser.slider.value)
+                    if self.diagnose_popup.sw_laser.switch.active:
+                        self.enable_laser_mode_confirm_popup()
+                    else:
+                        self.controller.setLaserMode(False)
                     self.control_list['laser_switch'][0] = now - 2
             elif elapsed > 3:
-                if self.diagnose_popup.sw_laser.switch.active != CNC.vars["sw_laser"]:
-                    self.diagnose_popup.sw_laser.set_flag = True
-                    self.diagnose_popup.sw_laser.switch.active = CNC.vars["sw_laser"]
+                if self.laser_drop_down.switch.active != CNC.vars["lasermode"]:
+                    self.laser_drop_down.switch.set_flag = True
+                    self.laser_drop_down.switch.active = CNC.vars["lasermode"]
+
+            # control laser slider
+            self.diagnose_popup.sl_laser.disabled = not CNC.vars['lasermode']
             elapsed = now - self.control_list['laser_slider'][0]
             if elapsed < 2:
                 if elapsed > 0.5:
-                    self.controller.setLaserSwitch(self.diagnose_popup.sw_laser.switch.active, self.control_list['laser_slider'][1])
+                    self.controller.setLaserPower(self.control_list['laser_slider'][1])
                     self.control_list['laser_slider'][0] = now - 2
             elif elapsed > 3:
                 if self.diagnose_popup.sl_laser.slider.value != CNC.vars["sl_laser"]:
@@ -3178,6 +3164,7 @@ class Makera(RelativeLayout):
         try:
             self.controller.open(CONN_WIFI, address)
             self.controller.connection_type = CONN_WIFI
+            self.store_machine_address(address.split(':')[0])
         except:
             print(sys.exc_info()[1])
         self.updateStatus()
@@ -3325,11 +3312,24 @@ class Makera(RelativeLayout):
     def restoreSettings(self):
         self.controller.restoreConfigCommand()
 
+    def enter_laser_mode(self):
+        self.controller.setLaserMode(True)
+
     # -----------------------------------------------------------------------
     def open_setting_default_confirm_popup(self):
         self.confirm_popup.lb_title.text = tr._('Save As Default')
         self.confirm_popup.lb_content.text = tr._('Confirm to save current settings as default ?')
         self.confirm_popup.confirm = partial(self.defaultSettings)
+        self.confirm_popup.cancel = None
+        self.confirm_popup.open(self)
+
+    def enable_laser_mode_confirm_popup(self):
+        self.confirm_popup.size_hint = (0.6, 0.7)
+        self.confirm_popup.pos_hint={'center_x': 0.5, 'center_y': 0.5}
+        self.confirm_popup.lb_title.text = tr._('Entering Laser Mode')
+        self.confirm_popup.lb_title.size_hint_y = None
+        self.confirm_popup.lb_content.text = tr._('You are about to enable laser mode. \n\nWhen enabled the current tool will be dropped, the spindle fan locked to 90%, \nand the empty spindle nose will be set as the tool and length probed.\n\n It\'s recommended to remove the laser dust cap, and put on safety glasses now.\n\nAre you read to proceed ?')
+        self.confirm_popup.confirm = partial(self.enter_laser_mode)
         self.confirm_popup.cancel = None
         self.confirm_popup.open(self)
 
@@ -3645,6 +3645,7 @@ class MakeraApp(App):
         self.settings_cls = SettingsWithSidebar
         self.use_kivy_settings = True
         self.title = tr._('Carvera Controller Community')
+        self.icon = os.path.join(os.path.dirname(__file__), 'icon.png')
 
         return Makera(ctl_version=__version__)
 
@@ -3720,8 +3721,7 @@ def load_constants():
     global LANGS
 
     FW_UPD_ADDRESS = 'https://raw.githubusercontent.com/carvera-community/carvera_community_firmware/master/version.txt'
-    # CTL_UPD_ADDRESS = 'https://raw.githubusercontent.com/carvera-community/carvera_controller/main/CHANGELOG.md'
-    CTL_UPD_ADDRESS = 'https://raw.githubusercontent.com/MakeraInc/CarveraController/main/version.txt'
+    CTL_UPD_ADDRESS = 'https://raw.githubusercontent.com/carvera-community/carvera_controller/main/CHANGELOG.md'
     DOWNLOAD_ADDRESS = 'https://github.com/carvera-community/carvera_controller/releases/latest'
 
 

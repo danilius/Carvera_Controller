@@ -936,6 +936,15 @@
         on_release:
             root.select('')
             app.root.config_popup.open()
+    IconButton:
+        icon: 'data/open_iconic_UI/oi--bug.png'
+        icon_size: 24
+        small_icon: True
+        size_hint_y: None
+        height: '50dp'
+        on_release:
+            root.select('')
+            app.root.controller.sendbugreport()
 
 <StatusDropDown>:
     btn_connect_usb: btn_connect_usb

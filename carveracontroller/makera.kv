@@ -2821,9 +2821,8 @@
 
     # switch widget variables
     sw_spindle: sw_spindle
-    sw_spindlefan: sw_spindlefan
-    sw_vacuum: sw_vacuum
     sw_laser: sw_laser
+
     sw_light: sw_light
     sw_tool_sensor_pwr: sw_tool_sensor_pwr
     sw_air: sw_air
@@ -2854,7 +2853,7 @@
             size_hint_y: None
             height: '40dp'
             Label:
-                text: tr._(" Diagnose ( Be careful, do not change except diagnosing )")
+                text: tr._("   Diagnostic Panel")
                 bold: True
                 halign: "left"
                 valign: "middle"
@@ -2866,27 +2865,25 @@
                 size_hint_x: 1.5
                 SwitchBox:
                     id: sw_spindle
-                    label: tr._('Spindle')
+                    label: tr._('Spindle Motor')
                     control_name: 'spindle_switch'
-                SwitchBox:
+                Label:
                     id: sw_spindlefan
-                    label: tr._('SpindleFan')
-                    control_name: 'spindlefan_switch'
-                SwitchBox:
+                    text: tr._('Spindle Fan')
+                Label:
                     id: sw_vacuum
-                    label: tr._('Vacuum') if app.model != 'CA1' else tr._('PowerFan')
-                    control_name: 'vacuum_switch'
+                    text: tr._('Vacuum') if app.model != 'CA1' else tr._('PowerFan')
                 SwitchBox:
                     id: sw_laser
-                    label: tr._('Laser')
+                    label: tr._('Engraving Laser')
                     control_name: 'laser_switch'
                 SwitchBox:
                     id: sw_light
-                    label: tr._('Light')
+                    label: tr._('Enclosure Light')
                     control_name: 'light_switch'
                 SwitchBox:
                     id: sw_air
-                    label: tr._('Air')
+                    label: tr._('Air Assist')
                     control_name: 'air_switch'
                     disabled: app.model == 'CA1'
             BoxLayout:
@@ -2899,15 +2896,16 @@
                     control_name: 'spindle_slider'
                 SliderBox:
                     id: sl_spindlefan
-                    step: 5
+                    step: 10
                     control_name: 'spindlefan_slider'
+                    label: tr._('Spindle Fan')
                 SliderBox:
                     id: sl_vacuum
-                    step: 5
+                    step: 10
                     control_name: 'vacuum_slider'
                 SliderBox:
                     id: sl_laser
-                    step: 5
+                    step: 10
                     control_name: 'laser_slider'
                 SwitchBox:
                     id: sw_tool_sensor_pwr
@@ -2952,11 +2950,19 @@
                     label: tr._('Z+ Limit')
                 StateBox:
                     id: st_calibrate
-                    label: tr._('Calibrate')
+                    label: tr._('Tool Length Setter')
                 StateBox:
                     id: st_cover
                     label: tr._('Cover Switch')
                 Label:
+        BoxLayout:
+            size_hint_y: None
+            height: '20dp'
+            Label:
+                text: tr._("Changes in values are applied after 2 seconds.")
+                halign: "right"
+                valign: "middle"
+                text_size: self.size
         BoxLayout:
             size_hint_y: None
             height: '50dp'
@@ -2967,6 +2973,7 @@
                 text: tr._("Close")
                 on_release:
                     root.dismiss()
+
 
 <ConfigPopup>:
     padding: dp(10)

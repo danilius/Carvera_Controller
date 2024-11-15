@@ -296,20 +296,20 @@ class Controller:
         else:
             self.executeCommand("M5\n")
 
-    def setVacuumSwitch(self, switch, power):
-        if switch:
+    def setVacuumPower(self, power=0):
+        if power > 0:
             self.executeCommand("M801 S%d\n" % (power))
         else:
             self.executeCommand("M802\n")
 
-    def setSpindlefanSwitch(self, switch, power):
-        if switch:
+    def setSpindlefanPower(self, power=0):
+        if power > 0:
             self.executeCommand("M811 S%d\n" % (power))
         else:
             self.executeCommand("M812\n")
 
-    def setLaserSwitch(self, switch, power):
-        if switch:
+    def setLaserPower(self, power=0):
+        if power > 0:
             self.executeCommand("M3 S%g\n" % (power * 1.0 / 100))
         else:
             self.executeCommand("M5\n")
@@ -398,7 +398,7 @@ class Controller:
     # escape special characters
     # ------------------------------------------------------------------------------
     def escape(self, value):
-        return value.replace('?', '\x02').replace('*', '\x03').replace('!', '\x04').replace('~', '\x05')
+        return value.replace('?', '\x02').replace('&', '\x03').replace('!', '\x04').replace('~', '\x05')
 
     def lsCommand(self, ls_dir):
         ls_command = "ls -e -s %s\n" % ls_dir.replace(' ', '\x01')
@@ -718,8 +718,7 @@ class Controller:
 
     def viewDiagnoseReport(self, sio_diagnose):
         if self.loadNUM == 0 and self.sendNUM == 0:
-            # self.stream.send(b"diagnose\n")
-            self.stream.send(b"*")
+            self.stream.send(b"diagnose\n")
             self.sio_diagnose = sio_diagnose
 
     # ----------------------------------------------------------------------

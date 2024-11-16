@@ -1,3 +1,6 @@
+[Unreleased]
+- Fix: uploadLocalFile upload callback causes crash when uploading firmware
+
 [0.5.0]
 - Change: Replace Makera logos on icons.
 - Change: Improved text on Diagnostics screen

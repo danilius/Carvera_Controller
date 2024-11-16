@@ -2499,7 +2499,7 @@ class Makera(RelativeLayout):
                 os.remove(output_filename)
             return False
     # -----------------------------------------------------------------------
-    def uploadLocalFile(self, filepath, callback):
+    def uploadLocalFile(self, filepath, callback=None):
         self.controller.sendNUM = SEND_FILE
         self.uploading_file = filepath
         if 'lz' in self.filetype:               #如果固件支持的上传文件类型为.lz，则进行压缩

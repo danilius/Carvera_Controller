@@ -1,3 +1,6 @@
+[0.5.2]
+- Fix: Upload-and-select fails to load local gcode file when machine supports .lz compression
+
 [0.5.1]
 - Fix: uploadLocalFile callback causes crash when uploading firmware
 

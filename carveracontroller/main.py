@@ -2594,7 +2594,10 @@ class Makera(RelativeLayout):
 
         self.controller.sendNUM = 0
         if upload_result and callback:  # Only run callback if upload succeeded
-            callback(remotename, local_path)
+            if self.uploading_file.endswith('.lz'):
+                callback(remotename, origin_path)
+            else:
+                callback(remotename, local_path)
 
 
     # -----------------------------------------------------------------------

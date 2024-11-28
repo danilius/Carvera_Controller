@@ -2136,7 +2136,10 @@ class Makera(RelativeLayout):
             setting_config.read_string(config_string)
             for section_name in setting_config.sections():
                 for (key, value) in setting_config.items(section_name):
-                    self.setting_list[key.strip()] = value.strip()
+                    try:
+                        self.setting_list[key.strip()] = value.strip()
+                    except AttributeError:
+                        print('Invalid setting key/value encountered, skipping')
             self.load_coordinates()
             self.load_laser_offsets()
             self.setting_change_list = {}

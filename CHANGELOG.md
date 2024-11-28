@@ -1,3 +1,6 @@
+[Unreleased]
+- Fix: Exception handling for loading machine config file into controller
+
 [0.5.2]
 - Fix: Upload-and-select fails to load local gcode file when machine supports .lz compression
 

@@ -2139,7 +2139,8 @@ class Makera(RelativeLayout):
                     try:
                         self.setting_list[key.strip()] = value.strip()
                     except AttributeError:
-                        print('Invalid setting key/value encountered, skipping')
+                        Clock.schedule_once(partial(self.load_error, tr._('Error loading machine config setting. Possibly malformed value.\nSkipping setting key: ') + str(key)), 0)
+            
             self.load_coordinates()
             self.load_laser_offsets()
             self.setting_change_list = {}

@@ -3566,7 +3566,7 @@
                                 pos: self.pos
                                 size: self.size
                                 radius: [self.height / 2,]
-                        BoxLayout:
+                        ControlBoxLayout:
                             disabled: (app.state != 'Idle' and app.state != 'Run' and app.state != 'Pause') or (app.playing and app.state != 'Pause')
                             padding: '25dp'
                             canvas.before:

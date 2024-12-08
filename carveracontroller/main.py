@@ -1112,6 +1112,31 @@ class TopBar(BoxLayout):
 class BottomBar(BoxLayout):
     pass
 
+class ControlBoxLayout(BoxLayout):
+    def __init__(self, **kwargs):
+        super(ControlBoxLayout, self).__init__(**kwargs)
+        Window.bind(on_key_down=self._keydown)
+
+    def _keydown(self, *args):
+        app = App.get_running_app()
+
+        # Only allow keyboard jogging when state is machine in a suitable state
+        if (app.state in ['Idle', 'Run', 'Pause']) or (app.playing and app.state == 'Pause'):
+            key = args[1]  # keycode
+            if key == 274:  # down button
+                app.root.controller.jog("Y{}".format(app.root.step_xy.text))
+            elif key == 273:  # up button
+                app.root.controller.jog("Y-{}".format(app.root.step_xy.text))
+            elif key == 275:  # right button
+                app.root.controller.jog("X{}".format(app.root.step_xy.text))
+            elif key == 276:  # left button
+                app.root.controller.jog("X-{}".format(app.root.step_xy.text))
+            elif key == 280:  # page up
+                app.root.controller.jog("Z{}".format(app.root.step_z.text))
+            elif key == 281:  # page down
+                app.root.controller.jog("Z-{}".format(app.root.step_z.text))
+        
+
 # -----------------------------------------------------------------------
 class Content(ScreenManager):
     pass

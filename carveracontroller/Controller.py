@@ -501,10 +501,6 @@ class Controller:
         if self.stream:
             self.stream.send(b'\x18')
 
-    def sendbugreport(self):
-        webbrowser.open('https://github.com/Carvera-Community/Carvera_Controller/issues')
-        webbrowser.open('https://github.com/Carvera-Community/Carvera_Community_Firmware/issues')
-
     # ----------------------------------------------------------------------
     def hardResetPre(self):
         self.stream.send(b"reset\n")

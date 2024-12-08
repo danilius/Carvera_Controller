@@ -1393,6 +1393,10 @@ class Makera(RelativeLayout):
     
     def open_download(self):
         webbrowser.open(DOWNLOAD_ADDRESS, new = 2)
+    
+    def send_bug_report(self):
+        webbrowser.open('https://github.com/Carvera-Community/Carvera_Controller/issues')
+        webbrowser.open('https://github.com/Carvera-Community/Carvera_Community_Firmware/issues')
 
     def open_update_popup(self):
         self.upgrade_popup.check_button.disabled = False

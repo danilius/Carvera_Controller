@@ -1,443 +1,500 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: \n"
+"Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-01-07 20:41+0800\n"
-"PO-Revision-Date: \n"
-"Last-Translator: \n"
-"Language-Team: \n"
-"Language: zh_TW\n"
+"POT-Creation-Date: 2024-12-08 17:29+1100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 3.3.2\n"
 
-#: makera.py:182
+#: main.py:122
 msgid "Halt Manually"
 msgstr ""
 
-#: makera.py:183
+#: main.py:123
 msgid "Home Fail"
 msgstr ""
 
-#: makera.py:184
+#: main.py:124
 msgid "Probe Fail"
 msgstr ""
 
-#: makera.py:185
+#: main.py:125
 msgid "Calibrate Fail"
 msgstr ""
 
-#: makera.py:186
+#: main.py:126
 msgid "ATC Home Fail"
 msgstr ""
 
-#: makera.py:187
+#: main.py:127
 msgid "ATC Invalid Tool Number"
 msgstr ""
 
-#: makera.py:188
+#: main.py:128
 msgid "ATC Drop Tool Fail"
 msgstr ""
 
-#: makera.py:189
+#: main.py:129
 msgid "ATC Position Occupied"
 msgstr ""
 
-#: makera.py:190
+#: main.py:130
 msgid "Spindle Overheated"
 msgstr ""
 
-#: makera.py:191
+#: main.py:131
 msgid "Soft Limit Triggered"
 msgstr ""
 
-#: makera.py:192
+#: main.py:132
 msgid "Cover opened when playing"
 msgstr ""
 
-#: makera.py:193
+#: main.py:133
 msgid "Wireless probe dead or not set"
 msgstr ""
 
-#: makera.py:194
+#: main.py:134
 msgid "Emergency stop button pressed"
 msgstr ""
 
-#: makera.py:196
+#: main.py:136
 msgid "Hard Limit Triggered, reset needed"
 msgstr ""
 
-#: makera.py:197
+#: main.py:137
 msgid "X Axis Motor Error, reset needed"
 msgstr ""
 
-#: makera.py:198
+#: main.py:138
 msgid "Y Axis Motor Error, reset needed"
 msgstr ""
 
-#: makera.py:199
+#: main.py:139
 msgid "Z Axis Motor Error, reset needed"
 msgstr ""
 
-#: makera.py:200
+#: main.py:140
 msgid "Spindle Stall, reset needed"
 msgstr ""
 
-#: makera.py:201
+#: main.py:141
 msgid "SD card read fail, reset needed"
 msgstr ""
 
-#: makera.py:203
+#: main.py:143
 msgid "Spindle Alarm, power off/on needed"
 msgstr ""
 
-#: makera.py:318
+#: main.py:306
 msgid "Press the Wireless Probe until the green LED blinks quickly."
 msgstr ""
 
-#: makera.py:319
+#: main.py:307
 msgid "Pairing Success!"
 msgstr ""
 
-#: makera.py:320
+#: main.py:308
 msgid "Pairing Timeout!"
 msgstr ""
 
-#: makera.py:471
+#: main.py:476
 msgid "from Headstock"
 msgstr ""
 
-#: makera.py:477
+#: main.py:482
 msgid "from Anchor2"
 msgstr ""
 
-#: makera.py:479
+#: main.py:484
 msgid "from Anchor1"
 msgstr ""
 
-#: makera.py:484
+#: main.py:489
 msgid "Fixed Pos"
 msgstr ""
 
-#: makera.py:486
+#: main.py:491
 msgid "from"
 msgstr ""
 
-#: makera.py:487 makera.kv:1391
+#: main.py:492 makera.kv:1477
 msgid "Work Origin"
 msgstr ""
 
-#: makera.py:487 makera.kv:1397
+#: main.py:492 makera.kv:1483
 msgid "Path Origin"
 msgstr ""
 
-#: makera.py:490
+#: main.py:495
 msgid "X Points: "
 msgstr ""
 
-#: makera.py:491
+#: main.py:496
 msgid "Y Points: "
 msgstr ""
 
-#: makera.py:492
+#: main.py:497
 msgid "Height: "
 msgstr ""
 
-#: makera.py:1375 makera.py:1402
+#: main.py:1429 main.py:1457
 msgid " New version detected: v"
 msgstr ""
 
-#: makera.py:1375 makera.py:1402
+#: main.py:1429 main.py:1457
 msgid " Current: v"
 msgstr ""
 
-#: makera.py:1378 makera.py:1405
+#: main.py:1432 main.py:1460
 msgid " Current version: v"
 msgstr ""
 
-#: makera.py:1522
+#: main.py:1584
 msgid "Timeout, Connection lost!"
 msgstr ""
 
-#: makera.py:1548
+#: main.py:1610
 msgid "Documents"
 msgstr ""
 
-#: makera.py:1550
+#: main.py:1612
 msgid "Downloads"
 msgstr ""
 
-#: makera.py:1552
+#: main.py:1614
 msgid "Desktop"
 msgstr ""
 
-#: makera.py:1563
+#: main.py:1625
 msgid "Storage"
 msgstr ""
 
-#: makera.py:1613 makera.py:1657
+#: main.py:1675 main.py:1719
 msgid "Recent Places"
 msgstr ""
 
-#: makera.py:1670
-msgid "Searching nearby machines..."
+#: main.py:1735
+msgid "Cannot connect, machine is busy or not availiable."
 msgstr ""
 
-#: makera.py:1680
-msgid "Not found, enter IP manually..."
+#: main.py:1737
+msgid "No previous machine network address stored."
 msgstr ""
 
-#: makera.py:1694
-msgid "Input IP address:"
+#: main.py:1742
+msgid "Searching for nearby machines..."
 msgstr ""
 
-#: makera.py:1766
+#: main.py:1752
+msgid "None found, enter address manually..."
+msgstr ""
+
+#: main.py:1766
+msgid "Input machine network address:"
+msgstr ""
+
+#: main.py:1869
 msgid "Error loading dir"
 msgstr ""
 
-#: makera.py:1768
+#: main.py:1871
 msgid "Timeout loading dir"
 msgstr ""
 
-#: makera.py:1776
+#: main.py:1879
 msgid "Error deleting"
 msgstr ""
 
-#: makera.py:1778
+#: main.py:1881
 msgid "Timeout deleting"
 msgstr ""
 
-#: makera.py:1786
+#: main.py:1889
 msgid "Error renaming"
 msgstr ""
 
-#: makera.py:1788
+#: main.py:1891
 msgid "Timeout renaming"
 msgstr ""
 
-#: makera.py:1796
+#: main.py:1899
 msgid "Error making dir:"
 msgstr ""
 
-#: makera.py:1798
+#: main.py:1901
 msgid "Timeout making dir:"
 msgstr ""
 
-#: makera.py:1806
+#: main.py:1909
 msgid "Error getting WiFi info!"
 msgstr ""
 
-#: makera.py:1808
+#: main.py:1911
 msgid "Timeout getting WiFi info!"
 msgstr ""
 
-#: makera.py:1818
+#: main.py:1921
 msgid "Timeout connecting WiFi!"
 msgstr ""
 
-#: makera.py:1828
+#: main.py:1931
 msgid "Delete File or Dir"
 msgstr ""
 
-#: makera.py:1829
+#: main.py:1932
 msgid "Confirm to delete file or dir"
 msgstr ""
 
-#: makera.py:1839
+#: main.py:1944
 msgid "Machine Is Halted: "
 msgstr ""
 
-#: makera.py:1841
+#: main.py:1946
 msgid "Machine Is Halted!"
 msgstr ""
 
-#: makera.py:1844
+#: main.py:1949
 msgid "Please manually switch off/on the machine!"
 msgstr ""
 
-#: makera.py:1847 makera.py:1859
+#: main.py:1952 main.py:1964
 msgid "Confirm to reset machine?"
 msgstr ""
 
-#: makera.py:1850
+#: main.py:1955
 msgid "Confirm to unlock machine?"
 msgstr ""
 
-#: makera.py:1858
+#: main.py:1963
 msgid "Machine Is Sleeping"
 msgstr ""
 
-#: makera.py:1873
+#: main.py:1978
+msgid "Changing Tool"
+msgstr ""
+
+#: main.py:1979
+msgid "Please change to tool: "
+msgstr ""
+
+#: main.py:1979
+msgid "Then press ' Confirm' or main button to proceed"
+msgstr ""
+
+#: main.py:2009
 msgid "Change name"
 msgstr ""
 
-#: makera.py:1881
+#: main.py:2017
 msgid "Input new folder name:"
 msgstr ""
 
-#: makera.py:1889
+#: main.py:2025
 msgid "Input WiFi password of"
 msgstr ""
 
-#: makera.py:1901
+#: main.py:2037 main.py:2068
 msgid "File Already Exists"
 msgstr ""
 
-#: makera.py:1902
+#: main.py:2038 main.py:2069
 msgid "Confirm to overwrite file:"
 msgstr ""
 
-#: makera.py:1909
+#: main.py:2045
 msgid "Updating Firmware"
 msgstr ""
 
-#: makera.py:1910
+#: main.py:2046
 msgid "Reset the machine when uploading is complete."
 msgstr ""
 
-#: makera.py:1927
-msgid "Openning local file"
+#: main.py:2060
+msgid "Loading file"
 msgstr ""
 
-#: makera.py:1989
+#: main.py:2086
+msgid "Opening local file"
+msgstr ""
+
+#: main.py:2142
+msgid ""
+"Error loading machine config setting. Possibly malformed value.\n"
+"Skipping setting key: "
+msgstr ""
+
+#: main.py:2152
 msgid "Download config file error"
 msgstr ""
 
-#: makera.py:2004
+#: main.py:2168
 msgid "Load config..."
 msgstr ""
 
-#: makera.py:2004
+#: main.py:2168
 msgid "Checking"
 msgstr ""
 
-#: makera.py:2030
+#: main.py:2195
 msgid "Download config file error!"
 msgstr ""
 
-#: makera.py:2032
+#: main.py:2197
 msgid "Download file error!"
 msgstr ""
 
-#: makera.py:2046
+#: main.py:2211
 msgid "Synchronize version and time..."
 msgstr ""
 
-#: makera.py:2051
+#: main.py:2218
 msgid "Open cached file"
 msgstr ""
 
-#: makera.py:2061
+#: main.py:2228
 msgid "Downloading is canceled manually."
 msgstr ""
 
-#: makera.py:2071
+#: main.py:2251
 msgid "Downloading"
 msgstr ""
 
-#: makera.py:2085 makera.py:2087
+#: main.py:2265 main.py:2267
 msgid "WiFi: Searching for network..."
 msgstr ""
 
-#: makera.py:2112
+#: main.py:2292
 msgid "WiFi: Connected"
 msgstr ""
 
-#: makera.py:2112
+#: main.py:2292
 msgid "WiFi: Not Connected"
 msgstr ""
 
-#: makera.py:2115
+#: main.py:2295
 msgid "Close Connection"
 msgstr ""
 
-#: makera.py:2156
+#: main.py:2336
 msgid "Can not load coordinate value:"
 msgstr ""
 
-#: makera.py:2163
+#: main.py:2343
 msgid "Can not load laser offset value:"
 msgstr ""
 
-#: makera.py:2224
+#: main.py:2404
 msgid "Connecting to"
 msgstr ""
 
-#: makera.py:2247
+#: main.py:2525
 msgid "Uploading"
 msgstr ""
 
-#: makera.py:2268
+#: main.py:2547
 msgid "Uploading is canceled manually."
 msgstr ""
 
-#: makera.py:2271
+#: main.py:2556
 msgid "Upload file error!"
 msgstr ""
 
-#: makera.py:2290
+#: main.py:2597
+msgid "Decompressing"
+msgstr ""
+
+#: main.py:2609
 msgid "Update Finished"
 msgstr ""
 
-#: makera.py:2291
+#: main.py:2610
 msgid "Confirm to reset the machine?"
 msgstr ""
 
-#: makera.py:2405 makera.kv:2911
+#: main.py:2732 makera.kv:3081
 msgid "disconnect"
 msgstr ""
 
-#: makera.py:2533 makera.kv:2730
+#: main.py:2864 main.py:2883
 msgid "Laser"
 msgstr ""
 
-#: makera.py:2540
+#: main.py:2871
 msgid "None"
 msgstr ""
 
-#: makera.py:2550 makera.kv:2781
+#: main.py:2881 makera.kv:2941
 msgid "Probe"
 msgstr ""
 
-#: makera.py:2625
+#: main.py:2961
 msgid " No Remote File Selected"
 msgstr ""
 
-#: makera.py:2901 makera.py:2912
+#: main.py:3226 main.py:3237
 msgid "Load config error, Key:"
 msgstr ""
 
-#: makera.py:2982
+#: main.py:3307
 msgid "Settings applied, need reset to take effect !"
 msgstr ""
 
-#: makera.py:2987
+#: main.py:3312
 msgid "Restore Settings"
 msgstr ""
 
-#: makera.py:2988
+#: main.py:3313
 msgid "Confirm to restore settings from default ?"
 msgstr ""
 
-#: makera.py:2999
+#: main.py:3327
 msgid "Save As Default"
 msgstr ""
 
-#: makera.py:3000
+#: main.py:3328
 msgid "Confirm to save current settings as default ?"
 msgstr ""
 
-#: makera.py:3217
-msgid "Openning file error:"
+#: main.py:3336
+msgid "Entering Laser Mode"
 msgstr ""
 
-#: makera.py:3217
+#: main.py:3338
+msgid ""
+"You are about to enable laser mode. \n"
+"\n"
+"When enabled the current tool will be dropped, the spindle fan locked to "
+"90%, \n"
+"and the empty spindle nose will be set as the tool and length probed.\n"
+"\n"
+" It's recommended to remove the laser dust cap, and put on safety glasses "
+"now.\n"
+"\n"
+"Are you read to proceed ?"
+msgstr ""
+
+#: main.py:3571
+msgid "Opening file error:"
+msgstr ""
+
+#: main.py:3571
 msgid "Please make sure the GCode file is valid"
 msgstr ""
 
-#: makera.py:3299
-msgid "Carvera Controller"
+#: main.py:3654
+msgid "Carvera Controller Community"
 msgstr ""
 
 #: makera.kv:312
@@ -504,535 +561,585 @@ msgstr ""
 msgid "Shrink"
 msgstr ""
 
+#: makera.kv:453
+msgid "Fast Move"
+msgstr ""
 
-#: makera.kv:430
+#: makera.kv:475
 msgid "Feed Status"
 msgstr ""
 
-#: makera.kv:444 makera.kv:526
+#: makera.kv:489 makera.kv:571
 msgid "Scale:"
 msgstr ""
 
-#: makera.kv:449 makera.kv:530
+#: makera.kv:494 makera.kv:575
 msgid "Target:"
 msgstr ""
 
-#: makera.kv:453
+#: makera.kv:498
 msgid "Speed Scaling"
 msgstr ""
 
-#: makera.kv:490 makera.kv:591 makera.kv:776 makera.kv:3462
+#: makera.kv:535 makera.kv:637 makera.kv:843 makera.kv:3639
 msgid "Reset"
 msgstr ""
 
-#: makera.kv:512
+#: makera.kv:557
 msgid "Spindle Status"
 msgstr ""
 
-#: makera.kv:534
+#: makera.kv:579
 msgid "Temp:"
 msgstr ""
 
-#: makera.kv:537
+#: makera.kv:582 makera.kv:2493
 msgid "Auto Vacuum"
 msgstr ""
 
-#: makera.kv:555
+#: makera.kv:601
 msgid "RPM Scaling"
 msgstr ""
 
-#: makera.kv:610
+#: makera.kv:658
 msgid "Tool Status"
 msgstr ""
 
-#: makera.kv:624
+#: makera.kv:672
 msgid "TLO:  "
 msgstr ""
 
-#: makera.kv:628
+#: makera.kv:676
 msgid "WP:  "
 msgstr ""
 
-#: makera.kv:634 makera.kv:637 makera.kv:638
+#: makera.kv:684 makera.kv:687 makera.kv:688
 msgid "Change..."
 msgstr ""
 
-#: makera.kv:641 makera.kv:2801
+#: makera.kv:691
 msgid "Calibrate"
 msgstr ""
 
-#: makera.kv:648
+#: makera.kv:698
 msgid "Drop"
 msgstr ""
 
-#: makera.kv:657 makera.kv:660 makera.kv:661
+#: makera.kv:709 makera.kv:712 makera.kv:713
 msgid "Set..."
 msgstr ""
 
-#: makera.kv:677
+#: makera.kv:716
+msgid "Clamp"
+msgstr ""
+
+#: makera.kv:724
+msgid "Unclamp"
+msgstr ""
+
+#: makera.kv:744
 msgid "Laser Status"
 msgstr ""
 
-#: makera.kv:691
+#: makera.kv:758
 msgid "scale:"
 msgstr ""
 
-#: makera.kv:694
+#: makera.kv:761
 msgid "Enable Laser"
 msgstr ""
 
-#: makera.kv:718
+#: makera.kv:785
 msgid "Laser Test"
 msgstr ""
 
-#: makera.kv:737
+#: makera.kv:804
 msgid "Power Scaling"
 msgstr ""
 
-#: makera.kv:887
-msgid "WIFI..."
+#: makera.kv:962
+msgid "Reconnect"
 msgstr ""
 
-#: makera.kv:894
+#: makera.kv:973
+msgid "Scan Wi-Fi..."
+msgstr ""
+
+#: makera.kv:980
 msgid " USB..."
 msgstr ""
 
-#: makera.kv:912
+#: makera.kv:998
 msgid "Disconnect"
 msgstr ""
 
-#: makera.kv:924
+#: makera.kv:1010
 msgid "Upload..."
 msgstr ""
 
-#: makera.kv:930 makera.kv:1785 makera.kv:1833 makera.kv:2174
+#: makera.kv:1016 makera.kv:1871 makera.kv:1919 makera.kv:2253
 msgid "Download"
 msgstr ""
 
-#: makera.kv:936 makera.kv:1933
+#: makera.kv:1022 makera.kv:2019
 msgid "Delete"
 msgstr ""
 
-#: makera.kv:942 makera.kv:1925
+#: makera.kv:1028 makera.kv:2011
 msgid "Rename"
 msgstr ""
 
-#: makera.kv:1045
+#: makera.kv:1131
 msgid "Select Language"
 msgstr ""
 
-#: makera.kv:1057 makera.kv:1092 makera.kv:1121 makera.kv:1175 makera.kv:1286
-#: makera.kv:1350 makera.kv:1436 makera.kv:1517 makera.kv:1692
+#: makera.kv:1143 makera.kv:1178 makera.kv:1207 makera.kv:1261 makera.kv:1372
+#: makera.kv:1436 makera.kv:1522 makera.kv:1603 makera.kv:1778 makera.kv:3936
+#: makera.kv:3993 makera.kv:4050 makera.kv:4107 makera.kv:4164
 msgid "Cancel"
 msgstr ""
 
-#: makera.kv:1060 makera.kv:1095 makera.kv:1148 makera.kv:1290 makera.kv:1354
-#: makera.kv:1440 makera.kv:1521 makera.kv:1696
+#: makera.kv:1146 makera.kv:1181 makera.kv:1234 makera.kv:1376 makera.kv:1440
+#: makera.kv:1526 makera.kv:1607 makera.kv:1782 makera.kv:3940 makera.kv:3997
+#: makera.kv:4054 makera.kv:4111 makera.kv:4168
 msgid "Ok"
 msgstr ""
 
-#: makera.kv:1077
+#: makera.kv:1163
 msgid "Input Box"
 msgstr ""
 
-#: makera.kv:1113
+#: makera.kv:1199
 msgid "Confirm Box"
 msgstr ""
 
-#: makera.kv:1117 makera.kv:1142
+#: makera.kv:1203 makera.kv:1228
 msgid "Confirm to continue?"
 msgstr ""
 
-#: makera.kv:1127
+#: makera.kv:1213
 msgid "Confirm"
 msgstr ""
 
-#: makera.kv:1196
+#: makera.kv:1282
 msgid "Auto-Set By Offset"
 msgstr ""
 
-#: makera.kv:1211
+#: makera.kv:1297
 msgid "Anchor1"
 msgstr ""
 
-#: makera.kv:1220
+#: makera.kv:1306
 msgid "Anchor2"
 msgstr ""
 
-#: makera.kv:1229
+#: makera.kv:1315
 msgid "4Axis Origin"
 msgstr ""
 
-#: makera.kv:1238
+#: makera.kv:1324
 msgid "Current Pos"
 msgstr ""
 
-#: makera.kv:1246 makera.kv:1403
+#: makera.kv:1332 makera.kv:1489
 msgid "X Offset:"
 msgstr ""
 
-#: makera.kv:1252 makera.kv:1409
+#: makera.kv:1338 makera.kv:1495
 msgid "Enter X Offset"
 msgstr ""
 
-#: makera.kv:1260 makera.kv:1417
+#: makera.kv:1346 makera.kv:1503
 msgid "Y Offset:"
 msgstr ""
 
-#: makera.kv:1266 makera.kv:1423
+#: makera.kv:1352 makera.kv:1509
 msgid "Enter Y Offset"
 msgstr ""
 
-#: makera.kv:1277
+#: makera.kv:1363
 msgid "Note: Work origin will be set immediately when clicking OK."
 msgstr ""
 
-#: makera.kv:1300
+#: makera.kv:1386
 msgid "Set By XYZ Probe"
 msgstr ""
 
-#: makera.kv:1311 makera.kv:1478
+#: makera.kv:1397 makera.kv:1564
 msgid "Probe Height:"
 msgstr ""
 
-#: makera.kv:1317 makera.kv:1484
+#: makera.kv:1403 makera.kv:1570
 msgid "Height Above Workpiece"
 msgstr ""
 
-#: makera.kv:1325 makera.kv:1492
+#: makera.kv:1411 makera.kv:1578
 msgid "Tool Diameter:"
 msgstr ""
 
-#: makera.kv:1331 makera.kv:1498
+#: makera.kv:1417 makera.kv:1584
 msgid "Tool Diameter"
 msgstr ""
 
-#: makera.kv:1339 makera.kv:1506
+#: makera.kv:1425 makera.kv:1592
 msgid ""
 "Note: Please make sure the probe is stably positioned and the magnet head is "
 "attached to the tool."
 msgstr ""
 
-#: makera.kv:1380
+#: makera.kv:1466
 msgid "Z Probe Config"
 msgstr ""
 
-#: makera.kv:1468
+#: makera.kv:1554
 msgid "XYZ Probe At Current Position"
 msgstr ""
 
-#: makera.kv:1544
+#: makera.kv:1630
 msgid "Paring Wireless Probe"
 msgstr ""
 
-#: makera.kv:1558
+#: makera.kv:1644
 msgid "Start Pairing"
 msgstr ""
 
-#: makera.kv:1578 makera.kv:1865 makera.kv:2113 makera.kv:2180 makera.kv:2587
-#: makera.kv:2813
+#: makera.kv:1664 makera.kv:1951 makera.kv:2199 makera.kv:2275 makera.kv:2747
+#: makera.kv:2982
 msgid "Close"
 msgstr ""
 
-#: makera.kv:1608
+#: makera.kv:1694
 msgid "Auto Leveling Config"
 msgstr ""
 
-#: makera.kv:1626
+#: makera.kv:1712
 msgid "Clearance Height:   "
 msgstr ""
 
-#: makera.kv:1638
+#: makera.kv:1724
 msgid "Min"
 msgstr ""
 
-#: makera.kv:1640
+#: makera.kv:1726
 msgid "Max"
 msgstr ""
 
-#: makera.kv:1642
+#: makera.kv:1728
 msgid "Step"
 msgstr ""
 
-#: makera.kv:1644
+#: makera.kv:1730
 msgid "Points"
 msgstr ""
 
-#: makera.kv:1727
+#: makera.kv:1813
 msgid "Upgrade"
 msgstr ""
 
-#: makera.kv:1737
+#: makera.kv:1823
 msgid " Check Updates on Startup"
 msgstr ""
 
-#: makera.kv:1755
+#: makera.kv:1841
 msgid "Controller"
 msgstr ""
 
-#: makera.kv:1765 makera.kv:1813
+#: makera.kv:1851 makera.kv:1899
 msgid " Update Log:"
 msgstr ""
 
-#: makera.kv:1803 makera.kv:2147
+#: makera.kv:1889 makera.kv:2233
 msgid "Firmware"
 msgstr ""
 
-#: makera.kv:1839
+#: makera.kv:1925
 msgid "Update"
 msgstr ""
 
-#: makera.kv:1860
+#: makera.kv:1946
 msgid "Check for Updates"
 msgstr ""
 
-#: makera.kv:1905
+#: makera.kv:1991
 msgid "Remote"
 msgstr ""
 
-#: makera.kv:1941
+#: makera.kv:2027
 msgid "New Folder"
 msgstr ""
 
-#: makera.kv:1948
+#: makera.kv:2034
 msgid "Upload File"
 msgstr ""
 
-#: makera.kv:2033 makera.kv:2266
+#: makera.kv:2119 makera.kv:2361
 msgid "Search"
 msgstr ""
 
-#: makera.kv:2062 makera.kv:2295
+#: makera.kv:2148 makera.kv:2390
 msgid "Name "
 msgstr ""
 
-#: makera.kv:2069 makera.kv:2302
+#: makera.kv:2155 makera.kv:2397
 msgid "Date Modified "
 msgstr ""
 
-#: makera.kv:2079 makera.kv:2312
+#: makera.kv:2165 makera.kv:2407
 msgid " Size"
 msgstr ""
 
-#: makera.kv:2117
+#: makera.kv:2203
 msgid "Clear Selection"
 msgstr ""
 
-#: makera.kv:2126
+#: makera.kv:2212
 msgid "Select"
 msgstr ""
 
-#: makera.kv:2147
+#: makera.kv:2233
 msgid "Local"
 msgstr ""
 
-#: makera.kv:2167
+#: makera.kv:2253
+msgid "View"
+msgstr ""
+
+#: makera.kv:2260
 msgid "Upload"
 msgstr ""
 
-#: makera.kv:2174
-msgid "Open"
+#: makera.kv:2267
+msgid "Upload and Select"
 msgstr ""
 
-#: makera.kv:2266
+#: makera.kv:2361
 msgid "firmware"
 msgstr ""
 
-#: makera.kv:2366
+#: makera.kv:2461
 msgid "Config and Run"
 msgstr ""
 
-#: makera.kv:2366
+#: makera.kv:2461
 msgid " Config and Do "
 msgstr ""
 
-#: makera.kv:2402
+#: makera.kv:2531
 msgid " Set Work Origin"
 msgstr ""
 
-#: makera.kv:2420
+#: makera.kv:2549
 msgid " (0, 0) from Anchor1"
 msgstr ""
 
-#: makera.kv:2433 makera.kv:2515 makera.kv:2574
+#: makera.kv:2562 makera.kv:2644 makera.kv:2703
 msgid "Config"
 msgstr ""
 
-#: makera.kv:2454
+#: makera.kv:2583
 msgid " Scan Margin"
 msgstr ""
 
-#: makera.kv:2487
+#: makera.kv:2616
 msgid " Auto Z Probe"
 msgstr ""
 
-#: makera.kv:2502
+#: makera.kv:2631
 msgid " (10, 10) from Path Origin"
 msgstr ""
 
-#: makera.kv:2546
+#: makera.kv:2675
 msgid " Auto Leveling"
 msgstr ""
 
-#: makera.kv:2560
+#: makera.kv:2689
 msgid " X Points: 10, Y Points: 10, Height: 5"
 msgstr ""
 
-#: makera.kv:2591
+#: makera.kv:2751
 msgid "Run"
 msgstr ""
 
-#: makera.kv:2591
+#: makera.kv:2751
 msgid "Do "
 msgstr ""
 
-#: makera.kv:2706
-msgid " Diagnose ( Be careful, do not change except diagnosing )"
+#: makera.kv:2865
+msgid "   Diagnostic Panel"
 msgstr ""
 
-#: makera.kv:2718
-msgid "Spindle"
+#: makera.kv:2877
+msgid "Spindle Motor"
 msgstr ""
 
-#: makera.kv:2722
-msgid "SpindleFan"
+#: makera.kv:2881 makera.kv:2910
+msgid "Spindle Fan"
 msgstr ""
 
-#: makera.kv:2726
+#: makera.kv:2884
 msgid "Vacuum"
 msgstr ""
 
-#: makera.kv:2734
-msgid "Light"
+#: makera.kv:2884
+msgid "PowerFan"
 msgstr ""
 
-#: makera.kv:2738
-msgid "Air"
+#: makera.kv:2887
+msgid "Engraving Laser"
 msgstr ""
 
-#: makera.kv:2762
+#: makera.kv:2891
+msgid "Enclosure Light"
+msgstr ""
+
+#: makera.kv:2895
+msgid "Air Assist"
+msgstr ""
+
+#: makera.kv:2921
 msgid "ToolSensorPWR"
 msgstr ""
 
-#: makera.kv:2766
+#: makera.kv:2921
+msgid "Probe Laser"
+msgstr ""
+
+#: makera.kv:2925
 msgid "WPChargePWR"
 msgstr ""
 
-#: makera.kv:2772
+#: makera.kv:2925
+msgid "Beep"
+msgstr ""
+
+#: makera.kv:2931
 msgid "X- Limit"
 msgstr ""
 
-#: makera.kv:2775
+#: makera.kv:2934
 msgid "Y- Limit"
 msgstr ""
 
-#: makera.kv:2778
+#: makera.kv:2937
 msgid "ATC Limit"
 msgstr ""
 
-#: makera.kv:2784
+#: makera.kv:2944
 msgid "Tool Sensor"
 msgstr ""
 
-#: makera.kv:2787
+#: makera.kv:2948
 msgid "E-Stop"
 msgstr ""
 
-#: makera.kv:2792
+#: makera.kv:2953
 msgid "X+ Limit"
 msgstr ""
 
-#: makera.kv:2795
+#: makera.kv:2956
 msgid "Y+ Limit"
 msgstr ""
 
-#: makera.kv:2798
+#: makera.kv:2959
 msgid "Z+ Limit"
 msgstr ""
 
-#: makera.kv:2804
+#: makera.kv:2962
+msgid "Tool Length Setter"
+msgstr ""
+
+#: makera.kv:2965
 msgid "Cover Switch"
 msgstr ""
 
-#: makera.kv:2830
+#: makera.kv:2971
+msgid "Changes in values are applied after 2 seconds."
+msgstr ""
+
+#: makera.kv:3000
 msgid " Settings"
 msgstr ""
 
-#: makera.kv:2839
+#: makera.kv:3009
 msgid "Apply"
 msgstr ""
 
-#: makera.kv:3138
+#: makera.kv:3308
 msgid "FILE"
 msgstr ""
 
-#: makera.kv:3144
+#: makera.kv:3314
 msgid "Enter command..."
 msgstr ""
 
-#: makera.kv:3153
+#: makera.kv:3323
 msgid "send"
 msgstr ""
 
-#: makera.kv:3456
+#: makera.kv:3633
 msgid "Unlock"
 msgstr ""
 
-#: makera.kv:3468
+#: makera.kv:3645
 msgid "Home"
 msgstr ""
 
-#: makera.kv:3475
+#: makera.kv:3652
 msgid "Margin..."
 msgstr ""
 
-#: makera.kv:3488
+#: makera.kv:3665
 msgid "ZProbe..."
 msgstr ""
 
-#: makera.kv:3501
+#: makera.kv:3678
 msgid "AutoLevel..."
 msgstr ""
 
-#: makera.kv:3517 makera.kv:3520 makera.kv:3521
+#: makera.kv:3694 makera.kv:3697 makera.kv:3698
 msgid "Goto..."
 msgstr ""
 
-#: makera.kv:3526
+#: makera.kv:3703
 msgid "Set Origin"
 msgstr ""
 
-#: makera.kv:3590
+#: makera.kv:3767
 msgid "SettingPage"
 msgstr ""
 
-#: makera.py:2428
-msgid "Decompressing"
-msgstr ""
-#: makera.py:3786
+#: makera.kv:3906
 msgid "Set X Current Pos"
 msgstr ""
-#: makera.py:3786
-msgid "Set Y Current Pos"
-msgstr ""
-#: makera.py:3786
-msgid "Set Z Current Pos"
-msgstr ""
-#: makera.py:3786
-msgid "Set A Current Pos"
-msgstr ""
-#: makera.kv:3799
+
+#: makera.kv:3922
 msgid "Enter X Pos"
 msgstr ""
+
+#: makera.kv:3963
+msgid "Set Y Current Pos"
+msgstr ""
+
+#: makera.kv:3979
 msgid "Enter Y Pos"
 msgstr ""
+
+#: makera.kv:4020
+msgid "Set Z Current Pos"
+msgstr ""
+
+#: makera.kv:4036
 msgid "Enter Z Pos"
 msgstr ""
+
+#: makera.kv:4077
+msgid "Set A Current Pos"
+msgstr ""
+
+#: makera.kv:4093 makera.kv:4150
 msgid "Enter A Pos"
 msgstr ""
-#: makera.kv:453
-msgid "Fast Move"
-msgstr ""
-#: makera.kv:4021
+
+#: makera.kv:4134
 msgid "Rapidly move the A to"
 msgstr ""

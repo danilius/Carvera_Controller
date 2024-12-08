@@ -1,4 +1,4 @@
-[Unreleased]
+[0.5.3]
 - Fix: Exception handling for loading machine config file into controller. If the config can't be parsed correctly it will be skipped and a warning message shown on screen.
 - Fix: Use correct gcode filename if file was uploaded compressed
 

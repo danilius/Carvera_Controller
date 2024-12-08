@@ -29,7 +29,7 @@ for kv_file in kv_files:
     print(f"Appended .pot file with entries from {kv_file}")
 
 # List of languages for .po files
-languages = ["de", "en", "es", "fr", "it", "ja", "ko", "pt", "zh-CN", "zh-TW"]
+languages = ["en","zh-CN"]
 po_files = [f"locales/{lang}/LC_MESSAGES/{lang}.po" for lang in languages]
 
 # Check if .po files exist; if not, create them from .pot file

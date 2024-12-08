@@ -2136,7 +2136,11 @@ class Makera(RelativeLayout):
             setting_config.read_string(config_string)
             for section_name in setting_config.sections():
                 for (key, value) in setting_config.items(section_name):
-                    self.setting_list[key.strip()] = value.strip()
+                    try:
+                        self.setting_list[key.strip()] = value.strip()
+                    except AttributeError:
+                        Clock.schedule_once(partial(self.load_error, tr._('Error loading machine config setting. Possibly malformed value.\nSkipping setting key: ') + str(key)), 0)
+            
             self.load_coordinates()
             self.load_laser_offsets()
             self.setting_change_list = {}
@@ -2595,7 +2599,7 @@ class Makera(RelativeLayout):
         self.controller.sendNUM = 0
         if upload_result and callback:  # Only run callback if upload succeeded
             if self.uploading_file.endswith('.lz'):
-                callback(remotename, origin_path)
+                callback(remotename[:-3], origin_path)
             else:
                 callback(remotename, local_path)
 

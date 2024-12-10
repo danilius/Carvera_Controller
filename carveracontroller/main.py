@@ -1111,32 +1111,6 @@ class TopBar(BoxLayout):
 
 class BottomBar(BoxLayout):
     pass
-
-class ControlBoxLayout(BoxLayout):
-    def __init__(self, **kwargs):
-        super(ControlBoxLayout, self).__init__(**kwargs)
-        Window.bind(on_key_down=self._keydown)
-
-    def _keydown(self, *args):
-        app = App.get_running_app()
-
-        # Only allow keyboard jogging when state is machine in a suitable state
-        if (app.state in ['Idle', 'Run', 'Pause']) or (app.playing and app.state == 'Pause'):
-            key = args[1]  # keycode
-            if key == 274:  # down button
-                app.root.controller.jog("Y{}".format(app.root.step_xy.text))
-            elif key == 273:  # up button
-                app.root.controller.jog("Y-{}".format(app.root.step_xy.text))
-            elif key == 275:  # right button
-                app.root.controller.jog("X{}".format(app.root.step_xy.text))
-            elif key == 276:  # left button
-                app.root.controller.jog("X-{}".format(app.root.step_xy.text))
-            elif key == 280:  # page up
-                app.root.controller.jog("Z{}".format(app.root.step_z.text))
-            elif key == 281:  # page down
-                app.root.controller.jog("Z-{}".format(app.root.step_z.text))
-        
-
 # -----------------------------------------------------------------------
 class Content(ScreenManager):
     pass
@@ -1410,12 +1384,39 @@ class Makera(RelativeLayout):
         #
         threading.Thread(target=self.monitorSerial).start()
 
+        # Keyboard Jog Controls
+        Window.bind(on_key_down=self._keydown)
+
     def __del__(self):
         # Cleanup the temporary directory when the app is closed
         try:
             shutil.rmtree(self.temp_dir)
         except Exception as e:
             print(f"Error cleaning up temporary directory: {e}")
+        Config.set('graphics', 'width', Window.size[0])
+        Config.set('graphics', 'height', Window.size[1])
+        Config.write()
+
+    
+    def _keydown(self, *args):
+        app = App.get_running_app()
+
+        # Only allow keyboard jogging when machine in a suitable state
+        if (app.state in ['Idle', 'Run', 'Pause']) or (app.playing and app.state == 'Pause'):
+            key = args[1]  # keycode
+            if key == 274:  # down button
+                app.root.controller.jog("Y{}".format(app.root.step_xy.text))
+            elif key == 273:  # up button
+                app.root.controller.jog("Y-{}".format(app.root.step_xy.text))
+            elif key == 275:  # right button
+                app.root.controller.jog("X{}".format(app.root.step_xy.text))
+            elif key == 276:  # left button
+                app.root.controller.jog("X-{}".format(app.root.step_xy.text))
+            elif key == 280:  # page up
+                app.root.controller.jog("Z{}".format(app.root.step_z.text))
+            elif key == 281:  # page down
+                app.root.controller.jog("Z-{}".format(app.root.step_z.text))
+        
     
     def open_download(self):
         webbrowser.open(DOWNLOAD_ADDRESS, new = 2)
@@ -3738,9 +3739,9 @@ def set_config_defaults(default_lang):
         Config.set('kivy', 'window_icon', 'data/icon.png')
         Config.set('kivy', 'exit_on_escape', '0')
         Config.set('kivy', 'pause_on_minimize', '0')
-        Config.set('graphics', 'width', '960')
-        Config.set('graphics', 'height', '600')
         Config.set('graphics', 'allow_screensaver', '0')
+        Config.set('graphics', 'width', '1920')
+        Config.set('graphics', 'height', '1200')
         #Config.set('input', 'mouse', 'mouse, multitouch_on_demand')
         Config.write()
 

@@ -3718,32 +3718,34 @@ def android_tweaks():
         print("Pyjnius Import Fail.")
 
 def set_config_defaults(default_lang):
-    Config.set('kivy', 'exit_on_escape', '0')
-    if not Config.has_section('carvera') or not Config.has_option('carvera', 'version') or Config.get('carvera', 'version') != __version__:
-        if not Config.has_section('carvera'):
-            Config.add_section('carvera')
+    if not Config.has_section('carvera'):
+        Config.add_section('carvera')
+
+    # Only update config if running new version
+    if not Config.has_option('carvera', 'version') or Config.get('carvera', 'version') != __version__:
         Config.set('carvera', 'version', __version__)
-        if not Config.has_option('carvera', 'show_update'): Config.set('carvera', 'show_update', '1')
-        if not Config.has_option('carvera', 'language'): Config.set('carvera', 'language', default_lang)
-        if not Config.has_option('carvera', 'local_folder_1'): Config.set('carvera', 'local_folder_1', '')
-        if not Config.has_option('carvera', 'local_folder_2'): Config.set('carvera', 'local_folder_2', '')
-        if not Config.has_option('carvera', 'local_folder_3'): Config.set('carvera', 'local_folder_3', '')
-        if not Config.has_option('carvera', 'local_folder_4'): Config.set('carvera', 'local_folder_4', '')
-        if not Config.has_option('carvera', 'local_folder_5'): Config.set('carvera', 'local_folder_5', '')
-        if not Config.has_option('carvera', 'remote_folder_1'): Config.set('carvera', 'remote_folder_1', '')
-        if not Config.has_option('carvera', 'remote_folder_2'): Config.set('carvera', 'remote_folder_2', '')
-        if not Config.has_option('carvera', 'remote_folder_3'): Config.set('carvera', 'remote_folder_3', '')
-        if not Config.has_option('carvera', 'remote_folder_4'): Config.set('carvera', 'remote_folder_4', '')
-        if not Config.has_option('carvera', 'remote_folder_5'): Config.set('carvera', 'remote_folder_5', '')
-        # Default params, set only once
+        # Default params that are not configurable, set only once
         Config.set('kivy', 'window_icon', 'data/icon.png')
         Config.set('kivy', 'exit_on_escape', '0')
         Config.set('kivy', 'pause_on_minimize', '0')
-        Config.set('graphics', 'allow_screensaver', '0')
-        Config.set('graphics', 'width', '1920')
-        Config.set('graphics', 'height', '1200')
-        #Config.set('input', 'mouse', 'mouse, multitouch_on_demand')
-        Config.write()
+
+    # Configurable config options. Don't change if they are already set
+    if not Config.has_option('carvera', 'show_update'): Config.set('carvera', 'show_update', '1')
+    if not Config.has_option('carvera', 'language'): Config.set('carvera', 'language', default_lang)
+    if not Config.has_option('carvera', 'local_folder_1'): Config.set('carvera', 'local_folder_1', '')
+    if not Config.has_option('carvera', 'local_folder_2'): Config.set('carvera', 'local_folder_2', '')
+    if not Config.has_option('carvera', 'local_folder_3'): Config.set('carvera', 'local_folder_3', '')
+    if not Config.has_option('carvera', 'local_folder_4'): Config.set('carvera', 'local_folder_4', '')
+    if not Config.has_option('carvera', 'local_folder_5'): Config.set('carvera', 'local_folder_5', '')
+    if not Config.has_option('carvera', 'remote_folder_1'): Config.set('carvera', 'remote_folder_1', '')
+    if not Config.has_option('carvera', 'remote_folder_2'): Config.set('carvera', 'remote_folder_2', '')
+    if not Config.has_option('carvera', 'remote_folder_3'): Config.set('carvera', 'remote_folder_3', '')
+    if not Config.has_option('carvera', 'remote_folder_4'): Config.set('carvera', 'remote_folder_4', '')
+    if not Config.has_option('carvera', 'remote_folder_5'): Config.set('carvera', 'remote_folder_5', '')
+    if not Config.has_option('graphics', 'allow_screensaver'): Config.set('graphics', 'allow_screensaver', '0')
+    if not Config.has_option('graphics', 'width'): Config.set('graphics', 'width', '1920')
+    if not Config.has_option('graphics', 'height'): Config.set('graphics', 'height', '1200')
+    Config.write()
 
 def load_constants():
     Window.softinput_mode = "below_target"

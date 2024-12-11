@@ -2,6 +2,7 @@
 - Enhancement: Support translation file generation, updates, and inclusion into binary. We now can accept translation contributions.
 - Enhancement: Using the report bug button opens the controller log directory
 - Enhancement: Window size of the app is saved on exit
+- Enhancement: Default to showing the Control screen instead of empty file view
 
 [0.5.3]
 - Fix: Exception handling for loading machine config file into controller. If the config can't be parsed correctly it will be skipped and a warning message shown on screen.

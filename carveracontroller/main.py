@@ -89,7 +89,6 @@ from kivy.uix.label import Label
 from kivy.properties import BooleanProperty
 from kivy.graphics import Color, Rectangle, Ellipse, Line
 from kivy.properties import ObjectProperty, NumericProperty, ListProperty
-from kivy.metrics import dp
 from kivy.config import Config
 
 from serial.tools.list_ports import comports
@@ -3743,8 +3742,8 @@ def set_config_defaults(default_lang):
     if not Config.has_option('carvera', 'remote_folder_4'): Config.set('carvera', 'remote_folder_4', '')
     if not Config.has_option('carvera', 'remote_folder_5'): Config.set('carvera', 'remote_folder_5', '')
     if not Config.has_option('graphics', 'allow_screensaver'): Config.set('graphics', 'allow_screensaver', '0')
-    if not Config.has_option('graphics', 'width'): Config.set('graphics', 'width', '1920')
-    if not Config.has_option('graphics', 'height'): Config.set('graphics', 'height', '1200')
+    if not Config.has_option('graphics', 'width'): Config.set('graphics', 'width', '1440')
+    if not Config.has_option('graphics', 'height'): Config.set('graphics', 'height', '900')
     Config.write()
 
 def load_constants():

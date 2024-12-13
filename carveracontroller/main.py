@@ -105,6 +105,7 @@ from pathlib import Path
 # import os
 import shutil
 import string
+import subprocess
 
 from . import Utils
 from kivy.config import ConfigParser
@@ -1393,6 +1394,19 @@ class Makera(RelativeLayout):
     
     def open_download(self):
         webbrowser.open(DOWNLOAD_ADDRESS, new = 2)
+    
+    def send_bug_report(self):
+        webbrowser.open('https://github.com/Carvera-Community/Carvera_Controller/issues')
+        webbrowser.open('https://github.com/Carvera-Community/Carvera_Community_Firmware/issues')
+        log_dir = Path.home() / ".kivy" / "logs"
+        
+        # Open the log directory with whatever native file browser is availiable
+        if sys.platform == "win32":
+            os.startfile(log_dir)
+        else:
+            # Linux and MacOS
+            opener = "open" if sys.platform == "darwin" else "xdg-open"
+            subprocess.Popen([opener, log_dir])
 
     def open_update_popup(self):
         self.upgrade_popup.check_button.disabled = False

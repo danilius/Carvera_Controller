@@ -16,6 +16,7 @@ from dunamai import Version
 from ruamel.yaml import YAML
 
 import patch_pyinstaller
+from update_translations import compile_mo
 
 logger = logging.getLogger(__name__)
 
@@ -181,6 +182,9 @@ def main():
     package_version = get_version_info()
     output_filename = PACKAGE_NAME
     versionfile_path = None
+
+    # Compile translation files
+    compile_mo()
 
     if os == "windows":
         versionfile_path = generate_versionfile(

@@ -1,5 +1,7 @@
 [unreleased]
 - Enhancement: add "tool change" as a option for the front button long press actions. This feature requires Community Firmware.
+- Enhancement: Support translation file generation, updates, and inclusion into binary. We now can accept translation contributions.
+- Enhancement: Using the report bug button opens the controller log directory
 
 [0.5.3]
 - Fix: Exception handling for loading machine config file into controller. If the config can't be parsed correctly it will be skipped and a warning message shown on screen.

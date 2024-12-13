@@ -14,5 +14,21 @@
         "section": "carvera",
         "key": "ui_density",
         "default": "2.0"
+    },
+    {
+        "type": "bool",
+        "title": "Allow Screensaver",
+        "desc": "Should the screensaver be allowed to run?",
+        "section": "graphics",
+        "key": "allow_screensaver",
+        "default": "false"
+    },
+    {
+        "type": "bool",
+        "title": "Show Update Notification",
+        "desc": "Should firmware/controller update availability be checked?",
+        "section": "carvera",
+        "key": "show_update",
+        "default": "true"
     }
 ]

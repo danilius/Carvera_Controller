@@ -1,0 +1,18 @@
+[
+    {
+        "type": "bool",
+        "title": "Override UI Window Density",
+        "desc": "Should the OS DPI settings be overridden?",
+        "section": "carvera",
+        "key": "ui_density_override",
+        "default": "false"
+    },
+    {
+        "type": "numeric",
+        "title": "Override Window Density",
+        "desc": "Overridden UI Window Density.",
+        "section": "carvera",
+        "key": "ui_density",
+        "default": "2.0"
+    }
+]

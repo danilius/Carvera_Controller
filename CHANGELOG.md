@@ -4,6 +4,8 @@
 - Enhancement: Window size of the app is saved on exit
 - Change: Default to showing the Control screen instead of empty file view
 - Change: Default window size is now 1440x900
+- Enhancement: Controller configuration can now be changed via Settings
+- Enhancement: Added configurable UI Density
 
 [0.5.3]
 - Fix: Exception handling for loading machine config file into controller. If the config can't be parsed correctly it will be skipped and a warning message shown on screen.

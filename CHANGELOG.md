@@ -7,7 +7,7 @@
 - Enhancement: Controller configuration can now be changed via Settings
 - Enhancement: Added configurable Controller UI Density via Settings
 - Enhancement: Added configurable screensaver prevention via Settings
-- Enhancement: Added update checking toggle to Settings
+- Enhancement: Keyboard controls for jogging. Arrow keys for X/Y, and PgUp/PgDown for Z axis movements. Disabled by default. Toggle in Settings panel.
 
 [0.5.3]
 - Fix: Exception handling for loading machine config file into controller. If the config can't be parsed correctly it will be skipped and a warning message shown on screen.

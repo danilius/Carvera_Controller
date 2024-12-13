@@ -9,8 +9,8 @@
     },
     {
         "type": "numeric",
-        "title": "Override Window Density",
-        "desc": "Overridden UI Window Density.",
+        "title": "Overridden Window Density Multiplier",
+        "desc": "How many times bigger should the UI be scaled. Fractions are allowed.",
         "section": "carvera",
         "key": "ui_density",
         "default": "2.0"
@@ -26,9 +26,17 @@
     {
         "type": "bool",
         "title": "Show Update Notification",
-        "desc": "Should firmware/controller update availability be checked?",
+        "desc": "Check for new updates on startup?",
         "section": "carvera",
         "key": "show_update",
         "default": "true"
+    },
+    {
+        "type": "string",
+        "title": "Previous Machine Network Address",
+        "desc": "Network address of last machine connected over network. Used for reconnect functionality",
+        "section": "carvera",
+        "key": "address",
+        "default": ""
     }
 ]

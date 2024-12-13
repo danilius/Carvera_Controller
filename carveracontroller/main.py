@@ -1431,7 +1431,7 @@ class Makera(RelativeLayout):
         # Set default controller config values
         for setting in controller_config_definition:
             if 'default' in setting:
-                Config.setdefault('carvera', setting['key'], setting['default'])
+                Config.setdefault(setting['section'], setting['key'], setting['default'])
                 setting.pop('default', None)
             controller_config.append(setting)
 

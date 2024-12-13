@@ -1,4 +1,5 @@
 [unreleased]
+- Enhancement: add "tool change" as a option for the front button long press actions. This feature requires Community Firmware.
 - Enhancement: Support translation file generation, updates, and inclusion into binary. We now can accept translation contributions.
 - Enhancement: Using the report bug button opens the controller log directory
 

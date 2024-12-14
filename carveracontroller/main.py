@@ -3371,11 +3371,19 @@ class Makera(RelativeLayout):
         else:
             Window.unbind(on_key_down=self._keyboard_jog_keydown)
     
+    def _is_popup_open(self):
+        """Checks to see if any of the popups objects are open."""
+        popups_to_check = [self.file_popup._is_open, self.coord_popup._is_open, self.xyz_probe_popup._is_open, self.pairing_popup._is_open,
+                   self.upgrade_popup._is_open, self.language_popup._is_open, self.diagnose_popup._is_open, self.confirm_popup._is_open,
+                   self.message_popup._is_open, self.progress_popup._is_open, self.input_popup._is_open, self.config_popup._is_open]
+
+        return any(popups_to_check)
+    
     def _keyboard_jog_keydown(self, *args):
         app = App.get_running_app()
 
-        # Only allow keyboard jogging when machine in a suitable state
-        if (app.state in ['Idle', 'Run', 'Pause']) or (app.playing and app.state == 'Pause'):
+        # Only allow keyboard jogging when machine in a suitable state and has no popups open
+        if (app.state in ['Idle', 'Run', 'Pause'] or (app.playing and app.state == 'Pause')) and not self._is_popup_open():
             key = args[1]  # keycode
             if key == 274:  # down button
                 app.root.controller.jog_with_speed("Y{}".format(app.root.step_xy.text), app.root.jog_speed)

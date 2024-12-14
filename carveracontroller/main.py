@@ -3361,6 +3361,12 @@ class Makera(RelativeLayout):
     def toggle_jog_control_ui(self):
         app = App.get_running_app()
         app.root.show_advanced_jog_controls = not app.root.show_advanced_jog_controls  # toggle the boolean
+
+        # Don't let the kb jog work if the advanced jog control bar is closed
+        if not app.root.show_advanced_jog_controls:
+            app.root.keyboard_jog_control = False
+            app.root.ids.kb_jog_btn.state = 'normal'
+            Window.unbind(on_key_down=self._keyboard_jog_keydown)    
     
     def toggle_keyboard_jog_control(self):
         app = App.get_running_app()

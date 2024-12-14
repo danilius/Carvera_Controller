@@ -1,0 +1,42 @@
+[
+    {
+        "type": "bool",
+        "title": "Override UI Window Density",
+        "desc": "Should the OS DPI settings be overridden?",
+        "section": "carvera",
+        "key": "ui_density_override",
+        "default": "false"
+    },
+    {
+        "type": "numeric",
+        "title": "Overridden Window Density Multiplier",
+        "desc": "How many times bigger should the UI be scaled. Fractions are allowed.",
+        "section": "carvera",
+        "key": "ui_density",
+        "default": "2.0"
+    },
+    {
+        "type": "bool",
+        "title": "Allow Screensaver",
+        "desc": "Should the screensaver be allowed to run?",
+        "section": "graphics",
+        "key": "allow_screensaver",
+        "default": "false"
+    },
+    {
+        "type": "bool",
+        "title": "Show Update Notification",
+        "desc": "Check for new updates on startup?",
+        "section": "carvera",
+        "key": "show_update",
+        "default": "true"
+    },
+    {
+        "type": "string",
+        "title": "Previous Machine Network Address",
+        "desc": "Network address of last machine connected over network. Used for reconnect functionality",
+        "section": "carvera",
+        "key": "address",
+        "default": ""
+    }
+]

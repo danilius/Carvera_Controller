@@ -563,6 +563,9 @@ class MakeraConfigPanel(SettingsWithSidebar):
             elif key == 'default' and value == 'DEFAULT':
                 app.root.open_setting_default_confirm_popup()
 
+class JogSpeedDropDown(DropDown):
+    pass
+
 class XDropDown(DropDown):
     pass
 
@@ -1180,6 +1183,9 @@ class Makera(RelativeLayout):
     message_popup = ObjectProperty()
     progress_popup = ObjectProperty()
     input_popup = ObjectProperty()
+    show_advanced_jog_controls = BooleanProperty(False)
+    keyboard_jog_control = BooleanProperty(False)
+    jog_speed = NumericProperty(0)
 
     gcode_viewer = ObjectProperty()
     gcode_playing = BooleanProperty(False)
@@ -1329,9 +1335,9 @@ class Makera(RelativeLayout):
         self.laser_drop_down = LaserDropDown()
         self.func_drop_down = FuncDropDown()
         self.status_drop_down = StatusDropDown()
-        #
         self.operation_drop_down = OperationDropDown()
-        #
+        self.jog_speed_drop_down = JogSpeedDropDown()
+
         self.confirm_popup = ConfirmPopup()
         self.message_popup = MessagePopup()
         self.progress_popup = ProgressPopup()
@@ -3354,7 +3360,35 @@ class Makera(RelativeLayout):
     # -----------------------------------------------------------------------
     def toggle_jog_control_ui(self):
         app = App.get_running_app()
-        app.show_advanced_jog_controls = not app.show_advanced_jog_controls  # toggle the boolean
+        app.root.show_advanced_jog_controls = not app.root.show_advanced_jog_controls  # toggle the boolean
+    
+    def toggle_keyboard_jog_control(self):
+        app = App.get_running_app()
+        app.root.keyboard_jog_control = not app.root.keyboard_jog_control  # toggle the boolean
+
+        if app.root.keyboard_jog_control:
+            Window.bind(on_key_down=self._keyboard_jog_keydown)
+        else:
+            Window.unbind(on_key_down=self._keyboard_jog_keydown)
+    
+    def _keyboard_jog_keydown(self, *args):
+        app = App.get_running_app()
+
+        # Only allow keyboard jogging when machine in a suitable state
+        if (app.state in ['Idle', 'Run', 'Pause']) or (app.playing and app.state == 'Pause'):
+            key = args[1]  # keycode
+            if key == 274:  # down button
+                app.root.controller.jog_with_speed("Y{}".format(app.root.step_xy.text), app.root.jog_speed)
+            elif key == 273:  # up button
+                app.root.controller.jog_with_speed("Y-{}".format(app.root.step_xy.text), app.root.jog_speed)
+            elif key == 275:  # right button
+                app.root.controller.jog_with_speed("X{}".format(app.root.step_xy.text), app.root.jog_speed)
+            elif key == 276:  # left button
+                app.root.controller.jog_with_speed("X-{}".format(app.root.step_xy.text), app.root.jog_speed)
+            elif key == 280:  # page up
+                app.root.controller.jog_with_speed("Z{}".format(app.root.step_z.text), app.root.jog_speed)
+            elif key == 281:  # page down
+                app.root.controller.jog_with_speed("Z-{}".format(app.root.step_z.text), app.root.jog_speed)
 
     def apply_setting_changes(self):
         if self.setting_change_list:
@@ -3709,7 +3743,6 @@ class MakeraApp(App):
     has_4axis = BooleanProperty(False)
     lasering = BooleanProperty(False)
     show_gcode_ctl_bar = BooleanProperty(False)
-    show_advanced_jog_controls = BooleanProperty(False)
     fw_has_update = BooleanProperty(False)
     ctl_has_update = BooleanProperty(False)
     selected_local_filename = StringProperty('')

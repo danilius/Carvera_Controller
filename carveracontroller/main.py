@@ -1783,11 +1783,16 @@ class Makera(RelativeLayout):
                             color=(180 / 255, 180 / 255, 180 / 255, 1))
         self.wifi_conn_drop_down.add_widget(btn)
         self.wifi_conn_drop_down.open(button)
-        Clock.schedule_once(self.load_machine_list, 0)
+        self.machine_detector.query_for_machines()
+        Clock.schedule_interval(self.load_machine_list, 0.1)
 
     def load_machine_list(self, *args):
+        machines = self.machine_detector.check_for_responses()
+        if machines is None:
+            # the MachineDetector is still waiting for responses from machines
+            return
+        Clock.unschedule(self.load_machine_list)
         self.wifi_conn_drop_down.clear_widgets()
-        machines = self.machine_detector.get_machine_list()
         if len(machines) == 0:
             btn = MachineButton(text=tr._('None found, enter address manually...'), size_hint_y=None, height='35dp',
                                 color=(225 / 255, 225 / 255, 225 / 255, 1))

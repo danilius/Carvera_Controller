@@ -3352,6 +3352,10 @@ class Makera(RelativeLayout):
         return True
 
     # -----------------------------------------------------------------------
+    def toggle_jog_control_ui(self):
+        app = App.get_running_app()
+        app.show_advanced_jog_controls = not app.show_advanced_jog_controls  # toggle the boolean
+
     def apply_setting_changes(self):
         if self.setting_change_list:
             self.apply_machine_setting_changes()
@@ -3705,6 +3709,7 @@ class MakeraApp(App):
     has_4axis = BooleanProperty(False)
     lasering = BooleanProperty(False)
     show_gcode_ctl_bar = BooleanProperty(False)
+    show_advanced_jog_controls = BooleanProperty(False)
     fw_has_update = BooleanProperty(False)
     ctl_has_update = BooleanProperty(False)
     selected_local_filename = StringProperty('')

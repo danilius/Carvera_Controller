@@ -8,6 +8,8 @@
 - Enhancement: Controller configuration can now be changed via Settings
 - Enhancement: Added configurable Controller UI Density via Settings
 - Enhancement: Added configurable screensaver prevention via Settings
+- Enhancement: Advanced Jog Controls. Additional controls panel for jogging. Including Ability to set jog movement speed and Keyboard Mode. When keyboard mode is enabled, use Arrow keys for X/Y, and PgUp/PgDown for Z axis movements.
+
 
 [0.5.3]
 - Fix: Exception handling for loading machine config file into controller. If the config can't be parsed correctly it will be skipped and a warning message shown on screen.

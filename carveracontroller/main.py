@@ -3748,7 +3748,7 @@ def android_tweaks():
         print("Pyjnius Import Fail.")
 
 def load_app_configs():
-    if Config.get('carvera', 'ui_density_override') == "1":
+    if Config.has_option('carvera', 'ui_density_override') and Config.get('carvera', 'ui_density_override') == "1":
         Metrics.set_density(float(Config.get('carvera', 'ui_density')))
 
 def set_config_defaults(default_lang):

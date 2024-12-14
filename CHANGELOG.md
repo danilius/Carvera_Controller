@@ -9,6 +9,7 @@
 - Enhancement: Added configurable Controller UI Density via Settings
 - Enhancement: Added configurable screensaver prevention via Settings
 - Enhancement: Advanced Jog Controls. Additional controls panel for jogging. Including Ability to set jog movement speed and Keyboard Mode. When keyboard mode is enabled, use Arrow keys for X/Y, and PgUp/PgDown for Z axis movements.
+- Fix: "Scan Wi-Fi..." menu option is now non blocking, and will no longer freeze the rest of the UI
 
 
 [0.5.3]

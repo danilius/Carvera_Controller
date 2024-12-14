@@ -563,6 +563,9 @@ class MakeraConfigPanel(SettingsWithSidebar):
             elif key == 'default' and value == 'DEFAULT':
                 app.root.open_setting_default_confirm_popup()
 
+class JogSpeedDropDown(DropDown):
+    pass
+
 class XDropDown(DropDown):
     pass
 
@@ -1180,6 +1183,9 @@ class Makera(RelativeLayout):
     message_popup = ObjectProperty()
     progress_popup = ObjectProperty()
     input_popup = ObjectProperty()
+    show_advanced_jog_controls = BooleanProperty(False)
+    keyboard_jog_control = BooleanProperty(False)
+    jog_speed = NumericProperty(0)
 
     gcode_viewer = ObjectProperty()
     gcode_playing = BooleanProperty(False)
@@ -1329,9 +1335,9 @@ class Makera(RelativeLayout):
         self.laser_drop_down = LaserDropDown()
         self.func_drop_down = FuncDropDown()
         self.status_drop_down = StatusDropDown()
-        #
         self.operation_drop_down = OperationDropDown()
-        #
+        self.jog_speed_drop_down = JogSpeedDropDown()
+
         self.confirm_popup = ConfirmPopup()
         self.message_popup = MessagePopup()
         self.progress_popup = ProgressPopup()
@@ -3352,6 +3358,52 @@ class Makera(RelativeLayout):
         return True
 
     # -----------------------------------------------------------------------
+    def toggle_jog_control_ui(self):
+        app = App.get_running_app()
+        app.root.show_advanced_jog_controls = not app.root.show_advanced_jog_controls  # toggle the boolean
+
+        # Don't let the kb jog work if the advanced jog control bar is closed
+        if not app.root.show_advanced_jog_controls:
+            app.root.keyboard_jog_control = False
+            app.root.ids.kb_jog_btn.state = 'normal'
+            Window.unbind(on_key_down=self._keyboard_jog_keydown)    
+    
+    def toggle_keyboard_jog_control(self):
+        app = App.get_running_app()
+        app.root.keyboard_jog_control = not app.root.keyboard_jog_control  # toggle the boolean
+
+        if app.root.keyboard_jog_control:
+            Window.bind(on_key_down=self._keyboard_jog_keydown)
+        else:
+            Window.unbind(on_key_down=self._keyboard_jog_keydown)
+    
+    def _is_popup_open(self):
+        """Checks to see if any of the popups objects are open."""
+        popups_to_check = [self.file_popup._is_open, self.coord_popup._is_open, self.xyz_probe_popup._is_open, self.pairing_popup._is_open,
+                   self.upgrade_popup._is_open, self.language_popup._is_open, self.diagnose_popup._is_open, self.confirm_popup._is_open,
+                   self.message_popup._is_open, self.progress_popup._is_open, self.input_popup._is_open, self.config_popup._is_open]
+
+        return any(popups_to_check)
+    
+    def _keyboard_jog_keydown(self, *args):
+        app = App.get_running_app()
+
+        # Only allow keyboard jogging when machine in a suitable state and has no popups open
+        if (app.state in ['Idle', 'Run', 'Pause'] or (app.playing and app.state == 'Pause')) and not self._is_popup_open():
+            key = args[1]  # keycode
+            if key == 274:  # down button
+                app.root.controller.jog_with_speed("Y{}".format(app.root.step_xy.text), app.root.jog_speed)
+            elif key == 273:  # up button
+                app.root.controller.jog_with_speed("Y-{}".format(app.root.step_xy.text), app.root.jog_speed)
+            elif key == 275:  # right button
+                app.root.controller.jog_with_speed("X{}".format(app.root.step_xy.text), app.root.jog_speed)
+            elif key == 276:  # left button
+                app.root.controller.jog_with_speed("X-{}".format(app.root.step_xy.text), app.root.jog_speed)
+            elif key == 280:  # page up
+                app.root.controller.jog_with_speed("Z{}".format(app.root.step_z.text), app.root.jog_speed)
+            elif key == 281:  # page down
+                app.root.controller.jog_with_speed("Z-{}".format(app.root.step_z.text), app.root.jog_speed)
+
     def apply_setting_changes(self):
         if self.setting_change_list:
             self.apply_machine_setting_changes()

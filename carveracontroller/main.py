@@ -1389,9 +1389,6 @@ class Makera(RelativeLayout):
         #
         threading.Thread(target=self.monitorSerial).start()
 
-        # Keyboard Jog Controls
-        Window.bind(on_key_down=self._keydown)
-
     def __del__(self):
         # Cleanup the temporary directory when the app is closed
         try:
@@ -1401,26 +1398,6 @@ class Makera(RelativeLayout):
         Config.set('graphics', 'width', Window.size[0])
         Config.set('graphics', 'height', Window.size[1])
         Config.write()
-
-    
-    def _keydown(self, *args):
-        app = App.get_running_app()
-
-        # Only allow keyboard jogging when machine in a suitable state
-        if (app.state in ['Idle', 'Run', 'Pause']) or (app.playing and app.state == 'Pause'):
-            key = args[1]  # keycode
-            if key == 274:  # down button
-                app.root.controller.jog("Y{}".format(app.root.step_xy.text))
-            elif key == 273:  # up button
-                app.root.controller.jog("Y-{}".format(app.root.step_xy.text))
-            elif key == 275:  # right button
-                app.root.controller.jog("X{}".format(app.root.step_xy.text))
-            elif key == 276:  # left button
-                app.root.controller.jog("X-{}".format(app.root.step_xy.text))
-            elif key == 280:  # page up
-                app.root.controller.jog("Z{}".format(app.root.step_z.text))
-            elif key == 281:  # page down
-                app.root.controller.jog("Z-{}".format(app.root.step_z.text))
     
     def load_controller_config(self):
         config_def_file = os.path.join(os.path.dirname(__file__),'controller_config.json')
@@ -2208,7 +2185,7 @@ class Makera(RelativeLayout):
             self.load_laser_offsets()
             self.setting_change_list = {}
 
-            self.config_loaded = self.load_config()
+            self.config_loaded = self.load_machine_config()
             self.config_loading = False
             self.config_popup.btn_apply.disabled = True if len(self.setting_change_list) == 0 else False
         else:
@@ -3258,9 +3235,16 @@ class Makera(RelativeLayout):
         self.updateStatus()
 
     # -----------------------------------------------------------------------
-    def load_config(self):
+    def load_machine_config(self):
         panels = self.config_popup.settings_panel.interface.content.panels
-        if len(panels.values()) > 0:
+
+        # Need to subtract the controller config panels from count to see if machine config panels already loaded
+        controller_config_panels = 0
+        for panel in panels.values():
+            if panel.title == 'Controller':
+                controller_config_panels = 1
+        
+        if len(panels.values()) - controller_config_panels > 0:
             # already have panels, update data
             for panel in panels.values():
                 children = panel.children
@@ -3284,7 +3268,10 @@ class Makera(RelativeLayout):
                                 child.value = new_value
                             self.controller.log.put(
                                 (Controller.MSG_NORMAL, 'Can not load config, Key: {}'.format(child.key)))
-                        elif child.key.lower() != 'restore' and child.key.lower() != 'default':
+                            
+                        # restore/default are used for default config management
+                        # carvera/graphics options are managed via Controller settings (not here)
+                        elif child.section.lower() not in ['restore','default', 'carvera', 'graphics']:
                             self.controller.log.put(
                                 (Controller.MSG_ERROR, tr._('Load config error, Key:') + ' {}'.format(child.key)))
                             self.controller.close()
@@ -3356,7 +3343,7 @@ class Makera(RelativeLayout):
                         advanced.pop('default')
                 self.config_popup.settings_panel.add_json_panel('Machine - Basic', self.config, data=json.dumps(basic_config))
                 self.config_popup.settings_panel.add_json_panel('Machine - Advanced', self.config, data=json.dumps(advanced_config))
-                self.config_popup.settings_panel.add_json_panel('Restore', self.config, data=json.dumps(restore_config))
+                self.config_popup.settings_panel.add_json_panel('Machine - Restore', self.config, data=json.dumps(restore_config))
         return True
 
     # -----------------------------------------------------------------------

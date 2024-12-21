@@ -1,4 +1,4 @@
-[unreleased]
+[0.6.0]
 - Enhancement: add "tool change" as a option for the front button long press actions. This feature requires Community Firmware.
 - Enhancement: Support translation file generation, updates, and inclusion into binary. We now can accept translation contributions.
 - Change: Using the report bug button opens the controller log directory
@@ -10,7 +10,6 @@
 - Enhancement: Added configurable screensaver prevention via Settings
 - Enhancement: Advanced Jog Controls. Additional controls panel for jogging. Including Ability to set jog movement speed and Keyboard Mode. When keyboard mode is enabled, use Arrow keys for X/Y, and PgUp/PgDown for Z axis movements.
 - Fix: "Scan Wi-Fi..." menu option is now non blocking, and will no longer freeze the rest of the UI
-
 
 [0.5.3]
 - Fix: Exception handling for loading machine config file into controller. If the config can't be parsed correctly it will be skipped and a warning message shown on screen.

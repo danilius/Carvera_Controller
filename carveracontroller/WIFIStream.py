@@ -18,7 +18,11 @@ SOCKET_TIMEOUT = 0.3  # s
 # ==============================================================================
 class MachineDetector:
     def __init__(self):
-        pass
+        self.machine_list = []
+        self.machine_name_list = []
+        self.sock = None
+        self.t = None
+        self.tr = None
 
     def is_machine_busy(self, addr):
         """Tries to connect to the machine, if machine is available returns true else false"""
@@ -28,34 +32,40 @@ class MachineDetector:
         except (socket.timeout, socket.error) as e:
             return True
 
-    def get_machine_list(self):
+    def query_for_machines(self):
         UDP_IP = "0.0.0.0"
-        machine_list = []
-        machine_name_list = []
         # test
-        # machine_list.append({'machine': 'Dummy machine', 'ip': '127.0.0.1', 'port': 7777, 'busy': False})
+        # self.machine_list.append({'machine': 'Dummy machine', 'ip': '127.0.0.1', 'port': 7777, 'busy': False})
         try:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            sock.settimeout(1)
-            sock.bind((UDP_IP, UDP_PORT))
-            t = tr = time.time()
-            while t - tr < 3:
+            self.machine_list = []
+            self.machine_name_list = []
+            self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            self.sock.settimeout(1)
+            self.sock.bind((UDP_IP, UDP_PORT))
+            self.t = self.tr = time.time()
+        except:
+            print(sys.exc_info()[1])
+
+    def check_for_responses(self):
+        try:
+            if self.t - self.tr < 3:
                 fields = []
                 try:
-                    data, addr = sock.recvfrom(128)  # buffer size is 1024 bytes
+                    data, addr = self.sock.recvfrom(128)  # buffer size is 1024 bytes
                     fields = data.decode('utf-8').split(',')
                 except:
                     pass
-                if len(fields) > 3 and fields[0] not in machine_name_list:
-                    machine_name_list.append(fields[0])
-                    machine_list.append({'machine': fields[0], 'ip': fields[1], 'port': int(fields[2]), 'busy': True if fields[3] == '1' else False})
-                    print(machine_list[-1])
-                    #break
-                t = time.time()
-            sock.close()
+                if len(fields) > 3 and fields[0] not in self.machine_name_list:
+                    self.machine_name_list.append(fields[0])
+                    self.machine_list.append({'machine': fields[0], 'ip': fields[1], 'port': int(fields[2]), 'busy': True if fields[3] == '1' else False})
+                    print(self.machine_list[-1])
+                self.t = time.time()
+                return None
+            else:
+                self.sock.close()
+                return self.machine_list
         except:
             print(sys.exc_info()[1])
-        return machine_list
 
 
 

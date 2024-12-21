@@ -501,10 +501,6 @@ class Controller:
         if self.stream:
             self.stream.send(b'\x18')
 
-    def sendbugreport(self):
-        webbrowser.open('https://github.com/Carvera-Community/Carvera_Controller/issues')
-        webbrowser.open('https://github.com/Carvera-Community/Carvera_Community_Firmware/issues')
-
     # ----------------------------------------------------------------------
     def hardResetPre(self):
         self.stream.send(b"reset\n")
@@ -786,6 +782,12 @@ class Controller:
     # ----------------------------------------------------------------------
     def jog(self, _dir):
         self.executeCommand("G91G0{}".format(_dir))
+    
+    def jog_with_speed(self, _dir, speed):
+        if speed > 0:
+            self.executeCommand(f"G91G0{_dir} F{speed}")
+        else:
+            self.executeCommand(f"G91G0{_dir}")
 
     # ----------------------------------------------------------------------
     def goto(self, x=None, y=None, z=None):

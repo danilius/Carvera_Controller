@@ -89,8 +89,8 @@ from kivy.uix.label import Label
 from kivy.properties import BooleanProperty
 from kivy.graphics import Color, Rectangle, Ellipse, Line
 from kivy.properties import ObjectProperty, NumericProperty, ListProperty
-from kivy.metrics import dp
 from kivy.config import Config
+from kivy.metrics import Metrics
 
 from serial.tools.list_ports import comports
 from functools import partial
@@ -105,6 +105,7 @@ from pathlib import Path
 # import os
 import shutil
 import string
+import subprocess
 
 from . import Utils
 from kivy.config import ConfigParser
@@ -551,13 +552,19 @@ class MakeraConfigPanel(SettingsWithSidebar):
     def on_config_change(self, config, section, key, value):
         app = App.get_running_app()
         if not app.root.config_loading:
-            if section != 'Restore':
+            if section in ['carvera', 'graphics']:
+                app.root.controller_setting_change_list[key] = value
+                app.root.config_popup.btn_apply.disabled = False
+            elif section != 'Restore':
                 app.root.setting_change_list[key] = Utils.to_config(app.root.setting_type_list[key], value).strip()
                 app.root.config_popup.btn_apply.disabled = False
             elif key == 'restore' and value == 'RESTORE':
                 app.root.open_setting_restore_confirm_popup()
             elif key == 'default' and value == 'DEFAULT':
                 app.root.open_setting_default_confirm_popup()
+
+class JogSpeedDropDown(DropDown):
+    pass
 
 class XDropDown(DropDown):
     pass
@@ -1110,7 +1117,6 @@ class TopBar(BoxLayout):
 
 class BottomBar(BoxLayout):
     pass
-
 # -----------------------------------------------------------------------
 class Content(ScreenManager):
     pass
@@ -1177,6 +1183,9 @@ class Makera(RelativeLayout):
     message_popup = ObjectProperty()
     progress_popup = ObjectProperty()
     input_popup = ObjectProperty()
+    show_advanced_jog_controls = BooleanProperty(False)
+    keyboard_jog_control = BooleanProperty(False)
+    jog_speed = NumericProperty(0)
 
     gcode_viewer = ObjectProperty()
     gcode_playing = BooleanProperty(False)
@@ -1326,9 +1335,9 @@ class Makera(RelativeLayout):
         self.laser_drop_down = LaserDropDown()
         self.func_drop_down = FuncDropDown()
         self.status_drop_down = StatusDropDown()
-        #
         self.operation_drop_down = OperationDropDown()
-        #
+        self.jog_speed_drop_down = JogSpeedDropDown()
+
         self.confirm_popup = ConfirmPopup()
         self.message_popup = MessagePopup()
         self.progress_popup = ProgressPopup()
@@ -1361,6 +1370,8 @@ class Makera(RelativeLayout):
         self.setting_list = {}
         self.setting_type_list = {}
         self.setting_default_list = {}
+        self.controller_setting_change_list = {}
+        self.load_controller_config()
 
         self.usb_event = lambda instance, x: self.openUSB(x)
         self.wifi_event = lambda instance, x: self.openWIFI(x)
@@ -1390,9 +1401,44 @@ class Makera(RelativeLayout):
             shutil.rmtree(self.temp_dir)
         except Exception as e:
             print(f"Error cleaning up temporary directory: {e}")
+        Config.set('graphics', 'width', Window.size[0])
+        Config.set('graphics', 'height', Window.size[1])
+        Config.write()
     
+    def load_controller_config(self):
+        config_def_file = os.path.join(os.path.dirname(__file__),'controller_config.json')
+        with open(config_def_file) as file:
+            controller_config_definition = json.load(file)
+        controller_config = []
+
+        # Set default controller config values
+        for setting in controller_config_definition:
+            if 'default' in setting:
+                Config.setdefault(setting['section'], setting['key'], setting['default'])
+                setting.pop('default', None)
+            controller_config.append(setting)
+
+        self.config_popup.settings_panel.add_json_panel('Controller', Config, data=json.dumps(controller_config))
+
+    def apply_controller_settings(self):
+        pass
+
+
     def open_download(self):
         webbrowser.open(DOWNLOAD_ADDRESS, new = 2)
+    
+    def send_bug_report(self):
+        webbrowser.open('https://github.com/Carvera-Community/Carvera_Controller/issues')
+        webbrowser.open('https://github.com/Carvera-Community/Carvera_Community_Firmware/issues')
+        log_dir = Path.home() / ".kivy" / "logs"
+        
+        # Open the log directory with whatever native file browser is availiable
+        if sys.platform == "win32":
+            os.startfile(log_dir)
+        else:
+            # Linux and MacOS
+            opener = "open" if sys.platform == "darwin" else "xdg-open"
+            subprocess.Popen([opener, log_dir])
 
     def open_update_popup(self):
         self.upgrade_popup.check_button.disabled = False
@@ -1743,11 +1789,16 @@ class Makera(RelativeLayout):
                             color=(180 / 255, 180 / 255, 180 / 255, 1))
         self.wifi_conn_drop_down.add_widget(btn)
         self.wifi_conn_drop_down.open(button)
-        Clock.schedule_once(self.load_machine_list, 0)
+        self.machine_detector.query_for_machines()
+        Clock.schedule_interval(self.load_machine_list, 0.1)
 
     def load_machine_list(self, *args):
+        machines = self.machine_detector.check_for_responses()
+        if machines is None:
+            # the MachineDetector is still waiting for responses from machines
+            return
+        Clock.unschedule(self.load_machine_list)
         self.wifi_conn_drop_down.clear_widgets()
-        machines = self.machine_detector.get_machine_list()
         if len(machines) == 0:
             btn = MachineButton(text=tr._('None found, enter address manually...'), size_hint_y=None, height='35dp',
                                 color=(225 / 255, 225 / 255, 225 / 255, 1))
@@ -2145,7 +2196,7 @@ class Makera(RelativeLayout):
             self.load_laser_offsets()
             self.setting_change_list = {}
 
-            self.config_loaded = self.load_config()
+            self.config_loaded = self.load_machine_config()
             self.config_loading = False
             self.config_popup.btn_apply.disabled = True if len(self.setting_change_list) == 0 else False
         else:
@@ -3195,9 +3246,16 @@ class Makera(RelativeLayout):
         self.updateStatus()
 
     # -----------------------------------------------------------------------
-    def load_config(self):
+    def load_machine_config(self):
         panels = self.config_popup.settings_panel.interface.content.panels
-        if len(panels.values()) > 0:
+
+        # Need to subtract the controller config panels from count to see if machine config panels already loaded
+        controller_config_panels = 0
+        for panel in panels.values():
+            if panel.title == 'Controller':
+                controller_config_panels = 1
+        
+        if len(panels.values()) - controller_config_panels > 0:
             # already have panels, update data
             for panel in panels.values():
                 children = panel.children
@@ -3221,7 +3279,10 @@ class Makera(RelativeLayout):
                                 child.value = new_value
                             self.controller.log.put(
                                 (Controller.MSG_NORMAL, 'Can not load config, Key: {}'.format(child.key)))
-                        elif child.key.lower() != 'restore' and child.key.lower() != 'default':
+                            
+                        # restore/default are used for default config management
+                        # carvera/graphics options are managed via Controller settings (not here)
+                        elif child.section.lower() not in ['restore','default', 'carvera', 'graphics']:
                             self.controller.log.put(
                                 (Controller.MSG_ERROR, tr._('Load config error, Key:') + ' {}'.format(child.key)))
                             self.controller.close()
@@ -3291,21 +3352,82 @@ class Makera(RelativeLayout):
                         advanced.pop('section')
                     elif 'default' in advanced:
                         advanced.pop('default')
-
-                self.config_popup.settings_panel.add_json_panel('Basic', self.config, data=json.dumps(basic_config))
-                self.config_popup.settings_panel.add_json_panel('Advanced', self.config, data=json.dumps(advanced_config))
-                self.config_popup.settings_panel.add_json_panel('Restore', self.config, data=json.dumps(restore_config))
+                self.config_popup.settings_panel.add_json_panel('Machine - Basic', self.config, data=json.dumps(basic_config))
+                self.config_popup.settings_panel.add_json_panel('Machine - Advanced', self.config, data=json.dumps(advanced_config))
+                self.config_popup.settings_panel.add_json_panel('Machine - Restore', self.config, data=json.dumps(restore_config))
         return True
 
     # -----------------------------------------------------------------------
+    def toggle_jog_control_ui(self):
+        app = App.get_running_app()
+        app.root.show_advanced_jog_controls = not app.root.show_advanced_jog_controls  # toggle the boolean
+
+        # Don't let the kb jog work if the advanced jog control bar is closed
+        if not app.root.show_advanced_jog_controls:
+            app.root.keyboard_jog_control = False
+            app.root.ids.kb_jog_btn.state = 'normal'
+            Window.unbind(on_key_down=self._keyboard_jog_keydown)    
+    
+    def toggle_keyboard_jog_control(self):
+        app = App.get_running_app()
+        app.root.keyboard_jog_control = not app.root.keyboard_jog_control  # toggle the boolean
+
+        if app.root.keyboard_jog_control:
+            Window.bind(on_key_down=self._keyboard_jog_keydown)
+        else:
+            Window.unbind(on_key_down=self._keyboard_jog_keydown)
+    
+    def _is_popup_open(self):
+        """Checks to see if any of the popups objects are open."""
+        popups_to_check = [self.file_popup._is_open, self.coord_popup._is_open, self.xyz_probe_popup._is_open, self.pairing_popup._is_open,
+                   self.upgrade_popup._is_open, self.language_popup._is_open, self.diagnose_popup._is_open, self.confirm_popup._is_open,
+                   self.message_popup._is_open, self.progress_popup._is_open, self.input_popup._is_open, self.config_popup._is_open]
+
+        return any(popups_to_check)
+    
+    def _keyboard_jog_keydown(self, *args):
+        app = App.get_running_app()
+
+        # Only allow keyboard jogging when machine in a suitable state and has no popups open
+        if (app.state in ['Idle', 'Run', 'Pause'] or (app.playing and app.state == 'Pause')) and not self._is_popup_open():
+            key = args[1]  # keycode
+            if key == 274:  # down button
+                app.root.controller.jog_with_speed("Y{}".format(app.root.step_xy.text), app.root.jog_speed)
+            elif key == 273:  # up button
+                app.root.controller.jog_with_speed("Y-{}".format(app.root.step_xy.text), app.root.jog_speed)
+            elif key == 275:  # right button
+                app.root.controller.jog_with_speed("X{}".format(app.root.step_xy.text), app.root.jog_speed)
+            elif key == 276:  # left button
+                app.root.controller.jog_with_speed("X-{}".format(app.root.step_xy.text), app.root.jog_speed)
+            elif key == 280:  # page up
+                app.root.controller.jog_with_speed("Z{}".format(app.root.step_z.text), app.root.jog_speed)
+            elif key == 281:  # page down
+                app.root.controller.jog_with_speed("Z-{}".format(app.root.step_z.text), app.root.jog_speed)
+
     def apply_setting_changes(self):
+        if self.setting_change_list:
+            self.apply_machine_setting_changes()
+        if self.controller_setting_change_list:
+            self.apply_controller_setting_changes()
+
+
+    def apply_machine_setting_changes(self):
         for key in self.setting_change_list:
             self.controller.setConfigValue(key, self.setting_change_list[key])
             time.sleep(0.1)
         self.setting_change_list.clear()
         self.config_popup.btn_apply.disabled = True
-        self.message_popup.lb_content.text = tr._('Settings applied, need reset to take effect !')
+        self.message_popup.lb_content.text = tr._('Settings applied, need machine reset to take effect !')
         self.message_popup.open()
+
+    
+    def apply_controller_setting_changes(self):
+        if self.controller_setting_change_list.get("ui_density_override") or self.controller_setting_change_list.get("ui_density"):
+            self.message_popup.lb_content.text = tr._('UI Density changed, restart application to apply.')
+            self.message_popup.open()
+
+        self.config_popup.btn_apply.disabled = True
+
 
     # -----------------------------------------------------------------------
     def open_setting_restore_confirm_popup(self):
@@ -3677,33 +3799,39 @@ def android_tweaks():
     except ImportError:
         print("Pyjnius Import Fail.")
 
+def load_app_configs():
+    if Config.has_option('carvera', 'ui_density_override') and Config.get('carvera', 'ui_density_override') == "1":
+        Metrics.set_density(float(Config.get('carvera', 'ui_density')))
+
 def set_config_defaults(default_lang):
-    Config.set('kivy', 'exit_on_escape', '0')
-    if not Config.has_section('carvera') or not Config.has_option('carvera', 'version') or Config.get('carvera', 'version') != __version__:
-        if not Config.has_section('carvera'):
-            Config.add_section('carvera')
+    if not Config.has_section('carvera'):
+        Config.add_section('carvera')
+
+    # Only update config if running new version
+    if not Config.has_option('carvera', 'version') or Config.get('carvera', 'version') != __version__:
         Config.set('carvera', 'version', __version__)
-        if not Config.has_option('carvera', 'show_update'): Config.set('carvera', 'show_update', '1')
-        if not Config.has_option('carvera', 'language'): Config.set('carvera', 'language', default_lang)
-        if not Config.has_option('carvera', 'local_folder_1'): Config.set('carvera', 'local_folder_1', '')
-        if not Config.has_option('carvera', 'local_folder_2'): Config.set('carvera', 'local_folder_2', '')
-        if not Config.has_option('carvera', 'local_folder_3'): Config.set('carvera', 'local_folder_3', '')
-        if not Config.has_option('carvera', 'local_folder_4'): Config.set('carvera', 'local_folder_4', '')
-        if not Config.has_option('carvera', 'local_folder_5'): Config.set('carvera', 'local_folder_5', '')
-        if not Config.has_option('carvera', 'remote_folder_1'): Config.set('carvera', 'remote_folder_1', '')
-        if not Config.has_option('carvera', 'remote_folder_2'): Config.set('carvera', 'remote_folder_2', '')
-        if not Config.has_option('carvera', 'remote_folder_3'): Config.set('carvera', 'remote_folder_3', '')
-        if not Config.has_option('carvera', 'remote_folder_4'): Config.set('carvera', 'remote_folder_4', '')
-        if not Config.has_option('carvera', 'remote_folder_5'): Config.set('carvera', 'remote_folder_5', '')
-        # Default params, set only once
+        # Default params that are not configurable, set only once
         Config.set('kivy', 'window_icon', 'data/icon.png')
         Config.set('kivy', 'exit_on_escape', '0')
         Config.set('kivy', 'pause_on_minimize', '0')
-        Config.set('graphics', 'width', '960')
-        Config.set('graphics', 'height', '600')
-        Config.set('graphics', 'allow_screensaver', '0')
-        #Config.set('input', 'mouse', 'mouse, multitouch_on_demand')
-        Config.write()
+
+    # Configurable config options. Don't change if they are already set
+    if not Config.has_option('carvera', 'show_update'): Config.set('carvera', 'show_update', '1')
+    if not Config.has_option('carvera', 'language'): Config.set('carvera', 'language', default_lang)
+    if not Config.has_option('carvera', 'local_folder_1'): Config.set('carvera', 'local_folder_1', '')
+    if not Config.has_option('carvera', 'local_folder_2'): Config.set('carvera', 'local_folder_2', '')
+    if not Config.has_option('carvera', 'local_folder_3'): Config.set('carvera', 'local_folder_3', '')
+    if not Config.has_option('carvera', 'local_folder_4'): Config.set('carvera', 'local_folder_4', '')
+    if not Config.has_option('carvera', 'local_folder_5'): Config.set('carvera', 'local_folder_5', '')
+    if not Config.has_option('carvera', 'remote_folder_1'): Config.set('carvera', 'remote_folder_1', '')
+    if not Config.has_option('carvera', 'remote_folder_2'): Config.set('carvera', 'remote_folder_2', '')
+    if not Config.has_option('carvera', 'remote_folder_3'): Config.set('carvera', 'remote_folder_3', '')
+    if not Config.has_option('carvera', 'remote_folder_4'): Config.set('carvera', 'remote_folder_4', '')
+    if not Config.has_option('carvera', 'remote_folder_5'): Config.set('carvera', 'remote_folder_5', '')
+    if not Config.has_option('graphics', 'allow_screensaver'): Config.set('graphics', 'allow_screensaver', '0')
+    if not Config.has_option('graphics', 'width'): Config.set('graphics', 'width', '1440')
+    if not Config.has_option('graphics', 'height'): Config.set('graphics', 'height', '900')
+    Config.write()
 
 def load_constants():
     Window.softinput_mode = "below_target"
@@ -3766,6 +3894,7 @@ def main():
     default_lang = init_lang()
     tr = Lang(default_lang)
     set_config_defaults(default_lang)
+    load_app_configs()
     HALT_REASON = load_halt_translations(tr)
 
     base_path = app_base_path()

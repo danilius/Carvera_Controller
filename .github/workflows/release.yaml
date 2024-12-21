@@ -30,6 +30,12 @@ jobs:
       uses: ./.github/actions/bootstrap-poetry
       with:
         os: windows
+    
+    - uses: git-for-windows/setup-git-for-windows-sdk@v1
+      with:
+        flavor: minimal
+      # We install the SDK so as to have access to the msgfmt.exe binary
+      # from the GNU gettext package.
 
     - name: "Install Windows-Mesa OpenGL DLL"
       run: |
@@ -136,7 +142,7 @@ jobs:
         os: linux
     
     - name: Install MTDev
-      run: sudo apt-get install -y mtdev-tools
+      run: sudo apt-get install -y mtdev-tools gettext
     
     - name: Generate version strings
       run: |
@@ -172,7 +178,7 @@ jobs:
         copy_artifact_path: dist/carveracontroller-community-*.appimage
         copy_artifact_dest: ${{ github.workspace }}/dist/
         commands: |
-          sudo apt-get install -y git python3-dev build-essential xvfb squashfs-tools
+          sudo apt-get install -y git python3-dev build-essential xvfb squashfs-tools gettext
           curl -sSL https://install.python-poetry.org | python3 - -y
           export PATH="/home/runner/.local/bin:$PATH"
           poetry config virtualenvs.in-project true

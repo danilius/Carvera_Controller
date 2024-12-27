@@ -1424,9 +1424,6 @@ class Makera(RelativeLayout):
 
         self.config_popup.settings_panel.add_json_panel('Controller', Config, data=json.dumps(controller_config))
 
-    def apply_controller_settings(self):
-        pass
-
 
     def open_download(self):
         webbrowser.open(DOWNLOAD_ADDRESS, new = 2)
@@ -1494,6 +1491,10 @@ class Makera(RelativeLayout):
                     Config.set('carvera', 'language', lang_key)
                     Config.write()
         self.language_popup.dismiss()
+        self.config_popup.btn_apply.disabled = True
+        self.message_popup.lb_content.text = tr._('Language setting applied, restart Controller app to take effect !')
+        self.message_popup.open()
+
 
     def check_ctl_version(self, *args):
         self.upgrade_popup.ctl_upd_text.text = self.ctl_upd_text
@@ -3429,6 +3430,9 @@ class Makera(RelativeLayout):
         if self.controller_setting_change_list.get("ui_density_override") or self.controller_setting_change_list.get("ui_density"):
             self.message_popup.lb_content.text = tr._('UI Density changed, restart application to apply.')
             self.message_popup.open()
+        
+        if self.controller_setting_change_list.get("allow_mdi_while_machine_running") != self.allow_mdi_while_machine_running:
+            self.allow_mdi_while_machine_running = self.controller_setting_change_list.get("allow_mdi_while_machine_running")
 
         self.config_popup.btn_apply.disabled = True
 

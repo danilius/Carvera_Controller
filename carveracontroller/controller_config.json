@@ -38,5 +38,13 @@
         "section": "carvera",
         "key": "address",
         "default": ""
+    },
+    {
+        "type": "bool",
+        "title": "Allow MDI Commands When Machine Running",
+        "desc": "This could enable dangerous movements, or firmware corruption if MDI commands are used while file uploads are occuring. Use this functionality with caution.",
+        "section": "carvera",
+        "key": "allow_mdi_while_machine_running",
+        "default": "false"
     }
 ]

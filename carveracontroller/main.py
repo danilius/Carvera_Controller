@@ -1274,6 +1274,7 @@ class Makera(RelativeLayout):
 
     status_index = 0
     past_machine_addr = None
+    allow_mdi_while_machine_running = "0"
 
     def __init__(self, ctl_version):
         super(Makera, self).__init__()
@@ -1386,6 +1387,9 @@ class Makera(RelativeLayout):
 
         if Config.has_option('carvera', 'address'):
             self.past_machine_addr = Config.get('carvera', 'address')
+
+        if Config.has_option('carvera', 'allow_mdi_while_machine_running'):
+           self.allow_mdi_while_machine_running = Config.get('carvera', 'allow_mdi_while_machine_running')
 
         # blink timer
         Clock.schedule_interval(self.blink_state, 0.5)
@@ -3773,7 +3777,7 @@ class MakeraApp(App):
     def build(self):
         self.settings_cls = SettingsWithSidebar
         self.use_kivy_settings = True
-        self.title = tr._('Carvera Controller Community')
+        self.title = tr._('Carvera Controller Community') + ' v' + __version__
         self.icon = os.path.join(os.path.dirname(__file__), 'icon.png')
 
         return Makera(ctl_version=__version__)

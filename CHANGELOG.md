@@ -2,6 +2,7 @@
 - Enhancement: Added A axis microsteps per degree config option
 - Enhancement: Controller config option to allow MDI usage when machine running
 - Change: Add version string to app window title
+- Fix: Saved Window size is bigger than actual when DPI scaling is above 1x
 
 [0.6.0]
 - Enhancement: add "tool change" as a option for the front button long press actions. This feature requires Community Firmware.

@@ -1405,8 +1405,12 @@ class Makera(RelativeLayout):
             shutil.rmtree(self.temp_dir)
         except Exception as e:
             print(f"Error cleaning up temporary directory: {e}")
-        Config.set('graphics', 'width', Window.size[0])
-        Config.set('graphics', 'height', Window.size[1])
+        
+        # Save the last window size. 
+        # Seems that kivvy uses the window size before dpi scaling in the config, 
+        # but after dp scaling in Window.size
+        Config.set('graphics', 'width', int(Window.size[0]/Metrics.dp))
+        Config.set('graphics', 'height', int(Window.size[1]/Metrics.dp))
         Config.write()
     
     def load_controller_config(self):

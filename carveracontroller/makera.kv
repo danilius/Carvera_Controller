@@ -3602,7 +3602,7 @@
                                                     width: '40dp'
                                                     size_hint_x: None
                                                     text: tr._('send')
-                                                    disabled: app.state != 'Idle' and app.state != 'Pause'
+                                                    disabled: (app.state != 'Idle' and app.state != 'Pause' and root.allow_mdi_while_machine_running == '0')
                                                     on_release:
                                                         root.send_cmd()
                         FloatBox:

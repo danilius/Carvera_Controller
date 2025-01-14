@@ -1,4 +1,4 @@
-[unreleased]
+[0.7.0]
 - Enhancement: Added A axis microsteps per degree config option
 - Enhancement: Controller config option to allow MDI usage when machine running
 - Change: Add version string to app window title

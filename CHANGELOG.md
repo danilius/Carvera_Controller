@@ -1,3 +1,6 @@
+[Unreleased]
+- Enhancement: The ability to reduce the size of the autolevel probe area. This enables the ability to avoid probing the stock where there might be obstacles preventing probing.
+
 [0.7.1]
 - Fix: Set a default for the A axis microsteps per degree config option
 

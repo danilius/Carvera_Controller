@@ -108,6 +108,25 @@ from kivy.core.text import LabelBase
 from kivy.resources import resource_add_path
 from kivy.network.urlrequest import UrlRequest
 import webbrowser
+if sys.platform == "ios":
+    from pyobjus import autoclass
+    from pyobjus.dylib_manager import load_framework
+
+    load_framework('/System/Library/Frameworks/UIKit.framework')
+
+    NSURL = autoclass('NSURL')
+    UIApplication = autoclass('UIApplication')
+
+
+    def ios_webbrowser_open(url):
+        nsurl = NSURL.URLWithString_(url)
+        app = UIApplication.sharedApplication()
+
+
+        options = {}
+        app.openURL_options_completionHandler_(nsurl, options, None)
+    webbrowser.open = ios_webbrowser_open
+
 from pathlib import Path
 
 # import os
@@ -1574,8 +1593,9 @@ class Makera(RelativeLayout):
             os.startfile(log_dir)
         else:
             # Linux and MacOS
-            opener = "open" if sys.platform == "darwin" else "xdg-open"
-            subprocess.Popen([opener, log_dir])
+            if sys.platform != "ios":
+                opener = "open" if sys.platform == "darwin" else "xdg-open"
+                subprocess.Popen([opener, log_dir])
 
     def open_update_popup(self):
         self.upgrade_popup.check_button.disabled = False

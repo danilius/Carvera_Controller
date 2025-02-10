@@ -57,4 +57,4 @@ else
 fi
 
 # For now we open the project in XCode and build it from there
-open packaging_assets/ios/carveracontroller.xcodeproj
+open packaging_assets/ios/carveracontroller-ios/carveracontroller.xcodeproj

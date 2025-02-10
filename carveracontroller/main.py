@@ -468,6 +468,7 @@ class CoordPopup(ModalView):
         self.auto_level_popup.sp_x_points.text = str(self.config['leveling']['x_points'])
         self.auto_level_popup.sp_y_points.text = str(self.config['leveling']['y_points'])
         self.auto_level_popup.sp_height.text = str(self.config['leveling']['height'])
+
         self.load_leveling_label()
 
     def load_origin_label(self):
@@ -495,7 +496,11 @@ class CoordPopup(ModalView):
     def load_leveling_label(self):
         self.lb_leveling.text = tr._('X Points: ') + '%d ' % (self.config['leveling']['x_points']) \
                                 + tr._('Y Points: ') + '%d ' % (self.config['leveling']['y_points']) \
-                                + tr._('Height: ') + '%d' % (self.config['leveling']['height'])
+                                + tr._('Height: ') + '%d' % (self.config['leveling']['height']) \
+                                + tr._('    -X: ') + '%g ' % (round(self.config['leveling']['xn_offset'],4)) \
+                                + tr._(' +X: ') + '%g ' % (round(self.config['leveling']['xp_offset'],4)) \
+                                + tr._(' -Y: ') + '%g ' % (round(self.config['leveling']['yn_offset'],4)) \
+                                + tr._(' +Y: ') + '%g ' % (round(self.config['leveling']['yp_offset'],4))
 
     def toggle_config(self):
         # upldate main status
@@ -729,6 +734,10 @@ class CNCWorkspace(Widget):
                 Color(231 / 255, 76 / 255, 60 / 255, 1)
                 zprobe_x = self.config['zprobe']['x_offset'] + (origin_x if self.config['zprobe']['origin'] == 1 else origin_x + CNC.vars['xmin'])
                 zprobe_y = self.config['zprobe']['y_offset'] + (origin_y if self.config['zprobe']['origin'] == 1 else origin_y + CNC.vars['ymin'])
+                if self.config['leveling']['active']:
+                    zprobe_x = self.config['zprobe']['x_offset'] + (origin_x if self.config['zprobe']['origin'] == 1 else origin_x + CNC.vars['xmin'])
+                    zprobe_y = self.config['zprobe']['y_offset'] + (origin_y if self.config['zprobe']['origin'] == 1 else origin_y + CNC.vars['ymin'])
+
                 if app.has_4axis:
                     zprobe_x = CNC.vars['rotation_offset_x'] + CNC.vars['anchor_width'] - 3.0
                     zprobe_y = CNC.vars['rotation_offset_y'] + CNC.vars['anchor_width']
@@ -738,8 +747,8 @@ class CNCWorkspace(Widget):
             # auto leveling
             if self.config['leveling']['active']:
                 Color(244/255, 208/255, 63/255, 1)
-                for x in Utils.xfrange(0.0, CNC.vars['xmax'] - CNC.vars['xmin'], self.config['leveling']['x_points']):
-                    for y in Utils.xfrange(0.0, CNC.vars['ymax'] - CNC.vars['ymin'], self.config['leveling']['y_points']):
+                for x in Utils.xfrange(self.config['leveling']['xn_offset'], CNC.vars['xmax'] - CNC.vars['xmin'] - self.config['leveling']['xp_offset'], self.config['leveling']['x_points']):
+                    for y in Utils.xfrange(self.config['leveling']['yn_offset'], CNC.vars['ymax'] - CNC.vars['ymin']-self.config['leveling']['yp_offset'], self.config['leveling']['y_points']):
                         Ellipse(pos=(self.x + (origin_x + CNC.vars['xmin'] + x) * zoom - 5, self.y + (origin_y + CNC.vars['ymin'] + y) * zoom - 5), size=(10, 10))
                         # print('x=%f, y=%f' % (x, y))
 
@@ -1308,7 +1317,11 @@ class Makera(RelativeLayout):
                 'active': False,
                 'x_points': 5,
                 'y_points': 5,
-                'height': 5
+                'height': 5,
+                'xn_offset':0.0,
+                'xp_offset':0.0,
+                'yn_offset':0.0,
+                'yp_offset':0.0,
             }
         }
         self.update_coord_config()
@@ -1544,8 +1557,8 @@ class Makera(RelativeLayout):
 
         zprobe_abs = False
         # calculate zprobe offset
-        zprobe_offset_x = self.coord_config['zprobe']['x_offset']
-        zprobe_offset_y = self.coord_config['zprobe']['y_offset']
+        zprobe_offset_x = self.coord_config['zprobe']['x_offset'] - self.coord_config['leveling']['xn_offset']
+        zprobe_offset_y = self.coord_config['zprobe']['y_offset'] -self.coord_config['leveling']['yn_offset']
         if self.coord_config['zprobe']['origin'] == 1:
             zprobe_offset_x = zprobe_offset_x - CNC.vars['xmin']
             zprobe_offset_y = zprobe_offset_y - CNC.vars['ymin']
@@ -1555,7 +1568,8 @@ class Makera(RelativeLayout):
         self.controller.autoCommand(apply_margin, apply_zprobe,
                                     zprobe_abs, apply_leveling, goto_origin,
                                     zprobe_offset_x, zprobe_offset_y, self.coord_config['leveling']['x_points'],
-                                    self.coord_config['leveling']['y_points'], self.coord_config['leveling']['height'], buffer)
+                                    self.coord_config['leveling']['y_points'], self.coord_config['leveling']['height'], buffer, 
+                                    [self.coord_config['leveling']['xn_offset'],self.coord_config['leveling']['xp_offset'],self.coord_config['leveling']['yn_offset'],self.coord_config['leveling']['yp_offset']])
 
         # change back to last tool if needed
         if buffer and self.upcoming_tool == 0 and (apply_margin or apply_zprobe or apply_leveling):

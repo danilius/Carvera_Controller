@@ -251,9 +251,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		1D6058900D05DD3D006BFB54 /* carveracontroller */ = {
+		1D6058900D05DD3D006BFB54 /* CarveraController */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 1D6058960D05DD3E006BFB54 /* Build configuration list for PBXNativeTarget "carveracontroller" */;
+			buildConfigurationList = 1D6058960D05DD3E006BFB54 /* Build configuration list for PBXNativeTarget "CarveraController" */;
 			buildPhases = (
 				113D17E2153E3DB5001310A5 /* ShellScript */,
 				113D17E2153E3DB5001310A6 /* ShellScript */,
@@ -266,7 +266,7 @@
 			);
 			dependencies = (
 			);
-			name = carveracontroller;
+			name = CarveraController;
 			productName = carveracontroller;
 			productReference = 1D6058910D05DD3D006BFB54 /* carveracontroller.app */;
 			productType = "com.apple.product-type.application";
@@ -295,7 +295,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				1D6058900D05DD3D006BFB54 /* carveracontroller */,
+				1D6058900D05DD3D006BFB54 /* CarveraController */,
 			);
 		};
 /* End PBXProject section */
@@ -383,6 +383,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = QMMYJPQXNE;
 				EXCLUDED_ARCHS = "";
@@ -403,12 +404,14 @@
 					/Users/mamonney/Carvera_Controller/dist/include/common/sdl2,
 				);
 				INFOPLIST_FILE = "carveracontroller-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = CarveraController;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					/Users/mamonney/Carvera_Controller/dist/lib,
 				);
+				MARKETING_VERSION = 0.9.7;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = "-all_load";
 				PRODUCT_BUNDLE_IDENTIFIER = net.xwaves.carveracontroller;
@@ -431,6 +434,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CODE_SIGN_RESOURCE_RULES_PATH = "$(SDKROOT)/ResourceRules.plist";
 				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = QMMYJPQXNE;
 				EXCLUDED_ARCHS = "";
@@ -448,12 +452,14 @@
 					/Users/mamonney/Carvera_Controller/dist/include/common/sdl2,
 				);
 				INFOPLIST_FILE = "carveracontroller-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = CarveraController;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					/Users/mamonney/Carvera_Controller/dist/lib,
 				);
+				MARKETING_VERSION = 0.9.7;
 				OTHER_LDFLAGS = "-all_load";
 				PRODUCT_BUNDLE_IDENTIFIER = net.xwaves.carveracontroller;
 				PRODUCT_NAME = carveracontroller;
@@ -547,7 +553,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		1D6058960D05DD3E006BFB54 /* Build configuration list for PBXNativeTarget "carveracontroller" */ = {
+		1D6058960D05DD3E006BFB54 /* Build configuration list for PBXNativeTarget "CarveraController" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				1D6058940D05DD3E006BFB54 /* Debug */,

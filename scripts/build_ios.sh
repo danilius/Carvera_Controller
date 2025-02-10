@@ -37,32 +37,11 @@ fi
 TOP_LEVEL=$(git rev-parse --show-toplevel)
 cd $TOP_LEVEL || exit 1
 
-# Make sure we have the right tools
-# Install required tools if not already installed
-for tool in autoconf automake libtool pkg-config; do
-    if ! brew list -1 | grep -q "^${tool}\$"; then
-        brew install ${tool}
-    fi
-done
-
-# Create python venv if not there
-if [ ! -d "venv" ]; then
-    python3 -m venv venv
-fi
-
-source venv/bin/activate
-pip3 install Cython
-
-
 # Clone kivy-ios if not there
 if [ ! -d "build/kivy-ios" ]; then
     git clone https://github.com/kivy/kivy-ios.git build/kivy-ios
 fi
 
-# Install dependencies
-cd build/kivy-ios
-pip install -e .
-cd $TOP_LEVEL
 
 ln -sf $(pwd)/dist packaging_assets/ios/dist
 

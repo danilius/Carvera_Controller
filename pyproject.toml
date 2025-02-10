@@ -20,6 +20,8 @@ appimage-builder = "^1.1.0"
 ruamel-yaml = "^0.18.6"
 poetry-dynamic-versioning = "^1.4.1"
 dunamai = "^1.22.0"
+Cython = "^3.0.11"
+kivy-ios = { git = "https://github.com/kivy/kivy-ios.git", branch = "master", rev = "6bd6319150079b1c556ec24190305f3507b0b259" }
 
 [tool.poetry-dynamic-versioning]
 enable = true

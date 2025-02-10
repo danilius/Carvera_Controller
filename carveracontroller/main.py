@@ -98,7 +98,7 @@ from kivy.metrics import Metrics
 
 try:
     from serial.tools.list_ports import comports
-except:
+except ImportError:
     comports = None
 
 from functools import partial

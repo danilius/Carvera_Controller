@@ -12,7 +12,7 @@ class QuicklzRecipe(CythonRecipe):
     def prebuild_platform(self, plat):
         if self.has_marker("patched"):
             return
-        self.apply_patch("patch_python3.diff")
+        self.apply_patch(os.path.join(os.path.dirname(__file__), "patch_python3.diff"))
         self.set_marker("patched")
 
     python_depends = ['setuptools']

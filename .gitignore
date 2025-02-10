@@ -77,3 +77,6 @@ AppDir/
 appimage-build/
 AppDir.squashfs
 AppImageBuilder.yml
+
+# Apple stuff
+.DS_Store

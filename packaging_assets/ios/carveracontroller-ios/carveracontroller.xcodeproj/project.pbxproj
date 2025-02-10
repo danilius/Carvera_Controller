@@ -13,6 +13,7 @@
 		23B14FE88E91C37F0682FD25 /* libc++.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = D9F44643BC8CE397BE827344 /* libc++.tbd */; };
 		26724D2F8C42BF78296EF427 /* libSDL2_image.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = F555468F983B0C0C3D8A39E6 /* libSDL2_image.xcframework */; };
 		2CB5F34717D5233A006187AB /* bridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 2CB5F34617D5233A006187AB /* bridge.m */; };
+		306AABFA2D5A1C09001AE21B /* libquicklz.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = B16343CABE5245DC84B592C3 /* libquicklz.xcframework */; };
 		31044FE8A617700E6310BC14 /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6C0A4962AE1BE0703D8D42A7 /* CoreVideo.framework */; };
 		31D64A1F9418CA4719DF905E /* libssl.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4A4B440CA87E67B49D875F29 /* libssl.xcframework */; };
 		3317407194A5AA0AD871FE9B /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EBA441B7898864FA55FA614D /* CoreGraphics.framework */; };
@@ -24,7 +25,6 @@
 		5C4A47AEBBBA84F15498470F /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = A45949769FBB857AFD4CC2FE /* libsqlite3.tbd */; };
 		6C52493B882E11EC9E57D4EF /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A5124B098F07AB0CE70E7C0F /* UIKit.framework */; };
 		6C644356ABBDF9FF43C40333 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = BB7E40659FD98753F2835610 /* libz.tbd */; };
-		712A4C44980637328DB8B782 /* libquicklz.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = B16343CABE5245DC84B592C3 /* libquicklz.xcframework */; };
 		7A0D45EA98F7B2EF12AD9C02 /* libSDL2_ttf.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 339B48A886CA761D0A19C3D5 /* libSDL2_ttf.xcframework */; };
 		7A674BEEA1BB0033336CC4E5 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DAA347728ECFEC295FDF6F22 /* QuartzCore.framework */; };
 		8587495197F4C0E15F52D0A4 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 650D4733935B336C699C93ED /* Accelerate.framework */; };
@@ -116,6 +116,7 @@
 				B9D740B78FF3454EF62BF12A /* WebKit.framework in Frameworks */,
 				DE5F48D09E9FB2AB56B93260 /* ImageIO.framework in Frameworks */,
 				B8E84737AAA446910914F993 /* MessageUI.framework in Frameworks */,
+				306AABFA2D5A1C09001AE21B /* libquicklz.xcframework in Frameworks */,
 				D86A4F58915DC9EE73706617 /* AVFoundation.framework in Frameworks */,
 				C8E849BE8622EE80721C94AA /* AudioToolbox.framework in Frameworks */,
 				A22D4C9B9C2728FC45EFECEE /* CoreHaptics.framework in Frameworks */,
@@ -138,7 +139,6 @@
 				86414F6BA0CBE609139D0282 /* libpng16.xcframework in Frameworks */,
 				7A0D45EA98F7B2EF12AD9C02 /* libSDL2_ttf.xcframework in Frameworks */,
 				E93C475E8E8D386492849908 /* libios.xcframework in Frameworks */,
-				712A4C44980637328DB8B782 /* libquicklz.xcframework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

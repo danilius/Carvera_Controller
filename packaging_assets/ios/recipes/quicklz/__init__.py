@@ -3,17 +3,11 @@ import os
 
 
 class QuicklzRecipe(CythonRecipe):
-    version = "1.5.0"
-    url = "https://github.com/sergey-dryabzhinsky/python-quicklz/archive/refs/tags/v{version}.tar.gz"
+    version = "1.4.1"
+    url = "https://github.com/douban/pyquicklz/archive/refs/tags/{version}.tar.gz"
 
     depends = ['python3']
     library = "libquicklz.a"
-
-    def prebuild_platform(self, plat):
-        if self.has_marker("patched"):
-            return
-        self.apply_patch(os.path.join(os.path.dirname(__file__), "patch_python3.diff"))
-        self.set_marker("patched")
 
     python_depends = ['setuptools']
     call_hostpython_via_targetpython = False

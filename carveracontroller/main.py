@@ -118,7 +118,7 @@ if sys.platform == "ios":
     UIApplication = autoclass('UIApplication')
 
 
-    def ios_webbrowser_open(url):
+    def ios_webbrowser_open(url, new=None):
         nsurl = NSURL.URLWithString_(url)
         app = UIApplication.sharedApplication()
 

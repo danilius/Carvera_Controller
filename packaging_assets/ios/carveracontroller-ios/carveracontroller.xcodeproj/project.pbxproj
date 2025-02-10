@@ -1,0 +1,571 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 54;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		01532DAA137C099F0076F6BF /* icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 01532DA9137C099F0076F6BF /* icon.png */; };
+		02E542D780CC6E4638BE1496 /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C62F4F0BAF3EE05CCAA71A80 /* CoreMedia.framework */; };
+		1D60589B0D05DD56006BFB54 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 29B97316FDCFA39411CA2CEA /* main.m */; };
+		2038494D9E2080D7617E6BCB /* libSDL2.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 00EA418BA04982772267DF86 /* libSDL2.xcframework */; };
+		23B14FE88E91C37F0682FD25 /* libc++.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = D9F44643BC8CE397BE827344 /* libc++.tbd */; };
+		26724D2F8C42BF78296EF427 /* libSDL2_image.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = F555468F983B0C0C3D8A39E6 /* libSDL2_image.xcframework */; };
+		2CB5F34717D5233A006187AB /* bridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 2CB5F34617D5233A006187AB /* bridge.m */; };
+		31044FE8A617700E6310BC14 /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6C0A4962AE1BE0703D8D42A7 /* CoreVideo.framework */; };
+		31D64A1F9418CA4719DF905E /* libssl.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4A4B440CA87E67B49D875F29 /* libssl.xcframework */; };
+		3317407194A5AA0AD871FE9B /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EBA441B7898864FA55FA614D /* CoreGraphics.framework */; };
+		3CD04BDD9A248442EC2A360E /* libpyobjus.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 69034840BB27C9E3CDF095C5 /* libpyobjus.xcframework */; };
+		59738AB51A8BB5D8001B2C0C /* lib in Resources */ = {isa = PBXBuildFile; fileRef = 59738AB41A8BB5D8001B2C0C /* lib */; };
+		59738ABB1A8E19AA001B2C0C /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 59738ABA1A8E19AA001B2C0C /* Images.xcassets */; };
+		59994E3B148E85C800863906 /* carveracontrollerpkg in Resources */ = {isa = PBXBuildFile; fileRef = 59994E3A148E85C800863906 /* carveracontrollerpkg */; };
+		59FDEA8B21E7D34E004E6ECE /* include in Resources */ = {isa = PBXBuildFile; fileRef = 59FDEA8A21E7D34E004E6ECE /* include */; };
+		5C4A47AEBBBA84F15498470F /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = A45949769FBB857AFD4CC2FE /* libsqlite3.tbd */; };
+		6C52493B882E11EC9E57D4EF /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A5124B098F07AB0CE70E7C0F /* UIKit.framework */; };
+		6C644356ABBDF9FF43C40333 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = BB7E40659FD98753F2835610 /* libz.tbd */; };
+		712A4C44980637328DB8B782 /* libquicklz.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = B16343CABE5245DC84B592C3 /* libquicklz.xcframework */; };
+		7A0D45EA98F7B2EF12AD9C02 /* libSDL2_ttf.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 339B48A886CA761D0A19C3D5 /* libSDL2_ttf.xcframework */; };
+		7A674BEEA1BB0033336CC4E5 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DAA347728ECFEC295FDF6F22 /* QuartzCore.framework */; };
+		8587495197F4C0E15F52D0A4 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 650D4733935B336C699C93ED /* Accelerate.framework */; };
+		86414F6BA0CBE609139D0282 /* libpng16.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 03E841FA9892EEDE7E244A1D /* libpng16.xcframework */; };
+		8FEE46FBA9CE9BB13F001D41 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F36C451183F607E02CD8B638 /* Metal.framework */; };
+		94BE41E8B2394F6B340B4550 /* OpenGLES.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4DEA4A81A8F3A569B130BCAA /* OpenGLES.framework */; };
+		9DFB4942AD366508F6A592F9 /* libkivy.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 64F7416AB075A0994023F21B /* libkivy.xcframework */; };
+		A22D4C9B9C2728FC45EFECEE /* CoreHaptics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4F7140229CC1D236491CB9CA /* CoreHaptics.framework */; };
+		AC5106F52959EE4E00655416 /* Launch Screen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AC5106F42959EE4E00655416 /* Launch Screen.storyboard */; };
+		AFF84E7D9623124FB7A8D3F3 /* Photos.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5A7641749B9D44C54E1BBDFE /* Photos.framework */; };
+		B8E84737AAA446910914F993 /* MessageUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 25C8414497F8E6296A597ED7 /* MessageUI.framework */; };
+		B9D740B78FF3454EF62BF12A /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 31C44A95BA4F2D31DE1C045C /* WebKit.framework */; };
+		BB9D4757A3F349FF27DC7D78 /* libcrypto.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 230943B0AFDC9C60CAF6C442 /* libcrypto.xcframework */; };
+		C8E849BE8622EE80721C94AA /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9C1D4231A812C140D00ABCF9 /* AudioToolbox.framework */; };
+		CD3846F2A5CFDCB7B6D66221 /* libffi.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 59864361B31751B48655D9D2 /* libffi.xcframework */; };
+		D0FB4AA0A8226C4BF0C63F6E /* libpython3.11.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 17C445C2A54DAA82C0BBF162 /* libpython3.11.xcframework */; };
+		D86A4F58915DC9EE73706617 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9F384D92844FA79268A315BD /* AVFoundation.framework */; };
+		DAC8482ABA28382CAA2965EF /* MobileCoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AD544F96AD5EB18FE34CB6F2 /* MobileCoreServices.framework */; };
+		DE5F48D09E9FB2AB56B93260 /* ImageIO.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C9284233BFFA5F3C3E8B3F60 /* ImageIO.framework */; };
+		E93C475E8E8D386492849908 /* libios.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9AF44AE9BEFA4C339069C854 /* libios.xcframework */; };
+		EEA64242BE290036B32944DD /* CoreMotion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7AF849BC8B4B05BEC365B924 /* CoreMotion.framework */; };
+		FC874187AAE81C2AAFCAC590 /* libSDL2_mixer.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 537F42158DFB71F9E32277D8 /* libSDL2_mixer.xcframework */; };
+		FF314A1CB355FBFC7311B726 /* GameController.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3D0646D283B8832F573E425A /* GameController.framework */; };
+		FF7948998D19DEFCBE685F9A /* libbz2.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 240447DF913C90BB541347FC /* libbz2.tbd */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		00EA418BA04982772267DF86 /* libSDL2.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = libSDL2.xcframework; path = ../dist/xcframework/libSDL2.xcframework; sourceTree = SOURCE_ROOT; };
+		01532DA9137C099F0076F6BF /* icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon.png; sourceTree = "<group>"; };
+		03E841FA9892EEDE7E244A1D /* libpng16.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = libpng16.xcframework; path = ../dist/xcframework/libpng16.xcframework; sourceTree = SOURCE_ROOT; };
+		17C445C2A54DAA82C0BBF162 /* libpython3.11.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = libpython3.11.xcframework; path = ../dist/xcframework/libpython3.11.xcframework; sourceTree = SOURCE_ROOT; };
+		1D6058910D05DD3D006BFB54 /* carveracontroller.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = carveracontroller.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		230943B0AFDC9C60CAF6C442 /* libcrypto.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = libcrypto.xcframework; path = ../dist/xcframework/libcrypto.xcframework; sourceTree = SOURCE_ROOT; };
+		240447DF913C90BB541347FC /* libbz2.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; path = libbz2.tbd; sourceTree = DEVELOPER_DIR; };
+		25C8414497F8E6296A597ED7 /* MessageUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = MessageUI.framework; sourceTree = DEVELOPER_DIR; };
+		29B97316FDCFA39411CA2CEA /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		2CB5F34517D5233A006187AB /* bridge.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = bridge.h; sourceTree = SOURCE_ROOT; };
+		2CB5F34617D5233A006187AB /* bridge.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = bridge.m; sourceTree = SOURCE_ROOT; };
+		31C44A95BA4F2D31DE1C045C /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = WebKit.framework; sourceTree = DEVELOPER_DIR; };
+		339B48A886CA761D0A19C3D5 /* libSDL2_ttf.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = libSDL2_ttf.xcframework; path = ../dist/xcframework/libSDL2_ttf.xcframework; sourceTree = SOURCE_ROOT; };
+		3D0646D283B8832F573E425A /* GameController.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = GameController.framework; sourceTree = DEVELOPER_DIR; };
+		4A4B440CA87E67B49D875F29 /* libssl.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = libssl.xcframework; path = ../dist/xcframework/libssl.xcframework; sourceTree = SOURCE_ROOT; };
+		4DEA4A81A8F3A569B130BCAA /* OpenGLES.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = OpenGLES.framework; sourceTree = DEVELOPER_DIR; };
+		4F7140229CC1D236491CB9CA /* CoreHaptics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = CoreHaptics.framework; sourceTree = DEVELOPER_DIR; };
+		537F42158DFB71F9E32277D8 /* libSDL2_mixer.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = libSDL2_mixer.xcframework; path = ../dist/xcframework/libSDL2_mixer.xcframework; sourceTree = SOURCE_ROOT; };
+		59738AB41A8BB5D8001B2C0C /* lib */ = {isa = PBXFileReference; lastKnownFileType = folder; name = lib; path = /Users/mamonney/Carvera_Controller/dist/root/python3/lib; sourceTree = "<group>"; };
+		59738ABA1A8E19AA001B2C0C /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
+		59864361B31751B48655D9D2 /* libffi.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = libffi.xcframework; path = ../dist/xcframework/libffi.xcframework; sourceTree = SOURCE_ROOT; };
+		59994E3A148E85C800863906 /* carveracontrollerpkg */ = {isa = PBXFileReference; lastKnownFileType = folder; path = carveracontrollerpkg; sourceTree = "<group>"; };
+		59FDEA8A21E7D34E004E6ECE /* include */ = {isa = PBXFileReference; lastKnownFileType = folder; name = include; path = /Users/mamonney/Carvera_Controller/dist/root/python3/include; sourceTree = "<group>"; };
+		5A7641749B9D44C54E1BBDFE /* Photos.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Photos.framework; sourceTree = DEVELOPER_DIR; };
+		64F7416AB075A0994023F21B /* libkivy.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = libkivy.xcframework; path = ../dist/xcframework/libkivy.xcframework; sourceTree = SOURCE_ROOT; };
+		650D4733935B336C699C93ED /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Accelerate.framework; sourceTree = DEVELOPER_DIR; };
+		69034840BB27C9E3CDF095C5 /* libpyobjus.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = libpyobjus.xcframework; path = ../dist/xcframework/libpyobjus.xcframework; sourceTree = SOURCE_ROOT; };
+		6C0A4962AE1BE0703D8D42A7 /* CoreVideo.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = CoreVideo.framework; sourceTree = DEVELOPER_DIR; };
+		7AF849BC8B4B05BEC365B924 /* CoreMotion.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = CoreMotion.framework; sourceTree = DEVELOPER_DIR; };
+		8D1107310486CEB800E47090 /* carveracontroller-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "carveracontroller-Info.plist"; plistStructureDefinitionIdentifier = "com.apple.xcode.plist.structure-definition.iphone.info-plist"; sourceTree = "<group>"; };
+		9AF44AE9BEFA4C339069C854 /* libios.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = libios.xcframework; path = ../dist/xcframework/libios.xcframework; sourceTree = SOURCE_ROOT; };
+		9C1D4231A812C140D00ABCF9 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = AudioToolbox.framework; sourceTree = DEVELOPER_DIR; };
+		9F384D92844FA79268A315BD /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = AVFoundation.framework; sourceTree = DEVELOPER_DIR; };
+		A45949769FBB857AFD4CC2FE /* libsqlite3.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; path = libsqlite3.tbd; sourceTree = DEVELOPER_DIR; };
+		A5124B098F07AB0CE70E7C0F /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = UIKit.framework; sourceTree = DEVELOPER_DIR; };
+		AC5106F42959EE4E00655416 /* Launch Screen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = "Launch Screen.storyboard"; path = "Storyboards/Launch Screen.storyboard"; sourceTree = "<group>"; };
+		AD544F96AD5EB18FE34CB6F2 /* MobileCoreServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = MobileCoreServices.framework; sourceTree = DEVELOPER_DIR; };
+		B16343CABE5245DC84B592C3 /* libquicklz.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = libquicklz.xcframework; path = ../../../dist/xcframework/libquicklz.xcframework; sourceTree = SOURCE_ROOT; };
+		BB7E40659FD98753F2835610 /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; path = libz.tbd; sourceTree = DEVELOPER_DIR; };
+		C62F4F0BAF3EE05CCAA71A80 /* CoreMedia.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = CoreMedia.framework; sourceTree = DEVELOPER_DIR; };
+		C9284233BFFA5F3C3E8B3F60 /* ImageIO.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = ImageIO.framework; sourceTree = DEVELOPER_DIR; };
+		D9F44643BC8CE397BE827344 /* libc++.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; path = "libc++.tbd"; sourceTree = DEVELOPER_DIR; };
+		DAA347728ECFEC295FDF6F22 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = QuartzCore.framework; sourceTree = DEVELOPER_DIR; };
+		EBA441B7898864FA55FA614D /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = CoreGraphics.framework; sourceTree = DEVELOPER_DIR; };
+		F36C451183F607E02CD8B638 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Metal.framework; sourceTree = DEVELOPER_DIR; };
+		F555468F983B0C0C3D8A39E6 /* libSDL2_image.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = libSDL2_image.xcframework; path = ../dist/xcframework/libSDL2_image.xcframework; sourceTree = SOURCE_ROOT; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		1D60588F0D05DD3D006BFB54 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7A674BEEA1BB0033336CC4E5 /* QuartzCore.framework in Frameworks */,
+				6C52493B882E11EC9E57D4EF /* UIKit.framework in Frameworks */,
+				8587495197F4C0E15F52D0A4 /* Accelerate.framework in Frameworks */,
+				02E542D780CC6E4638BE1496 /* CoreMedia.framework in Frameworks */,
+				FF314A1CB355FBFC7311B726 /* GameController.framework in Frameworks */,
+				8FEE46FBA9CE9BB13F001D41 /* Metal.framework in Frameworks */,
+				3317407194A5AA0AD871FE9B /* CoreGraphics.framework in Frameworks */,
+				DAC8482ABA28382CAA2965EF /* MobileCoreServices.framework in Frameworks */,
+				31044FE8A617700E6310BC14 /* CoreVideo.framework in Frameworks */,
+				B9D740B78FF3454EF62BF12A /* WebKit.framework in Frameworks */,
+				DE5F48D09E9FB2AB56B93260 /* ImageIO.framework in Frameworks */,
+				B8E84737AAA446910914F993 /* MessageUI.framework in Frameworks */,
+				D86A4F58915DC9EE73706617 /* AVFoundation.framework in Frameworks */,
+				C8E849BE8622EE80721C94AA /* AudioToolbox.framework in Frameworks */,
+				A22D4C9B9C2728FC45EFECEE /* CoreHaptics.framework in Frameworks */,
+				AFF84E7D9623124FB7A8D3F3 /* Photos.framework in Frameworks */,
+				EEA64242BE290036B32944DD /* CoreMotion.framework in Frameworks */,
+				94BE41E8B2394F6B340B4550 /* OpenGLES.framework in Frameworks */,
+				5C4A47AEBBBA84F15498470F /* libsqlite3.tbd in Frameworks */,
+				FF7948998D19DEFCBE685F9A /* libbz2.tbd in Frameworks */,
+				23B14FE88E91C37F0682FD25 /* libc++.tbd in Frameworks */,
+				6C644356ABBDF9FF43C40333 /* libz.tbd in Frameworks */,
+				3CD04BDD9A248442EC2A360E /* libpyobjus.xcframework in Frameworks */,
+				BB9D4757A3F349FF27DC7D78 /* libcrypto.xcframework in Frameworks */,
+				D0FB4AA0A8226C4BF0C63F6E /* libpython3.11.xcframework in Frameworks */,
+				9DFB4942AD366508F6A592F9 /* libkivy.xcframework in Frameworks */,
+				2038494D9E2080D7617E6BCB /* libSDL2.xcframework in Frameworks */,
+				FC874187AAE81C2AAFCAC590 /* libSDL2_mixer.xcframework in Frameworks */,
+				CD3846F2A5CFDCB7B6D66221 /* libffi.xcframework in Frameworks */,
+				26724D2F8C42BF78296EF427 /* libSDL2_image.xcframework in Frameworks */,
+				31D64A1F9418CA4719DF905E /* libssl.xcframework in Frameworks */,
+				86414F6BA0CBE609139D0282 /* libpng16.xcframework in Frameworks */,
+				7A0D45EA98F7B2EF12AD9C02 /* libSDL2_ttf.xcframework in Frameworks */,
+				E93C475E8E8D386492849908 /* libios.xcframework in Frameworks */,
+				712A4C44980637328DB8B782 /* libquicklz.xcframework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		080E96DDFE201D6D7F000001 /* Classes */ = {
+			isa = PBXGroup;
+			children = (
+				2CB5F34517D5233A006187AB /* bridge.h */,
+				2CB5F34617D5233A006187AB /* bridge.m */,
+			);
+			name = Classes;
+			sourceTree = "<group>";
+		};
+		19C28FACFE9D520D11CA2CBB /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				1D6058910D05DD3D006BFB54 /* carveracontroller.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		29B97314FDCFA39411CA2CEA /* CustomTemplate */ = {
+			isa = PBXGroup;
+			children = (
+				AC5106F32959EE3800655416 /* Storyboards */,
+				080E96DDFE201D6D7F000001 /* Classes */,
+				29B97315FDCFA39411CA2CEA /* Sources */,
+				29B97317FDCFA39411CA2CEA /* Resources */,
+				29B97323FDCFA39411CA2CEA /* Frameworks */,
+				19C28FACFE9D520D11CA2CBB /* Products */,
+			);
+			name = CustomTemplate;
+			sourceTree = "<group>";
+		};
+		29B97315FDCFA39411CA2CEA /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				29B97316FDCFA39411CA2CEA /* main.m */,
+				59994E3A148E85C800863906 /* carveracontrollerpkg */,
+			);
+			name = Sources;
+			sourceTree = "<group>";
+		};
+		29B97317FDCFA39411CA2CEA /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				59738ABA1A8E19AA001B2C0C /* Images.xcassets */,
+				59738AB41A8BB5D8001B2C0C /* lib */,
+				59FDEA8A21E7D34E004E6ECE /* include */,
+				01532DA9137C099F0076F6BF /* icon.png */,
+				8D1107310486CEB800E47090 /* carveracontroller-Info.plist */,
+			);
+			name = Resources;
+			sourceTree = "<group>";
+		};
+		29B97323FDCFA39411CA2CEA /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				DAA347728ECFEC295FDF6F22 /* QuartzCore.framework */,
+				A5124B098F07AB0CE70E7C0F /* UIKit.framework */,
+				650D4733935B336C699C93ED /* Accelerate.framework */,
+				C62F4F0BAF3EE05CCAA71A80 /* CoreMedia.framework */,
+				3D0646D283B8832F573E425A /* GameController.framework */,
+				F36C451183F607E02CD8B638 /* Metal.framework */,
+				EBA441B7898864FA55FA614D /* CoreGraphics.framework */,
+				AD544F96AD5EB18FE34CB6F2 /* MobileCoreServices.framework */,
+				6C0A4962AE1BE0703D8D42A7 /* CoreVideo.framework */,
+				31C44A95BA4F2D31DE1C045C /* WebKit.framework */,
+				C9284233BFFA5F3C3E8B3F60 /* ImageIO.framework */,
+				25C8414497F8E6296A597ED7 /* MessageUI.framework */,
+				9F384D92844FA79268A315BD /* AVFoundation.framework */,
+				9C1D4231A812C140D00ABCF9 /* AudioToolbox.framework */,
+				4F7140229CC1D236491CB9CA /* CoreHaptics.framework */,
+				5A7641749B9D44C54E1BBDFE /* Photos.framework */,
+				7AF849BC8B4B05BEC365B924 /* CoreMotion.framework */,
+				4DEA4A81A8F3A569B130BCAA /* OpenGLES.framework */,
+				A45949769FBB857AFD4CC2FE /* libsqlite3.tbd */,
+				240447DF913C90BB541347FC /* libbz2.tbd */,
+				D9F44643BC8CE397BE827344 /* libc++.tbd */,
+				BB7E40659FD98753F2835610 /* libz.tbd */,
+				69034840BB27C9E3CDF095C5 /* libpyobjus.xcframework */,
+				230943B0AFDC9C60CAF6C442 /* libcrypto.xcframework */,
+				17C445C2A54DAA82C0BBF162 /* libpython3.11.xcframework */,
+				64F7416AB075A0994023F21B /* libkivy.xcframework */,
+				00EA418BA04982772267DF86 /* libSDL2.xcframework */,
+				537F42158DFB71F9E32277D8 /* libSDL2_mixer.xcframework */,
+				59864361B31751B48655D9D2 /* libffi.xcframework */,
+				F555468F983B0C0C3D8A39E6 /* libSDL2_image.xcframework */,
+				4A4B440CA87E67B49D875F29 /* libssl.xcframework */,
+				03E841FA9892EEDE7E244A1D /* libpng16.xcframework */,
+				339B48A886CA761D0A19C3D5 /* libSDL2_ttf.xcframework */,
+				9AF44AE9BEFA4C339069C854 /* libios.xcframework */,
+				B16343CABE5245DC84B592C3 /* libquicklz.xcframework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		AC5106F32959EE3800655416 /* Storyboards */ = {
+			isa = PBXGroup;
+			children = (
+				AC5106F42959EE4E00655416 /* Launch Screen.storyboard */,
+			);
+			name = Storyboards;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		1D6058900D05DD3D006BFB54 /* carveracontroller */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1D6058960D05DD3E006BFB54 /* Build configuration list for PBXNativeTarget "carveracontroller" */;
+			buildPhases = (
+				113D17E2153E3DB5001310A5 /* ShellScript */,
+				113D17E2153E3DB5001310A6 /* ShellScript */,
+				113D17E2153E3DB5001310A7 /* ShellScript */,
+				1D60588D0D05DD3D006BFB54 /* Resources */,
+				1D60588E0D05DD3D006BFB54 /* Sources */,
+				1D60588F0D05DD3D006BFB54 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = carveracontroller;
+			productName = carveracontroller;
+			productReference = 1D6058910D05DD3D006BFB54 /* carveracontroller.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		29B97313FDCFA39411CA2CEA /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1620;
+			};
+			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "carveracontroller" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = en;
+			hasScannedForEncodings = 1;
+			knownRegions = (
+				fr,
+				Base,
+				ja,
+				en,
+				de,
+			);
+			mainGroup = 29B97314FDCFA39411CA2CEA /* CustomTemplate */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				1D6058900D05DD3D006BFB54 /* carveracontroller */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		1D60588D0D05DD3D006BFB54 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				59738AB51A8BB5D8001B2C0C /* lib in Resources */,
+				AC5106F52959EE4E00655416 /* Launch Screen.storyboard in Resources */,
+				59FDEA8B21E7D34E004E6ECE /* include in Resources */,
+				59738ABB1A8E19AA001B2C0C /* Images.xcassets in Resources */,
+				01532DAA137C099F0076F6BF /* icon.png in Resources */,
+				59994E3B148E85C800863906 /* carveracontrollerpkg in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		113D17E2153E3DB5001310A5 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 12;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/bash;
+			shellScript = "rsync -av --delete \"/Users/mamonney/Carvera_Controller/carveracontroller\"/ \"$PROJECT_DIR\"/carveracontrollerpkg\n";
+		};
+		113D17E2153E3DB5001310A6 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 12;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/bash;
+			shellScript = "/Users/mamonney/Carvera_Controller/dist/hostpython3/bin/python -m compileall -f -b \"$PROJECT_DIR\"/carveracontrollerpkg\n";
+		};
+		113D17E2153E3DB5001310A7 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 12;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/bash;
+			shellScript = "find \"$PROJECT_DIR\"/carveracontrollerpkg/ -regex '.*\\.py' -delete\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		1D60588E0D05DD3D006BFB54 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1D60589B0D05DD56006BFB54 /* main.m in Sources */,
+				2CB5F34717D5233A006187AB /* bridge.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		1D6058940D05DD3E006BFB54 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = QMMYJPQXNE;
+				EXCLUDED_ARCHS = "";
+				FRAMEWORK_SEARCH_PATHS = (
+					/Users/mamonney/Carvera_Controller/dist/frameworks,
+					"$(SRCROOT)/../dist/xcframework",
+					"$(inherited)",
+					"$(SRCROOT)/../../../dist/xcframework",
+				);
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "";
+				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
+				HEADER_SEARCH_PATHS = (
+					"/Users/mamonney/Carvera_Controller/dist/root/python3/include/python3.11/**",
+					/Users/mamonney/Carvera_Controller/dist/include/common/sdl2,
+				);
+				INFOPLIST_FILE = "carveracontroller-Info.plist";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					/Users/mamonney/Carvera_Controller/dist/lib,
+				);
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_LDFLAGS = "-all_load";
+				PRODUCT_BUNDLE_IDENTIFIER = net.xwaves.carveracontroller;
+				PRODUCT_NAME = carveracontroller;
+				PROVISIONING_PROFILE = "";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				USER_HEADER_SEARCH_PATHS = "";
+			};
+			name = Debug;
+		};
+		1D6058950D05DD3E006BFB54 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				CODE_SIGN_RESOURCE_RULES_PATH = "$(SDKROOT)/ResourceRules.plist";
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = QMMYJPQXNE;
+				EXCLUDED_ARCHS = "";
+				FRAMEWORK_SEARCH_PATHS = (
+					/Users/mamonney/Carvera_Controller/dist/frameworks,
+					"$(SRCROOT)/../dist/xcframework",
+					"$(inherited)",
+					"$(SRCROOT)/../../../dist/xcframework",
+				);
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "";
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
+				HEADER_SEARCH_PATHS = (
+					"/Users/mamonney/Carvera_Controller/dist/root/python3/include/python3.11/**",
+					/Users/mamonney/Carvera_Controller/dist/include/common/sdl2,
+				);
+				INFOPLIST_FILE = "carveracontroller-Info.plist";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					/Users/mamonney/Carvera_Controller/dist/lib,
+				);
+				OTHER_LDFLAGS = "-all_load";
+				PRODUCT_BUNDLE_IDENTIFIER = net.xwaves.carveracontroller;
+				PRODUCT_NAME = carveracontroller;
+				PROVISIONING_PROFILE = "";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = NO;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				USER_HEADER_SEARCH_PATHS = "";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		C01FCF4F08A954540054247B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_BITCODE = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				USER_HEADER_SEARCH_PATHS = /Users/mamonney/Carvera_Controller/dist/root/include/;
+			};
+			name = Debug;
+		};
+		C01FCF5008A954540054247B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_BITCODE = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				OTHER_CFLAGS = "-DNS_BLOCK_ASSERTIONS=1";
+				USER_HEADER_SEARCH_PATHS = /Users/mamonney/Carvera_Controller/dist/root/include/;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		1D6058960D05DD3E006BFB54 /* Build configuration list for PBXNativeTarget "carveracontroller" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1D6058940D05DD3E006BFB54 /* Debug */,
+				1D6058950D05DD3E006BFB54 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C01FCF4E08A954540054247B /* Build configuration list for PBXProject "carveracontroller" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C01FCF4F08A954540054247B /* Debug */,
+				C01FCF5008A954540054247B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 29B97313FDCFA39411CA2CEA /* Project object */;
+}

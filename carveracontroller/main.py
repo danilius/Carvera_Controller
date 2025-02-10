@@ -96,7 +96,11 @@ from kivy.properties import ObjectProperty, NumericProperty, ListProperty
 from kivy.config import Config
 from kivy.metrics import Metrics
 
-from serial.tools.list_ports import comports
+try:
+    from serial.tools.list_ports import comports
+except:
+    comports = None
+
 from functools import partial
 from .WIFIStream import MachineDetector
 from kivy.core.window import Window
@@ -1777,11 +1781,12 @@ class Makera(RelativeLayout):
     # -----------------------------------------------------------------------
     def open_comports_drop_down(self, button):
         self.comports_drop_down.clear_widgets()
-        devices = sorted([x[0] for x in comports()])
-        for device in devices:
-            btn = Button(text=device, size_hint_y=None, height='35dp')
-            btn.bind(on_release=lambda btn: self.comports_drop_down.select(btn.text))
-            self.comports_drop_down.add_widget(btn)
+        if comports:
+            devices = sorted([x[0] for x in comports()])
+            for device in devices:
+                btn = Button(text=device, size_hint_y=None, height='35dp')
+                btn.bind(on_release=lambda btn: self.comports_drop_down.select(btn.text))
+                self.comports_drop_down.add_widget(btn)
         self.comports_drop_down.unbind(on_select=self.usb_event)
         self.comports_drop_down.bind(on_select=self.usb_event)
         self.comports_drop_down.open(button)

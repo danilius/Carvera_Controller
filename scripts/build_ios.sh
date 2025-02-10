@@ -64,6 +64,12 @@ cd build/kivy-ios
 pip install -e .
 cd $TOP_LEVEL
 
-# Build the kivy-ios toolchain and needed dpendencies
-python3 build/kivy-ios/toolchain.py build --add-custom-recipe packaging_assets/ios/recipes/quicklz --add-custom-recipe packaging_assets/ios/recipes/pyserial kivy quicklz pyserial
+ln -sf $(pwd)/dist packaging_assets/ios/dist
 
+# Copy recipes to the right place as there is a bug in kivy for custom recipes
+ln -sf $(pwd)/packaging_assets/ios/recipes/* build/kivy-ios/kivy_ios/recipes/
+
+# Build the kivy-ios toolchain and needed dpendencies
+python3 build/kivy-ios/toolchain.py build kivy quicklz pyserial
+
+python3 build/kivy-ios/toolchain.py update packaging_assets/ios/carveracontroller-ios

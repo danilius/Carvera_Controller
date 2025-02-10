@@ -80,3 +80,5 @@ AppImageBuilder.yml
 
 # Apple stuff
 .DS_Store
+xcuserdata
+project.pbxproj*backup

@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		01532DAA137C099F0076F6BF /* icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 01532DA9137C099F0076F6BF /* icon.png */; };
 		02E542D780CC6E4638BE1496 /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C62F4F0BAF3EE05CCAA71A80 /* CoreMedia.framework */; };
 		1D60589B0D05DD56006BFB54 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 29B97316FDCFA39411CA2CEA /* main.m */; };
 		2038494D9E2080D7617E6BCB /* libSDL2.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 00EA418BA04982772267DF86 /* libSDL2.xcframework */; };
@@ -54,7 +53,6 @@
 
 /* Begin PBXFileReference section */
 		00EA418BA04982772267DF86 /* libSDL2.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = libSDL2.xcframework; path = ../dist/xcframework/libSDL2.xcframework; sourceTree = SOURCE_ROOT; };
-		01532DA9137C099F0076F6BF /* icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon.png; sourceTree = "<group>"; };
 		03E841FA9892EEDE7E244A1D /* libpng16.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = libpng16.xcframework; path = ../dist/xcframework/libpng16.xcframework; sourceTree = SOURCE_ROOT; };
 		17C445C2A54DAA82C0BBF162 /* libpython3.11.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = libpython3.11.xcframework; path = ../dist/xcframework/libpython3.11.xcframework; sourceTree = SOURCE_ROOT; };
 		1D6058910D05DD3D006BFB54 /* carveracontroller.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = carveracontroller.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -192,7 +190,6 @@
 				59738ABA1A8E19AA001B2C0C /* Images.xcassets */,
 				59738AB41A8BB5D8001B2C0C /* lib */,
 				59FDEA8A21E7D34E004E6ECE /* include */,
-				01532DA9137C099F0076F6BF /* icon.png */,
 				8D1107310486CEB800E47090 /* carveracontroller-Info.plist */,
 			);
 			name = Resources;
@@ -309,7 +306,6 @@
 				AC5106F52959EE4E00655416 /* Launch Screen.storyboard in Resources */,
 				59FDEA8B21E7D34E004E6ECE /* include in Resources */,
 				59738ABB1A8E19AA001B2C0C /* Images.xcassets in Resources */,
-				01532DAA137C099F0076F6BF /* icon.png in Resources */,
 				59994E3B148E85C800863906 /* carveracontrollerpkg in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

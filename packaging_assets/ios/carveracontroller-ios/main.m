@@ -6,7 +6,7 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 #include "Python.h"
-#include "/Users/mamonney/kivy-ios/dist/include/common/sdl2/SDL_main.h"
+#include "SDL_main.h"
 #include <dlfcn.h>
 
 void export_orientation(void);

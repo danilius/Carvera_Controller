@@ -673,9 +673,9 @@ sh = "*"
 
 [package.source]
 type = "git"
-url = "https://github.com/kivy/kivy-ios.git"
-reference = "master"
-resolved_reference = "6bd6319150079b1c556ec24190305f3507b0b259"
+url = "https://github.com/zittix/kivy-ios.git"
+reference = "fix_custom_recipes"
+resolved_reference = "38e6eee2b0765d2b82aec0f3a69cb0cf147c3f19"
 
 [[package]]
 name = "lief"
@@ -1664,4 +1664,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = "<3.14,>=3.8"
-content-hash = "d70894bdfa940e51294eb353ba3ac5f6065839669534d9b4b0b28f30381a0315"
+content-hash = "620e8791e81bda3a33943b0595d6195e05c7ab3e57fd68f07ab1dda9a6f385c4"

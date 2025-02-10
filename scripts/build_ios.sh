@@ -1,8 +1,11 @@
+#!/bin/bash
 # Pre-requisites:
 # - Working XCode installation to build iOS app
 # - Homebrew installed
 # - Python 3 installed
 # - git installed
+
+set -e
 
 # Make sure it's the case
 if ! command -v brew &> /dev/null
@@ -37,18 +40,21 @@ fi
 TOP_LEVEL=$(git rev-parse --show-toplevel)
 cd $TOP_LEVEL || exit 1
 
-# Clone kivy-ios if not there
-if [ ! -d "build/kivy-ios" ]; then
-    git clone https://github.com/kivy/kivy-ios.git build/kivy-ios
-fi
-
-
 ln -sf $(pwd)/dist packaging_assets/ios/dist
 
-# Copy recipes to the right place as there is a bug in kivy for custom recipes
-ln -sf $(pwd)/packaging_assets/ios/recipes/* build/kivy-ios/kivy_ios/recipes/
-
 # Build the kivy-ios toolchain and needed dpendencies
-python3 build/kivy-ios/toolchain.py build kivy quicklz pyserial
+python3 -m kivy_ios.toolchain build --add-custom-recipe packaging_assets/ios/recipes/quicklz --add-custom-recipe packaging_assets/ios/recipes/pyserial kivy quicklz pyserial
 
-python3 build/kivy-ios/toolchain.py update packaging_assets/ios/carveracontroller-ios
+python3 -m kivy_ios.toolchain update --add-custom-recipe packaging_assets/ios/recipes/quicklz --add-custom-recipe packaging_assets/ios/recipes/pyserial packaging_assets/ios/carveracontroller-ios
+
+# Patch version if we given as arg
+if [ -z "$1" ]
+then
+    echo "No version given"
+else
+    plutil -replace CFBundleShortVersionString -string "$1" packaging_assets/ios/carveracontroller-ios/carveracontroller-Info.plist
+    plutil -replace CFBundleVersion -string "$1" packaging_assets/ios/carveracontroller-ios/carveracontroller-Info.plist
+fi
+
+# For now we open the project in XCode and build it from there
+open packaging_assets/ios/carveracontroller.xcodeproj

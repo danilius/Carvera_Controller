@@ -116,13 +116,14 @@ poetry run python -m carveracontroller
 
 ### Local Packaging
 
-The application is packaged using PyInstaller. This tool converts Python applications into a standalone executable, so it can be run on systems without requiring management of a installed Python interpreter or dependent libraries. An build helper script is configured with Poetry and can be run with:
+The application is packaged using PyInstaller (except for iOS). This tool converts Python applications into a standalone executable, so it can be run on systems without requiring management of a installed Python interpreter or dependent libraries. An build helper script is configured with Poetry and can be run with:
 
 ```bash
 poetry run python scripts/build.py --os os [--no-appimage]
 ```
 
-The options for `os` are windows, macos, or linux. If selecting `linux`, an appimage is built by default unless --no-appimage is specified.
+The options for `os` are windows, macos, linux or ios. If selecting `linux`, an appimage is built by default unless --no-appimage is specified.
+For iOS, the project will be open in XCode and needs to be built from there to simplify the signing process.
 
 ### Setting up translations
 

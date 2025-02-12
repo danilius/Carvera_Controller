@@ -280,7 +280,7 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1620;
 			};
-			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "CarveraController" */;
+			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "carveracontroller" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = en;
 			hasScannedForEncodings = 1;
@@ -329,7 +329,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
-			shellScript = "rsync -av --delete \"/Users/mamonney/Carvera_Controller/carveracontroller\"/ \"$PROJECT_DIR\"/carveracontrollerpkg\n";
+			shellScript = "rsync -av --delete \"$PROJECT_DIR/../../../carveracontroller\"/ \"$PROJECT_DIR\"/carveracontrollerpkg\n";
 		};
 		113D17E2153E3DB5001310A6 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -343,7 +343,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
-			shellScript = "/Users/mamonney/Carvera_Controller/dist/hostpython3/bin/python -m compileall -f -b \"$PROJECT_DIR\"/carveracontrollerpkg\n";
+			shellScript = "$PROJECT_DIR/../../../dist/hostpython3/bin/python -m compileall -f -b \"$PROJECT_DIR\"/carveracontrollerpkg\n";
 		};
 		113D17E2153E3DB5001310A7 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -411,7 +411,7 @@
 					"$(inherited)",
 					/Users/mamonney/Carvera_Controller/dist/lib,
 				);
-				MARKETING_VERSION = 0.9.7;
+				MARKETING_VERSION = 0.7.1;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = "-all_load";
 				PRODUCT_BUNDLE_IDENTIFIER = net.xwaves.carveracontroller;
@@ -462,7 +462,7 @@
 					"$(inherited)",
 					/Users/mamonney/Carvera_Controller/dist/lib,
 				);
-				MARKETING_VERSION = 0.9.7;
+				MARKETING_VERSION = 0.7.1;
 				OTHER_LDFLAGS = "-all_load";
 				PRODUCT_BUNDLE_IDENTIFIER = net.xwaves.carveracontroller;
 				PRODUCT_NAME = carveracontroller;
@@ -568,7 +568,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		C01FCF4E08A954540054247B /* Build configuration list for PBXProject "CarveraController" */ = {
+		C01FCF4E08A954540054247B /* Build configuration list for PBXProject "carveracontroller" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C01FCF4F08A954540054247B /* Debug */,

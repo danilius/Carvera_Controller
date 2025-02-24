@@ -118,7 +118,7 @@ from .__version__ import __version__
 from kivy.lang import Builder
 from .addons.tooltips.Tooltips import Tooltip,ToolTipButton,ToolTipDropDown 
 
-
+PLAY_FILE_IMAGE_DIR = os.path.join(os.path.dirname(__file__), 'data/play_file_image_backgrounds')
 
 def load_halt_translations(tr: Lang):
     """Loads the appropriate language translation"""
@@ -429,7 +429,27 @@ class CoordPopup(ModalView):
         self.MoveA_popup = MoveAPopup(self)
         self.mode = 'Run' # 'Margin' / 'ZProbe' / 'Leveling'
         super(CoordPopup, self).__init__(**kwargs)
+        self.background_image_files = [
+            f.replace(".png", "") for f in os.listdir(PLAY_FILE_IMAGE_DIR) if f.endswith(".png")
+        ]
 
+
+        # Ensure the spinner is updated after initialization
+        Clock.schedule_once(self.populate_spinner, 0)
+
+    def populate_spinner(self, dt):
+        if "background_image_spinner" in self.ids:
+            self.ids.background_image_spinner.values = ["None"] + self.background_image_files
+
+    def update_background_image(self, filename):
+        if filename != "None":
+            new_source = os.path.join(PLAY_FILE_IMAGE_DIR, filename)
+            cnc_workspace = self.ids.cnc_workspace
+            cnc_workspace.update_background_image(new_source + ".png")
+        else:
+            cnc_workspace = self.ids.cnc_workspace
+            cnc_workspace.update_background_image("None")
+    
     def set_config(self, key1, key2, value):
         self.config[key1][key2] = value
         self.cnc_workspace.draw()
@@ -649,14 +669,28 @@ class WiFiButton(BoxLayout, ToolTipButton):
 
 class CNCWorkspace(Widget):
     config = {}
-
+    bg_rect = ObjectProperty(None)
+    bg_image = ""
     # -----------------------------------------------------------------------
     def __init__(self, **kwargs):
-        self.bind(size=self.on_draw)
+        self.bind(size = self.on_resize, pos = self.on_resize)
         super(CNCWorkspace, self).__init__(**kwargs)
+        self.bg_rect = None
+
+    def on_resize(self, *args):
+        self.draw()
 
     def load_config(self, config):
         self.config = config
+
+    def update_background_image(self, new_source):
+        if self.bg_rect and new_source != "None":
+            self.bg_rect.source = new_source
+            self.bg_image = new_source
+        else:
+            self.bg_image = ""
+        self.draw()
+
 
     def draw(self, *args):
         if self.x <= 100:
@@ -666,57 +700,63 @@ class CNCWorkspace(Widget):
         with self.canvas:
             # background
             Color(50 / 255, 50 / 255, 50 / 255, 1)
-            Rectangle(pos=self.pos, size=self.size)
-            app = App.get_running_app()
-
-            if not app.has_4axis:
-                # anchor1
-                if self.config['origin']['anchor'] == 1:
-                    Color(75 / 255, 75 / 255, 75 / 255, 1)
-                else:
-                    Color(55 / 255, 55 / 255, 55 / 255, 1)
-                Rectangle(pos=(self.x, self.y),
-                          size=(CNC.vars['anchor_length'] * zoom, CNC.vars['anchor_width'] * zoom))
-                Rectangle(pos=(self.x, self.y),
-                          size=(CNC.vars['anchor_width'] * zoom, CNC.vars['anchor_length'] * zoom))
-
-                # anchor2
-                if self.config['origin']['anchor'] == 2:
-                    Color(75 / 255, 75 / 255, 75 / 255, 1)
-                else:
-                    Color(55 / 255, 55 / 255, 55 / 255, 1)
-                Rectangle(pos=(self.x + CNC.vars['anchor2_offset_x'] * zoom, self.y + CNC.vars['anchor2_offset_y'] * zoom),
-                          size=(CNC.vars['anchor_length'] * zoom, CNC.vars['anchor_width'] * zoom))
-                Rectangle(pos=(self.x + CNC.vars['anchor2_offset_x'] * zoom, self.y + CNC.vars['anchor2_offset_y'] * zoom),
-                          size=(CNC.vars['anchor_width'] * zoom, CNC.vars['anchor_length'] * zoom))
-
+            if self.bg_image == "" or self.bg_image == "None":
+                Color(50 / 255, 50 / 255, 50 / 255, 1)
             else:
-                rotation_base_y_center = (CNC.vars['anchor_width'] + CNC.vars['rotation_offset_y']) * zoom
-                # draw rotation base
-                Color(60 / 255, 60 / 255, 60 / 255, 1)
-                Rectangle(pos=(self.x, self.y + rotation_base_y_center - CNC.vars['rotation_base_height'] * zoom / 2),
-                          size=(CNC.vars['rotation_base_width'] * zoom, CNC.vars['rotation_base_height'] * zoom))
-                # draw rotation head
-                Color(75 / 255, 75 / 255, 75 / 255, 1)
-                Rectangle(pos=(self.x, self.y + rotation_base_y_center - CNC.vars['rotation_head_height'] * zoom / 2),
-                          size=(CNC.vars['rotation_head_width'] * zoom, CNC.vars['rotation_head_height'] * zoom))
+                Color(1,1,1,1)
+            self.bg_rect = Rectangle(pos=self.pos, size=self.size, source = self.bg_image)
 
-                # draw rotation chuck
-                Color(75 / 255, 75 / 255, 75 / 255, 1)
-                Rectangle(pos=(self.x + (CNC.vars['rotation_head_width'] + CNC.vars['rotation_chuck_interval']) * zoom, self.y + rotation_base_y_center - CNC.vars['rotation_chuck_dia'] * zoom / 2),
-                          size=(CNC.vars['rotation_chuck_width'] * zoom, CNC.vars['rotation_chuck_dia'] * zoom))
+            app = App.get_running_app()
+            if self.bg_image == "" or self.bg_image == "None":
+                Color(50 / 255, 50 / 255, 50 / 255, 1)
+                if not app.has_4axis:
+                    # anchor1
+                    if self.config['origin']['anchor'] == 1:
+                        Color(75 / 255, 75 / 255, 75 / 255, 1)
+                    else:
+                        Color(55 / 255, 55 / 255, 55 / 255, 1)
+                    Rectangle(pos=(self.x, self.y),
+                            size=(CNC.vars['anchor_length'] * zoom, CNC.vars['anchor_width'] * zoom))
+                    Rectangle(pos=(self.x, self.y),
+                            size=(CNC.vars['anchor_width'] * zoom, CNC.vars['anchor_length'] * zoom))
 
-                # draw rotation tail
-                Color(75 / 255, 75 / 255, 75 / 255, 1)
-                Rectangle(pos=(self.x + (CNC.vars['rotation_base_width'] - CNC.vars['rotation_tail_width']) * zoom, self.y + rotation_base_y_center - CNC.vars['rotation_tail_height'] * zoom / 2),
-                          size=(CNC.vars['rotation_tail_width'] * zoom, CNC.vars['rotation_tail_height'] * zoom))
+                    # anchor2
+                    if self.config['origin']['anchor'] == 2:
+                        Color(75 / 255, 75 / 255, 75 / 255, 1)
+                    else:
+                        Color(55 / 255, 55 / 255, 55 / 255, 1)
+                    Rectangle(pos=(self.x + CNC.vars['anchor2_offset_x'] * zoom, self.y + CNC.vars['anchor2_offset_y'] * zoom),
+                            size=(CNC.vars['anchor_length'] * zoom, CNC.vars['anchor_width'] * zoom))
+                    Rectangle(pos=(self.x + CNC.vars['anchor2_offset_x'] * zoom, self.y + CNC.vars['anchor2_offset_y'] * zoom),
+                            size=(CNC.vars['anchor_width'] * zoom, CNC.vars['anchor_length'] * zoom))
 
-                # draw rotation probe position
-                # Color(200 / 255, 200 / 255, 200 / 255, 1)
-                # Line(points=[self.x + (CNC.vars['rotation_offset_x'] + CNC.vars['anchor_width'] - 5) * zoom, self.y + (CNC.vars['rotation_offset_y'] + CNC.vars['anchor_width']) * zoom,
-                #              self.x + (CNC.vars['rotation_offset_x'] + CNC.vars['anchor_width'] + 5) * zoom, self.y + (CNC.vars['rotation_offset_y'] + CNC.vars['anchor_width']) * zoom], width=1)
-                # Line(points=[self.x + (CNC.vars['rotation_offset_x'] + CNC.vars['anchor_width']) * zoom, self.y + (CNC.vars['rotation_offset_y'] + CNC.vars['anchor_width'] - 5) * zoom,
-                #              self.x + (CNC.vars['rotation_offset_x'] + CNC.vars['anchor_width']) * zoom, self.y + (CNC.vars['rotation_offset_y'] + CNC.vars['anchor_width'] + 5) * zoom], width=1)
+                else:
+                    rotation_base_y_center = (CNC.vars['anchor_width'] + CNC.vars['rotation_offset_y']) * zoom
+                    # draw rotation base
+                    Color(60 / 255, 60 / 255, 60 / 255, 1)
+                    Rectangle(pos=(self.x, self.y + rotation_base_y_center - CNC.vars['rotation_base_height'] * zoom / 2),
+                            size=(CNC.vars['rotation_base_width'] * zoom, CNC.vars['rotation_base_height'] * zoom))
+                    # draw rotation head
+                    Color(75 / 255, 75 / 255, 75 / 255, 1)
+                    Rectangle(pos=(self.x, self.y + rotation_base_y_center - CNC.vars['rotation_head_height'] * zoom / 2),
+                            size=(CNC.vars['rotation_head_width'] * zoom, CNC.vars['rotation_head_height'] * zoom))
+
+                    # draw rotation chuck
+                    Color(75 / 255, 75 / 255, 75 / 255, 1)
+                    Rectangle(pos=(self.x + (CNC.vars['rotation_head_width'] + CNC.vars['rotation_chuck_interval']) * zoom, self.y + rotation_base_y_center - CNC.vars['rotation_chuck_dia'] * zoom / 2),
+                            size=(CNC.vars['rotation_chuck_width'] * zoom, CNC.vars['rotation_chuck_dia'] * zoom))
+
+                    # draw rotation tail
+                    Color(75 / 255, 75 / 255, 75 / 255, 1)
+                    Rectangle(pos=(self.x + (CNC.vars['rotation_base_width'] - CNC.vars['rotation_tail_width']) * zoom, self.y + rotation_base_y_center - CNC.vars['rotation_tail_height'] * zoom / 2),
+                            size=(CNC.vars['rotation_tail_width'] * zoom, CNC.vars['rotation_tail_height'] * zoom))
+
+                    # draw rotation probe position
+                    # Color(200 / 255, 200 / 255, 200 / 255, 1)
+                    # Line(points=[self.x + (CNC.vars['rotation_offset_x'] + CNC.vars['anchor_width'] - 5) * zoom, self.y + (CNC.vars['rotation_offset_y'] + CNC.vars['anchor_width']) * zoom,
+                    #              self.x + (CNC.vars['rotation_offset_x'] + CNC.vars['anchor_width'] + 5) * zoom, self.y + (CNC.vars['rotation_offset_y'] + CNC.vars['anchor_width']) * zoom], width=1)
+                    # Line(points=[self.x + (CNC.vars['rotation_offset_x'] + CNC.vars['anchor_width']) * zoom, self.y + (CNC.vars['rotation_offset_y'] + CNC.vars['anchor_width'] - 5) * zoom,
+                    #              self.x + (CNC.vars['rotation_offset_x'] + CNC.vars['anchor_width']) * zoom, self.y + (CNC.vars['rotation_offset_y'] + CNC.vars['anchor_width'] + 5) * zoom], width=1)
 
 
             laser_x = CNC.vars['laser_module_offset_x'] if CNC.vars['lasermode'] else 0.0

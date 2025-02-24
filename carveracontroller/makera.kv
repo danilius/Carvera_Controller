@@ -2620,6 +2620,35 @@
                 size_hint_x: None
                 width: '200dp'
                 orientation: 'vertical'
+                BoxLayout:
+                    padding: '5dp', '0dp', '5dp', '10dp'
+                    spacing: '5dp'
+                    size_hint_y: None
+                    height: '40dp'
+                    Label:
+                        text: tr._("Background:")
+                    Spinner:
+                        id: background_image_spinner
+                        text: "None"
+                        size_hint_x: 1.5
+                        on_text: root.update_background_image(self.text)
+                BoxLayout:
+                    padding: '0.5dp'
+                    size_hint_y: None
+                    height: '30dp'
+                    disabled: app.model == 'CA1'
+                    ToolTipButton:
+                        text: tr._('New Background')
+                        tooltip_txt: tr._('Open the directory to add new background images')
+                        size_hint_y: None
+                        height: '30dp'
+                        font_size: '16sp'
+                        disabled: app.state != 'Idle'
+                        on_release:
+                            app.root.controller.open_bkg_img_dir()
+                Label:
+                    size_hint_y: None
+                    height: '15dp'
 
                 BoxLayout:
                     padding: '0.5dp'

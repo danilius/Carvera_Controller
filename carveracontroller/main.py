@@ -118,8 +118,6 @@ from .__version__ import __version__
 from kivy.lang import Builder
 from .addons.tooltips.Tooltips import Tooltip,ToolTipButton,ToolTipDropDown 
 
-PLAY_FILE_IMAGE_DIR = os.path.join(os.path.dirname(__file__), 'data/play_file_image_backgrounds')
-
 def load_halt_translations(tr: Lang):
     """Loads the appropriate language translation"""
     HALT_REASON = {
@@ -3924,6 +3922,7 @@ def load_constants():
     global DOWNLOAD_ADDRESS
 
     global LANGS
+    global PLAY_FILE_IMAGE_DIR
 
     FW_UPD_ADDRESS = 'https://raw.githubusercontent.com/carvera-community/carvera_community_firmware/master/version.txt'
     CTL_UPD_ADDRESS = 'https://raw.githubusercontent.com/carvera-community/carvera_controller/main/CHANGELOG.md'
@@ -3938,7 +3937,7 @@ def load_constants():
     SHORT_LOAD_TIMEOUT = 3  # s
     WIFI_LOAD_TIMEOUT = 30 # s
     HEARTBEAT_TIMEOUT = 10
-
+    PLAY_FILE_IMAGE_DIR = os.path.join(os.path.dirname(__file__), 'data/play_file_image_backgrounds')
     MAX_TOUCH_INTERVAL = 0.15
     GCODE_VIEW_SPEED = 1
 

@@ -2639,13 +2639,13 @@
                     disabled: app.model == 'CA1'
                     ToolTipButton:
                         text: tr._('New Background')
-                        tooltip_txt: tr._('Open the directory to add new background images')
+                        tooltip_txt: tr._('Open the directory to add new background images. Custom images require a folder to be set in the controller settings.')
                         size_hint_y: None
                         height: '30dp'
                         font_size: '16sp'
                         disabled: app.state != 'Idle'
                         on_release:
-                            app.root.controller.open_bkg_img_dir()
+                            root.open_bkg_img_dir()
                 Label:
                     size_hint_y: None
                     height: '15dp'

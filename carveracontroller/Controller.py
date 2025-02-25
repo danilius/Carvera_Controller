@@ -797,22 +797,6 @@ class Controller:
             self.executeCommand(f"G91G0{_dir}")
 
     # ----------------------------------------------------------------------
-    def open_bkg_img_dir(self):
-        folder_path = os.path.join(os.path.dirname(__file__), 'data/play_file_image_backgrounds')  # Relative path
-
-        # Ensure the folder exists
-        if not os.path.exists(folder_path):
-            print(f"Folder '{folder_path}' does not exist!")
-            return
-
-        # Open based on OS
-        if platform.system() == "Windows":
-            os.startfile(folder_path)
-        elif platform.system() == "Darwin":  # macOS
-            subprocess.Popen(["open", folder_path])
-        else:  # Linux
-            subprocess.Popen(["xdg-open", folder_path])
-
 
     def goto(self, x=None, y=None, z=None):
         cmd = "G90G0"

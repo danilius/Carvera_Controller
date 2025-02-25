@@ -32,6 +32,14 @@
         "default": "true"
     },
     {
+        "type": "path",
+        "title": "Play Background Images Custom Folder",
+        "desc": "The user directory to pull custom background images for the play file screen from",
+        "section": "carvera",
+        "key": "custom_bkg_img_dir",
+        "default": ""
+    },
+    {
         "type": "string",
         "title": "Previous Machine Network Address",
         "desc": "Network address of last machine connected over network. Used for reconnect functionality",

@@ -21,10 +21,6 @@ from .USBStream import USBStream
 from .WIFIStream import WIFIStream
 from .XMODEM import EOT, CAN
 
-import os
-import platform
-import subprocess
-
 STREAM_POLL = 0.2 # s
 DIAGNOSE_POLL = 0.5  # s
 RX_BUFFER_SIZE = 128

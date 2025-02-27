@@ -3,8 +3,6 @@
 
 <ToolTipDropDown>:
 
-<ToolTipLabel>:
-
 <Tooltip>:
     size_hint: None, None
     width: max(tooltip_label.texture_size[0] + 20, tooltip_image.width + 20)
@@ -17,13 +15,13 @@
         Color:
             rgba: 0.1, 0.1, 0.1, 0.9
         Rectangle:
-            size: self.size
+            size: self.size[0]+10,self.size[1]
             pos: self.pos
         Color:
             rgba: 0.8, 0.8, 0.8, 1  # Light grey border
         Line:
             width: 1.5
-            rectangle: (*self.pos, *self.size) 
+            rectangle: (self.pos[0],self.pos[1], self.size[0] + 10 ,self.size [1]) 
 
     BoxLayout:
         size_hint: None, None

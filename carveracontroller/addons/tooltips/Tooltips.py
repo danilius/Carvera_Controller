@@ -55,8 +55,8 @@ class ToolTipButton(Button):
 
         image_widget = self._tooltip.ids.tooltip_image
         image_widget.bind(texture_size=self._update_image_size)
-        self._update_tooltip()
         self._update_image()
+        self._update_tooltip()
 
     def _update_tooltip(self, *largs):
         txt = self.tooltip_txt
@@ -103,12 +103,15 @@ class ToolTipButton(Button):
 
     def on_mouse_pos(self, *args):
         if not self.get_root_window():
+            self.close_tooltip()
             return
         
         if not self.tooltip_txt and not self.tooltip_image:
+            self.close_tooltip()
             return
         
         if self.disabled:
+            self.close_tooltip()
             return
         
     
@@ -185,8 +188,8 @@ class ToolTipDropDown(DropDown):
 
         image_widget = self._tooltip.ids.tooltip_image
         image_widget.bind(texture_size=self._update_image_size)
-        self._update_tooltip()
         self._update_image()
+        self._update_tooltip()
 
     def _update_tooltip(self, *largs):
         txt = self.tooltip_txt
@@ -233,12 +236,15 @@ class ToolTipDropDown(DropDown):
 
     def on_mouse_pos(self, *args):
         if not self.get_root_window():
+            self.close_tooltip()
             return
         
         if not self.tooltip_txt and not self.tooltip_image:
+            self.close_tooltip()
             return
         
         if self.disabled:
+            self.close_tooltip()
             return
         
     
@@ -316,8 +322,9 @@ class ToolTipLabel(Label):
 
         image_widget = self._tooltip.ids.tooltip_image
         image_widget.bind(texture_size=self._update_image_size)
-        self._update_tooltip()
+        
         self._update_image()
+        self._update_tooltip()
 
     def _update_tooltip(self, *largs):
         txt = self.tooltip_txt
@@ -364,12 +371,15 @@ class ToolTipLabel(Label):
 
     def on_mouse_pos(self, *args):
         if not self.get_root_window():
+            self.close_tooltip()
             return
         
         if not self.tooltip_txt and not self.tooltip_image:
+            self.close_tooltip()
             return
         
         if self.disabled:
+            self.close_tooltip()
             return
         
     

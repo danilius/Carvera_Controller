@@ -793,6 +793,7 @@ class Controller:
             self.executeCommand(f"G91G0{_dir}")
 
     # ----------------------------------------------------------------------
+
     def goto(self, x=None, y=None, z=None):
         cmd = "G90G0"
         if x is not None: cmd += "X%g" % (x)

@@ -570,8 +570,16 @@ class CoordPopup(ModalView):
     def load_leveling_label(self):
         self.lb_leveling.text = tr._('X Points: ') + '%d ' % (self.config['leveling']['x_points']) \
                                 + tr._('Y Points: ') + '%d ' % (self.config['leveling']['y_points']) \
-                                + tr._('Height: ') + '%d' % (self.config['leveling']['height']) \
-                                + tr._('    -X: ') + '%g ' % (round(self.config['leveling']['xn_offset'],4)) \
+                                + tr._('Height: ') + '%d' % (self.config['leveling']['height'])
+
+        any_offsets_set = False
+        for offset_type in ['xn_offset', 'xp_offset', 'yn_offset', 'yp_offset']:
+            if self.config['leveling'][offset_type] != 0:
+                any_offsets_set = True
+        
+        if any_offsets_set:
+            self.lb_leveling.text += tr._(' Offsets: ') \
+                                + tr._(' -X: ') + '%g ' % (round(self.config['leveling']['xn_offset'],4)) \
                                 + tr._(' +X: ') + '%g ' % (round(self.config['leveling']['xp_offset'],4)) \
                                 + tr._(' -Y: ') + '%g ' % (round(self.config['leveling']['yn_offset'],4)) \
                                 + tr._(' +Y: ') + '%g ' % (round(self.config['leveling']['yp_offset'],4))

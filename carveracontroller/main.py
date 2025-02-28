@@ -431,10 +431,16 @@ class CoordPopup(ModalView):
         self.MoveA_popup = MoveAPopup(self)
         self.mode = 'Run' # 'Margin' / 'ZProbe' / 'Leveling'
         super(CoordPopup, self).__init__(**kwargs)
+        self.user_play_file_image_dir = Config.get('carvera', 'custom_bkg_img_dir')
+        self.background_image_files = []
+
         default_bkg_images = os.path.join(os.path.dirname(__file__), 'data/play_file_image_backgrounds')
-        self.background_image_files = [
-            f.replace(".png", "") for f in os.listdir(PLAY_FILE_IMAGE_DIR) if f.endswith(".png")            
-        ]
+        
+        if os.path.exists(self.user_play_file_image_dir):
+            self.background_image_files = [
+                f.replace(".png", "") for f in os.listdir(self.user_play_file_image_dir) if f.endswith(".png")            
+            ]
+
         for f in os.listdir(default_bkg_images):
             if f.endswith(".png"):
                 self.background_image_files.append(f.replace(".png", ""))
@@ -450,7 +456,7 @@ class CoordPopup(ModalView):
     def update_background_image(self, filename):
         if filename != "None":
             old_source = os.path.join(os.path.dirname(__file__), 'data/play_file_image_backgrounds', filename)
-            new_source = os.path.join(PLAY_FILE_IMAGE_DIR, filename)
+            new_source = os.path.join(self.user_play_file_image_dir, filename)
             cnc_workspace = self.ids.cnc_workspace
             if os.path.isfile(new_source + ".png"):
                 cnc_workspace.update_background_image(new_source + ".png")
@@ -463,7 +469,8 @@ class CoordPopup(ModalView):
             cnc_workspace.update_background_image("None")
     
     def open_bkg_img_dir(self):
-        folder_path = PLAY_FILE_IMAGE_DIR
+        app = App.get_running_app()
+        folder_path = app.ids.coord_popup.user_play_file_image_dir
 
         # Ensure the folder exists
         if not os.path.exists(folder_path):
@@ -3928,8 +3935,6 @@ def android_tweaks():
 def load_app_configs():
     if Config.has_option('carvera', 'ui_density_override') and Config.get('carvera', 'ui_density_override') == "1":
         Metrics.set_density(float(Config.get('carvera', 'ui_density')))
-    if Config.has_option('carvera', 'custom_bkg_img_dir'):
-        PLAY_FILE_IMAGE_DIR = Config.get('carvera', 'custom_bkg_img_dir')
 
 def set_config_defaults(default_lang):
     if not Config.has_section('carvera'):
@@ -3956,9 +3961,11 @@ def set_config_defaults(default_lang):
     if not Config.has_option('carvera', 'remote_folder_3'): Config.set('carvera', 'remote_folder_3', '')
     if not Config.has_option('carvera', 'remote_folder_4'): Config.set('carvera', 'remote_folder_4', '')
     if not Config.has_option('carvera', 'remote_folder_5'): Config.set('carvera', 'remote_folder_5', '')
+    if not Config.has_option('carvera', 'custom_bkg_img_dir'): Config.set('carvera', 'custom_bkg_img_dir', '')
     if not Config.has_option('graphics', 'allow_screensaver'): Config.set('graphics', 'allow_screensaver', '0')
     if not Config.has_option('graphics', 'width'): Config.set('graphics', 'width', '1440')
     if not Config.has_option('graphics', 'height'): Config.set('graphics', 'height', '900')
+
     Config.write()
 
 def load_constants():
@@ -3982,7 +3989,6 @@ def load_constants():
     global DOWNLOAD_ADDRESS
 
     global LANGS
-    global PLAY_FILE_IMAGE_DIR
 
     FW_UPD_ADDRESS = 'https://raw.githubusercontent.com/carvera-community/carvera_community_firmware/master/version.txt'
     CTL_UPD_ADDRESS = 'https://raw.githubusercontent.com/carvera-community/carvera_controller/main/CHANGELOG.md'
@@ -3997,7 +4003,6 @@ def load_constants():
     SHORT_LOAD_TIMEOUT = 3  # s
     WIFI_LOAD_TIMEOUT = 30 # s
     HEARTBEAT_TIMEOUT = 10
-    PLAY_FILE_IMAGE_DIR = Config.get('carvera', 'custom_bkg_img_dir')
     MAX_TOUCH_INTERVAL = 0.15
     GCODE_VIEW_SPEED = 1
 

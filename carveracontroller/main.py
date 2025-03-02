@@ -111,21 +111,24 @@ import webbrowser
 if sys.platform == "ios":
     from pyobjus import autoclass
     from pyobjus.dylib_manager import load_framework
+    try:
+        load_framework('/System/Library/Frameworks/UIKit.framework')
 
-    load_framework('/System/Library/Frameworks/UIKit.framework')
-
-    NSURL = autoclass('NSURL')
-    UIApplication = autoclass('UIApplication')
-
-
-    def ios_webbrowser_open(url, new=None):
-        nsurl = NSURL.URLWithString_(url)
-        app = UIApplication.sharedApplication()
+        NSURL = autoclass('NSURL')
+        UIApplication = autoclass('UIApplication')
 
 
-        options = {}
-        app.openURL_options_completionHandler_(nsurl, options, None)
-    webbrowser.open = ios_webbrowser_open
+        def ios_webbrowser_open(url, new=None):
+            nsurl = NSURL.URLWithString_(url)
+            app = UIApplication.sharedApplication()
+
+
+            options = {}
+            app.openURL_options_completionHandler_(nsurl, options, None)
+        webbrowser.open = ios_webbrowser_open
+    except:
+        # Doesn't work for iOS simulator
+        pass
 
 from pathlib import Path
 

@@ -2238,6 +2238,19 @@ class Makera(RelativeLayout):
         self.input_popup.open(self)
 
     # -----------------------------------------------------------------------
+    def open_upload_local_file_popup(self):
+        # For iOS we use the native file picker
+        if sys.platform == 'ios':
+            from . import ios_helpers
+            ios_helpers.pick_nc_file()
+            return
+        self.file_popup.firmware_mode = False
+        self.file_popup.popup_manager.transition.direction = 'left'
+        self.file_popup.popup_manager.transition.duration = 0.3
+        self.file_popup.popup_manager.current = 'local_page'
+        self.set_local_folder_to_last_opened()
+
+    # -----------------------------------------------------------------------
     def open_wifi_password_input_popup(self):
         self.input_popup.lb_title.text = tr._('Input WiFi password of') + ' %s:' % self.input_popup.cache_var1
         self.input_popup.txt_content.text = ''
@@ -4070,7 +4083,11 @@ def main():
     base_path = app_base_path()
     register_fonts(base_path)
     register_images(base_path)
-    MakeraApp().run()
+
+    # Make it global to be able to access it from native APIs
+    global global_app
+    global_app = MakeraApp()
+    global_app.run()
 
 if __name__ == '__main__':
     main()

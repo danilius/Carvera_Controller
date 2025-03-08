@@ -15,6 +15,7 @@
 		2CB5F34717D5233A006187AB /* bridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 2CB5F34617D5233A006187AB /* bridge.m */; };
 		306AABFA2D5A1C09001AE21B /* libquicklz.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = B16343CABE5245DC84B592C3 /* libquicklz.xcframework */; };
 		306AABFC2D5A3F65001AE21B /* iconCircle.png in Resources */ = {isa = PBXBuildFile; fileRef = 306AABFB2D5A3F65001AE21B /* iconCircle.png */; };
+		30F3597D2D7C7B3800D5A803 /* UniformTypeIdentifiers.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 30F3597C2D7C7B3800D5A803 /* UniformTypeIdentifiers.framework */; };
 		31044FE8A617700E6310BC14 /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6C0A4962AE1BE0703D8D42A7 /* CoreVideo.framework */; };
 		31D64A1F9418CA4719DF905E /* libssl.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4A4B440CA87E67B49D875F29 /* libssl.xcframework */; };
 		3317407194A5AA0AD871FE9B /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EBA441B7898864FA55FA614D /* CoreGraphics.framework */; };
@@ -64,6 +65,7 @@
 		2CB5F34517D5233A006187AB /* bridge.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = bridge.h; sourceTree = SOURCE_ROOT; };
 		2CB5F34617D5233A006187AB /* bridge.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = bridge.m; sourceTree = SOURCE_ROOT; };
 		306AABFB2D5A3F65001AE21B /* iconCircle.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = iconCircle.png; sourceTree = "<group>"; };
+		30F3597C2D7C7B3800D5A803 /* UniformTypeIdentifiers.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UniformTypeIdentifiers.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.2.sdk/System/Library/Frameworks/UniformTypeIdentifiers.framework; sourceTree = DEVELOPER_DIR; };
 		31C44A95BA4F2D31DE1C045C /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = WebKit.framework; sourceTree = DEVELOPER_DIR; };
 		339B48A886CA761D0A19C3D5 /* libSDL2_ttf.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = libSDL2_ttf.xcframework; path = ../dist/xcframework/libSDL2_ttf.xcframework; sourceTree = SOURCE_ROOT; };
 		3D0646D283B8832F573E425A /* GameController.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = GameController.framework; sourceTree = DEVELOPER_DIR; };
@@ -118,6 +120,7 @@
 				B9D740B78FF3454EF62BF12A /* WebKit.framework in Frameworks */,
 				DE5F48D09E9FB2AB56B93260 /* ImageIO.framework in Frameworks */,
 				B8E84737AAA446910914F993 /* MessageUI.framework in Frameworks */,
+				30F3597D2D7C7B3800D5A803 /* UniformTypeIdentifiers.framework in Frameworks */,
 				306AABFA2D5A1C09001AE21B /* libquicklz.xcframework in Frameworks */,
 				D86A4F58915DC9EE73706617 /* AVFoundation.framework in Frameworks */,
 				C8E849BE8622EE80721C94AA /* AudioToolbox.framework in Frameworks */,
@@ -201,6 +204,7 @@
 		29B97323FDCFA39411CA2CEA /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				30F3597C2D7C7B3800D5A803 /* UniformTypeIdentifiers.framework */,
 				DAA347728ECFEC295FDF6F22 /* QuartzCore.framework */,
 				A5124B098F07AB0CE70E7C0F /* UIKit.framework */,
 				650D4733935B336C699C93ED /* Accelerate.framework */,

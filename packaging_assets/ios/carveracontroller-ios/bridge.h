@@ -1,5 +1,6 @@
 #import <Foundation/Foundation.h>
 #import <CoreMotion/CoreMotion.h>
+#import <UIKit/UIKit.h>
 
 @interface bridge : NSObject {
     NSOperationQueue *queue;
@@ -47,3 +48,8 @@
 @property (nonatomic) double pressure;
 
 @end
+
+@interface DocumentPickerHelper : NSObject <UIDocumentPickerDelegate>
++ (void)showDocumentPicker;
+@end
+

@@ -1,4 +1,7 @@
 #import "bridge.h"
+#import <UIKit/UIKit.h>
+#import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
+#include "Python.h"
 
 @implementation bridge
 
@@ -119,6 +122,61 @@ CMAltimeter *altimeterManager;
     [self.motionManager release];
     [queue release];
     [super dealloc];
+}
+
+@end
+
+@implementation DocumentPickerHelper
+
+
+// Singleton instance
++ (instancetype)sharedInstance {
+    static DocumentPickerHelper *sharedInstance = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        sharedInstance = [[DocumentPickerHelper alloc] init];
+    });
+    return sharedInstance;
+}
+
+// Show the document picker
++ (void)showDocumentPicker {
+    NSArray *documentTypes = @[[UTType typeWithIdentifier:@"public.data"]]; // Allow all file types, filtering in Python
+    UIDocumentPickerViewController *picker = [[UIDocumentPickerViewController alloc] initForOpeningContentTypes:documentTypes];
+    picker.delegate = [DocumentPickerHelper sharedInstance];
+
+    // Get the current top view controller
+    UIViewController *rootViewController = [UIApplication sharedApplication].keyWindow.rootViewController;
+    [rootViewController presentViewController:picker animated:YES completion:nil];
+}
+
+// Delegate method: Called when a document is picked
+- (void)documentPicker:(UIDocumentPickerViewController *)controller didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls {
+    if (urls.count == 0) {
+       return;
+   }
+
+   NSURL *selectedFileURL = urls.firstObject;
+
+   // Start accessing security-scoped resource
+   if (![selectedFileURL startAccessingSecurityScopedResource]) {
+       NSLog(@"Failed to access security-scoped resource.");
+       return;
+   }
+    
+    NSString *path = [selectedFileURL path];
+
+   @try {
+       NSString *str = [NSString stringWithFormat:@"carveracontrollerpkg.main.global_app.root.file_popup.local_rv.curr_selected_file=\"%@\"; carveracontrollerpkg.main.global_app.root.check_and_upload()", path];
+       PyGILState_STATE gstate;
+       gstate = PyGILState_Ensure();
+       PyRun_SimpleString([str cStringUsingEncoding:NSUTF8StringEncoding]);
+       PyGILState_Release(gstate);
+   }
+   @finally {
+       // Stop accessing security-scoped resource
+       [selectedFileURL stopAccessingSecurityScopedResource];
+   }
 }
 
 @end

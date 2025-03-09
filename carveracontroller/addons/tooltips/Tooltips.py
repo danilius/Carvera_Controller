@@ -8,6 +8,7 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.core.window import Window
 from kivy.factory import Factory
 from kivy.uix.dropdown import DropDown
+import sys
 
 class Tooltip(BoxLayout):
     pass
@@ -33,6 +34,9 @@ class ToolTipButton(Button):
     def __init__(self, **kwargs):
         self._tooltip = None
         super(ToolTipButton, self).__init__(**kwargs)
+        # On iOS, tooltips are not supported, so we disable them
+        if sys.platform == 'ios':
+            return
         fbind = self.fbind
         fbind('tooltip_cls', self._build_tooltip)
         fbind('tooltip_txt', self._update_tooltip)
@@ -166,6 +170,9 @@ class ToolTipDropDown(DropDown):
     def __init__(self, **kwargs):
         self._tooltip = None
         super(ToolTipDropDown, self).__init__(**kwargs)
+        # On iOS, tooltips are not supported, so we disable them
+        if sys.platform == 'ios':
+            return
         fbind = self.fbind
         fbind('tooltip_cls', self._build_tooltip)
         fbind('tooltip_txt', self._update_tooltip)
@@ -300,6 +307,9 @@ class ToolTipLabel(Label):
     def __init__(self, **kwargs):
         self._tooltip = None
         super(ToolTipLabel, self).__init__(**kwargs)
+        # On iOS, tooltips are not supported, so we disable them
+        if sys.platform == 'ios':
+            return
         fbind = self.fbind
         fbind('tooltip_cls', self._build_tooltip)
         fbind('tooltip_txt', self._update_tooltip)

@@ -284,7 +284,7 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1620;
 			};
-			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "carveracontroller" */;
+			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "CarveraController" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = en;
 			hasScannedForEncodings = 1;
@@ -415,10 +415,10 @@
 					"$(inherited)",
 					/Users/mamonney/Carvera_Controller/dist/lib,
 				);
-				MARKETING_VERSION = 0.7.1;
+				MARKETING_VERSION = 0.7.2;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = "-all_load";
-				PRODUCT_BUNDLE_IDENTIFIER = net.xwaves.carveracontroller;
+				PRODUCT_BUNDLE_IDENTIFIER = net.xwaves.carveracommunitycontroller;
 				PRODUCT_NAME = carveracontroller;
 				PROVISIONING_PROFILE = "";
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
@@ -466,9 +466,9 @@
 					"$(inherited)",
 					/Users/mamonney/Carvera_Controller/dist/lib,
 				);
-				MARKETING_VERSION = 0.7.1;
+				MARKETING_VERSION = 0.7.2;
 				OTHER_LDFLAGS = "-all_load";
-				PRODUCT_BUNDLE_IDENTIFIER = net.xwaves.carveracontroller;
+				PRODUCT_BUNDLE_IDENTIFIER = net.xwaves.carveracommunitycontroller;
 				PRODUCT_NAME = carveracontroller;
 				PROVISIONING_PROFILE = "";
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
@@ -572,7 +572,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		C01FCF4E08A954540054247B /* Build configuration list for PBXProject "carveracontroller" */ = {
+		C01FCF4E08A954540054247B /* Build configuration list for PBXProject "CarveraController" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C01FCF4F08A954540054247B /* Debug */,

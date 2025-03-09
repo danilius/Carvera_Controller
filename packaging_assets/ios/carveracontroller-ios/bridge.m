@@ -167,7 +167,7 @@ CMAltimeter *altimeterManager;
     NSString *path = [selectedFileURL path];
 
    @try {
-       NSString *str = [NSString stringWithFormat:@"carveracontrollerpkg.main.global_app.root.file_popup.local_rv.curr_selected_file=\"%@\"; carveracontrollerpkg.main.global_app.root.check_and_upload()", path];
+       NSString *str = [NSString stringWithFormat:@"carveracontrollerpkg.main.global_app.root.uploadLocalFile(\"%@\")", path];
        PyGILState_STATE gstate;
        gstate = PyGILState_Ensure();
        PyRun_SimpleString([str cStringUsingEncoding:NSUTF8StringEncoding]);

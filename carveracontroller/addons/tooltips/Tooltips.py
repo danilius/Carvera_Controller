@@ -27,7 +27,7 @@ class ToolTipButton(Button):
     tooltip_txt = StringProperty('')
     tooltip_cls = ObjectProperty(Tooltip)
     tooltip_image = StringProperty('')
-    tooltip_delay = 2
+    tooltip_delay = 0.5
     tooltip_image_size = ObjectProperty(None)
 
     def __init__(self, **kwargs):
@@ -160,7 +160,7 @@ class ToolTipDropDown(DropDown):
     tooltip_txt = StringProperty('')
     tooltip_cls = ObjectProperty(Tooltip)
     tooltip_image = StringProperty('')
-    tooltip_delay = 2
+    tooltip_delay = 0.5
     tooltip_image_size = ObjectProperty(None)
 
     def __init__(self, **kwargs):
@@ -294,7 +294,7 @@ class ToolTipLabel(Label):
     tooltip_txt = StringProperty('')
     tooltip_cls = ObjectProperty(Tooltip)
     tooltip_image = StringProperty('')
-    tooltip_delay = 2
+    tooltip_delay = 0.5
     tooltip_image_size = ObjectProperty(None)
 
     def __init__(self, **kwargs):

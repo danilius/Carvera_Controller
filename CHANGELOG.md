@@ -4,6 +4,7 @@
 - Enhancement: Added custom background images in a dropdown for the start file/probe screen to show bolt hole positions. The user can create their own by replicating one of the ones in the existing folder
 - Enhancement: Support copy keyboard shortcut from MDI window
 - Bugfix: Tooltips no longer persist when the parent object is unfocused
+- Enhancement: Initial iOS platform support
 - Bugfix: Tooltips no longer cut off certain longer strings of text
 
 [0.7.1]

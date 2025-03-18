@@ -11,7 +11,7 @@ The Controller software works on the following systems:
 - MacOS using Apple Silicon CPUs running Sonoma (14) or above
 - Linux using x64 CPUs running a Linux distribution with Glibc 2.31 or above (eg. Ubuntu 20.04 or higher)
 - Linux using ARM64 CPUs (eg RasPi 3 or above) running a distribution Glibc 2.36 or above (eg. RasPiOS Bookworm or higher)
-- Apple iPad with iOS 18 or higher
+- Apple iPad with iOS 17.6 or higher
 - Other systems might be work via the Python Package, see below for more details.
 
 ## Installation
@@ -138,3 +138,7 @@ poetry run python scripts/update_translations.py
 ```
 
 This utility scans the python and kivvy code for new strings and updates the mapping files. It does not clear/overwrite previous translations.
+
+### Collected Data & Privacy
+
+See [the privacy page](PRIVACY.md) for more details.

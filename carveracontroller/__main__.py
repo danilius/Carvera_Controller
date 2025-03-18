@@ -5,4 +5,5 @@ from carveracontroller.main import main, init_lang, Lang
 default_lang = init_lang()
 tr = Lang(default_lang)
 
-main()
+if __name__ == "__main__":
+    main()

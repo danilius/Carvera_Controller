@@ -96,7 +96,11 @@ from kivy.properties import ObjectProperty, NumericProperty, ListProperty
 from kivy.config import Config
 from kivy.metrics import Metrics
 
-from serial.tools.list_ports import comports
+try:
+    from serial.tools.list_ports import comports
+except ImportError:
+    comports = None
+
 from functools import partial
 from .WIFIStream import MachineDetector
 from kivy.core.window import Window
@@ -104,6 +108,28 @@ from kivy.core.text import LabelBase
 from kivy.resources import resource_add_path
 from kivy.network.urlrequest import UrlRequest
 import webbrowser
+if sys.platform == "ios":
+    from pyobjus import autoclass
+    from pyobjus.dylib_manager import load_framework
+    try:
+        load_framework('/System/Library/Frameworks/UIKit.framework')
+
+        NSURL = autoclass('NSURL')
+        UIApplication = autoclass('UIApplication')
+
+
+        def ios_webbrowser_open(url, new=None):
+            nsurl = NSURL.URLWithString_(url)
+            app = UIApplication.sharedApplication()
+
+
+            options = {}
+            app.openURL_options_completionHandler_(nsurl, options, None)
+        webbrowser.open = ios_webbrowser_open
+    except:
+        # Doesn't work for iOS simulator
+        pass
+
 from pathlib import Path
 
 # import os
@@ -1570,8 +1596,9 @@ class Makera(RelativeLayout):
             os.startfile(log_dir)
         else:
             # Linux and MacOS
-            opener = "open" if sys.platform == "darwin" else "xdg-open"
-            subprocess.Popen([opener, log_dir])
+            if sys.platform != "ios":
+                opener = "open" if sys.platform == "darwin" else "xdg-open"
+                subprocess.Popen([opener, log_dir])
 
     def open_update_popup(self):
         self.upgrade_popup.check_button.disabled = False
@@ -1777,11 +1804,12 @@ class Makera(RelativeLayout):
     # -----------------------------------------------------------------------
     def open_comports_drop_down(self, button):
         self.comports_drop_down.clear_widgets()
-        devices = sorted([x[0] for x in comports()])
-        for device in devices:
-            btn = Button(text=device, size_hint_y=None, height='35dp')
-            btn.bind(on_release=lambda btn: self.comports_drop_down.select(btn.text))
-            self.comports_drop_down.add_widget(btn)
+        if comports:
+            devices = sorted([x[0] for x in comports()])
+            for device in devices:
+                btn = Button(text=device, size_hint_y=None, height='35dp')
+                btn.bind(on_release=lambda btn: self.comports_drop_down.select(btn.text))
+                self.comports_drop_down.add_widget(btn)
         self.comports_drop_down.unbind(on_select=self.usb_event)
         self.comports_drop_down.bind(on_select=self.usb_event)
         self.comports_drop_down.open(button)
@@ -2208,6 +2236,19 @@ class Makera(RelativeLayout):
         self.input_popup.txt_content.password = False
         self.input_popup.confirm = self.createRemoteDir
         self.input_popup.open(self)
+
+    # -----------------------------------------------------------------------
+    def open_upload_local_file_popup(self):
+        # For iOS we use the native file picker
+        if sys.platform == 'ios':
+            from . import ios_helpers
+            ios_helpers.pick_nc_file()
+            return
+        self.file_popup.firmware_mode = False
+        self.file_popup.popup_manager.transition.direction = 'left'
+        self.file_popup.popup_manager.transition.duration = 0.3
+        self.file_popup.popup_manager.current = 'local_page'
+        self.set_local_folder_to_last_opened()
 
     # -----------------------------------------------------------------------
     def open_wifi_password_input_popup(self):
@@ -4042,7 +4083,11 @@ def main():
     base_path = app_base_path()
     register_fonts(base_path)
     register_images(base_path)
-    MakeraApp().run()
+
+    # Make it global to be able to access it from native APIs
+    global global_app
+    global_app = MakeraApp()
+    global_app.run()
 
 if __name__ == '__main__':
     main()

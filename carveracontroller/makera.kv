@@ -1,7 +1,7 @@
 #:kivy 1.11.1
 #:import Factory kivy.factory.Factory
-#:import tr __main__.tr
-#:include addons/tooltips/tooltips.kv
+#:import tr carveracontroller.__main__.tr
+#:include addons/tooltips/Tooltips.kv
 
 <Label>:
     font_name: 'ARIALUNI'
@@ -2170,11 +2170,7 @@
                         width: '100dp'
                         text: tr._("Upload File")
                         on_release:
-                            root.firmware_mode = False
-                            root.popup_manager.transition.direction = 'left'
-                            root.popup_manager.transition.duration = 0.3
-                            root.popup_manager.current = 'local_page'
-                            app.root.set_local_folder_to_last_opened()
+                            app.root.open_upload_local_file_popup()
                 BoxLayout:
                     size_hint_y: None
                     height: '5dp'

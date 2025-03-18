@@ -11,6 +11,7 @@ The Controller software works on the following systems:
 - MacOS using Apple Silicon CPUs running Sonoma (14) or above
 - Linux using x64 CPUs running a Linux distribution with Glibc 2.31 or above (eg. Ubuntu 20.04 or higher)
 - Linux using ARM64 CPUs (eg RasPi 3 or above) running a distribution Glibc 2.36 or above (eg. RasPiOS Bookworm or higher)
+- Apple iPad with iOS 17.6 or higher
 - Other systems might be work via the Python Package, see below for more details.
 
 ## Installation
@@ -62,6 +63,7 @@ To contribute to this project or set up a local development environment, follow 
 - One of the python dependencies [QuickLZ](https://pypi.org/project/pyquicklz/) will be compiled by Poetry when installed. Ensure that you have a compiler that Poetry/Pip can use and the Pythong headers. On a debian based Linux system this can be accomplished with `sudo apt-get install python3-dev build essential`. On Windows installation of (just) the Visual C++ 14.x compiler is required, this can be accomplished with [MSBuild tools package](https://wiki.python.org/moin/WindowsCompilers#Microsoft_Visual_C.2B-.2B-_14.2_standalone:_Build_Tools_for_Visual_Studio_2019_.28x86.2C_x64.2C_ARM.2C_ARM64.29).
 - [Squashfs-tools](https://github.com/plougher/squashfs-tools) is required if building Linux AppImages. On Debian based systems it's provided by the package `squashfs-tools`. This is only required if packaging for linux.
 - [gettext](https://www.gnu.org/software/gettext/) is required for language file generation. [Gnuwin32](https://gnuwin32.sourceforge.net/packages/gettext.htm) project has a version for Windows
+- For building iOS app, you need a working XCode installation as well as the build tool that can be installed with `brew install autoconf automake libtool pkg-config`
 
 ### Installing Poetry
 
@@ -114,13 +116,14 @@ poetry run python -m carveracontroller
 
 ### Local Packaging
 
-The application is packaged using PyInstaller. This tool converts Python applications into a standalone executable, so it can be run on systems without requiring management of a installed Python interpreter or dependent libraries. An build helper script is configured with Poetry and can be run with:
+The application is packaged using PyInstaller (except for iOS). This tool converts Python applications into a standalone executable, so it can be run on systems without requiring management of a installed Python interpreter or dependent libraries. An build helper script is configured with Poetry and can be run with:
 
 ```bash
 poetry run python scripts/build.py --os os [--no-appimage]
 ```
 
-The options for `os` are windows, macos, or linux. If selecting `linux`, an appimage is built by default unless --no-appimage is specified.
+The options for `os` are windows, macos, linux or ios. If selecting `linux`, an appimage is built by default unless --no-appimage is specified.
+For iOS, the project will be open in XCode and needs to be built from there to simplify the signing process.
 
 ### Setting up translations
 
@@ -135,3 +138,7 @@ poetry run python scripts/update_translations.py
 ```
 
 This utility scans the python and kivvy code for new strings and updates the mapping files. It does not clear/overwrite previous translations.
+
+### Collected Data & Privacy
+
+See [the privacy page](PRIVACY.md) for more details.

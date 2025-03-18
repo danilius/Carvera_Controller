@@ -165,7 +165,7 @@ def main():
         "--os",
         metavar="os",
         required=True,
-        choices=["windows", "macos", "linux"],
+        choices=["windows", "macos", "linux", "ios"],
         type=str,
         default="linux",
         help="Choices are: windows, macos, or linux. Default is linux."
@@ -192,12 +192,20 @@ def main():
             output_filename=output_filename,
         )
 
-    build_args = build_pyinstaller_args(
-        os=os,
-        output_filename=output_filename,
-        versionfile_path=versionfile_path,
-    )
-    run_pyinstaller(build_args=build_args)
+    # For iOS we need some special handling as it is not supported by pyinstaller
+    if os == "ios":
+        # Execute the build_ios.sh script
+        command = f"{BUILD_PATH}/build_ios.sh {package_version}"
+        result = subprocess.run(command, shell=True, capture_output=True, text=True, check=True)
+        print(result.stdout)
+        print(result.stderr)
+    else:
+        build_args = build_pyinstaller_args(
+            os=os,
+            output_filename=output_filename,
+            versionfile_path=versionfile_path,
+        )
+        run_pyinstaller(build_args=build_args)
 
     if os == "linux":
         # Need to remove some libs for opinionated backwards compatibility

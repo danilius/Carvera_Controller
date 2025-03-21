@@ -731,8 +731,9 @@
         height: '40dp'
         id: change_dropdown
         text: tr._('Change...')
-        values: 'Probe', 'Tool: 1', 'Tool: 2', 'Tool: 3', 'Tool: 4', 'Tool: 5', 'Tool: 6'
+        values: 'Probe', 'Tool: 1', 'Tool: 2', 'Tool: 3', 'Tool: 4', 'Tool: 5', 'Tool: 6', 'Custom'
         on_text:
+            if self.text == 'Custom': app.root.coord_popup.change_tool_popup.open()
             if self.text != tr._("Change..."): app.root.controller.changeToolCommand(self.text[-1])
             if self.text != tr._("Change..."): self.text = tr._('Change...')
             root.select('Third Item')
@@ -756,8 +757,9 @@
         height: '40dp'
         id: set_dropdown
         text: tr._('Set...')
-        values: 'Empty', 'Probe', 'Tool: 1', 'Tool: 2', 'Tool: 3', 'Tool: 4', 'Tool: 5', 'Tool: 6'
+        values: 'Empty', 'Probe', 'Tool: 1', 'Tool: 2', 'Tool: 3', 'Tool: 4', 'Tool: 5', 'Tool: 6', 'Custom'
         on_text:
+            if self.text == 'Custom': app.root.coord_popup.settool_popup.open()
             if self.text != tr._("Set..."): app.root.controller.setToolCommand(self.text[-1])
             if self.text != tr._("Set..."): self.text = tr._('Set...')
             root.select('Third Item')
@@ -4298,6 +4300,119 @@
                 text: tr._('Ok')
                 on_release:
                     app.root.controller.wcsSetA(float(txt_offset.text))
+                    root.dismiss()
+
+<SetToolPopup>:
+    size_hint: 0.5, 0.4
+    pos_hint: {"right": 0.75, "top": 0.7}
+    auto_dismiss: False
+    txt_offset: txt_offset
+    BoxLayout:
+        padding: '15dp'
+        orientation: 'vertical'
+        Label:
+            canvas.before:
+                Color:
+                    rgba: 45/255, 45/255, 45/255, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+            id: caption
+            size_hint_y: None
+            height: '30dp'
+            text: tr._('Set Current Tool Number')
+            halign: 'left'
+            valign: 'middle'
+        BoxLayout:
+            padding: '15dp'
+            orientation: 'vertical'
+        BoxLayout:
+            size_hint_y: None
+            height: '30dp'
+            Label:
+                text: 'Value:'
+                halign: "left"
+                valign: "center"
+                text_size: self.size
+            TextInput:
+                id: txt_offset
+                hint_text: tr._('Enter New Tool Number')
+                multiline: False
+                text: '0'
+                halign: "left"
+                input_type: 'number'
+                input_filter: 'int'
+        BoxLayout:
+            id: empty
+        BoxLayout:
+            spacing: '5dp'
+            size_hint_y: None
+            height: '40dp'
+            Button:
+                id: btn_cancel
+                text: tr._('Cancel')
+                on_release: root.dismiss()
+            Button:
+                id: btn_ok
+                text: tr._('Ok')
+                on_release:
+                    app.root.controller.setToolCommand(txt_offset.text)
+                    root.dismiss()
+<ChangeToolPopup>:
+    size_hint: 0.5, 0.4
+    pos_hint: {"right": 0.75, "top": 0.7}
+    auto_dismiss: False
+    txt_offset: txt_offset
+    BoxLayout:
+        padding: '15dp'
+        orientation: 'vertical'
+        Label:
+            canvas.before:
+                Color:
+                    rgba: 45/255, 45/255, 45/255, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+            id: caption
+            size_hint_y: None
+            height: '30dp'
+            text: tr._('Change Current Tool')
+            halign: 'left'
+            valign: 'middle'
+        BoxLayout:
+            padding: '15dp'
+            orientation: 'vertical'
+        BoxLayout:
+            size_hint_y: None
+            height: '30dp'
+            Label:
+                text: 'Value:'
+                halign: "left"
+                valign: "center"
+                text_size: self.size
+            TextInput:
+                id: txt_offset
+                hint_text: tr._('New Tool Number')
+                multiline: False
+                text: '0'
+                halign: "left"
+                input_type: 'number'
+                input_filter: 'int'
+        BoxLayout:
+            id: empty
+        BoxLayout:
+            spacing: '5dp'
+            size_hint_y: None
+            height: '40dp'
+            Button:
+                id: btn_cancel
+                text: tr._('Cancel')
+                on_release: root.dismiss()
+            Button:
+                id: btn_ok
+                text: tr._('Ok')
+                on_release:
+                    app.root.controller.changeToolCommand(txt_offset.text)
                     root.dismiss()
 
 <MoveAPopup>:

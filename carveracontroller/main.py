@@ -443,6 +443,8 @@ class CoordPopup(ModalView):
     sety_popup = ObjectProperty()
     setz_popup = ObjectProperty()
     seta_popup = ObjectProperty()
+    settool_popup = ObjectProperty()
+    change_tool_popup = ObjectProperty()
     MoveA_popup = ObjectProperty()
 
     def __init__(self, config, **kwargs):
@@ -454,6 +456,8 @@ class CoordPopup(ModalView):
         self.sety_popup = SetYPopup(self)
         self.setz_popup = SetZPopup(self)
         self.seta_popup = SetAPopup(self)
+        self.settool_popup = SetToolPopup(self)
+        self.change_tool_popup = ChangeToolPopup(self)
         self.MoveA_popup = MoveAPopup(self)
         self.mode = 'Run' # 'Margin' / 'ZProbe' / 'Leveling'
         super(CoordPopup, self).__init__(**kwargs)
@@ -656,6 +660,16 @@ class SetAPopup(ModalView):
     def __init__(self, coord_popup, **kwargs):
         self.coord_popup = coord_popup
         super(SetAPopup, self).__init__(**kwargs)
+
+class SetToolPopup(ModalView):
+    def __init__(self, coord_popup, **kwargs):
+        self.coord_popup = coord_popup
+        super(SetToolPopup, self).__init__(**kwargs)
+
+class ChangeToolPopup(ModalView):
+    def __init__(self, coord_popup, **kwargs):
+        self.coord_popup = coord_popup
+        super(ChangeToolPopup, self).__init__(**kwargs)
 
 class MoveAPopup(ModalView):
     def __init__(self, coord_popup, **kwargs):
@@ -2468,9 +2482,9 @@ class Makera(RelativeLayout):
             app.model = model.strip()
             if app.model == 'CA1':
                 self.tool_drop_down.set_dropdown.values = ['Probe', 'Tool: 1', 'Tool: 2', 'Tool: 3', 'Tool: 4', 'Tool: 5',
-                                                           'Tool: 6', 'Laser']
+                                                           'Tool: 6', 'Laser', 'Custom']
                 self.tool_drop_down.change_dropdown.values = ['Probe', 'Tool: 1', 'Tool: 2', 'Tool: 3', 'Tool: 4',
-                                                              'Tool: 5', 'Tool: 6', 'Laser']
+                                                              'Tool: 5', 'Tool: 6', 'Laser', 'Custom']
                 CNC.vars['rotation_base_width'] = 300
                 CNC.vars['rotation_head_width'] = 38
 

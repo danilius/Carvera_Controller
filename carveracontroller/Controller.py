@@ -381,6 +381,9 @@ class Controller:
             self.executeCommand("M6T0\n")
         elif tool == 'r':
             self.executeCommand("M6T8888\n")
+        elif tool == 'm':
+            #custom tool number
+            pass
         else:
             self.executeCommand("M6T%s\n" % tool)
 
@@ -389,6 +392,9 @@ class Controller:
             self.executeCommand("M493.2T0\n")
         elif tool == 'r':
             self.executeCommand("M493.2T8888\n")
+        elif tool == 'm':
+            #custom tool number
+            pass
         elif tool == 'y':
             self.executeCommand("M493.2T-1\n")
         else:

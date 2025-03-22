@@ -9,6 +9,7 @@
 - Enhancement: Set and change to custom tool number
 - Bugfix: Fixed Speed/Feed scaling when using +/- buttons. Now can reach 10% and 300% scaling.
 - Bugfix: Fixed firmware download button. Now opens the github releases page for the Community firmware
+- Bugfix: Fixed squished center buttons
 
 [0.7.1]
 - Fix: Set a default for the A axis microsteps per degree config option

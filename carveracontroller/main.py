@@ -1600,6 +1600,9 @@ class Makera(RelativeLayout):
     def open_download(self):
         webbrowser.open(DOWNLOAD_ADDRESS, new = 2)
     
+    def open_fw_download(self):
+        webbrowser.open(FW_DOWNLOAD_ADDRESS, new = 2)
+    
     def send_bug_report(self):
         webbrowser.open('https://github.com/Carvera-Community/Carvera_Controller/issues')
         webbrowser.open('https://github.com/Carvera-Community/Carvera_Community_Firmware/issues')
@@ -4050,12 +4053,14 @@ def load_constants():
     global FW_UPD_ADDRESS
     global CTL_UPD_ADDRESS
     global DOWNLOAD_ADDRESS
+    global FW_DOWNLOAD_ADDRESS
 
     global LANGS
 
     FW_UPD_ADDRESS = 'https://raw.githubusercontent.com/carvera-community/carvera_community_firmware/master/version.txt'
     CTL_UPD_ADDRESS = 'https://raw.githubusercontent.com/carvera-community/carvera_controller/main/CHANGELOG.md'
     DOWNLOAD_ADDRESS = 'https://github.com/carvera-community/carvera_controller/releases/latest'
+    FW_DOWNLOAD_ADDRESS = 'https://github.com/Carvera-Community/Carvera_Community_Firmware/releases/latest'
 
 
     LANGS = {

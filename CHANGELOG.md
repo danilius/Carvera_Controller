@@ -7,6 +7,7 @@
 - Enhancement: Initial iOS platform support
 - Bugfix: Tooltips no longer cut off certain longer strings of text
 - Enhancement: Set and change to custom tool number
+- Bugfix: Fixed Speed/Feed scaling when using +/- buttons. Now can reach 10% and 300% scaling.
 
 [0.7.1]
 - Fix: Set a default for the A axis microsteps per degree config option

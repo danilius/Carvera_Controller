@@ -574,12 +574,12 @@
             text: '-'
             font_size: '25sp'
             on_release:
-                if root.scale_slider.value >= 60: root.scale_slider.value = root.scale_slider.value - 10
+                if root.scale_slider.value > 10: root.scale_slider.value = root.scale_slider.value - 10
         Button:
             text: '+'
             font_size: '25sp'
             on_release:
-                if root.scale_slider.value <= 190: root.scale_slider.value = root.scale_slider.value + 10
+                if root.scale_slider.value < 300: root.scale_slider.value = root.scale_slider.value + 10
     Button:
         text: tr._('Reset')
         size_hint_y: None
@@ -654,8 +654,8 @@
         height: '40dp'
         Slider:
             id: scale_slider
-            min: 50
-            max: 200
+            min: 10
+            max: 300
             value: 100
             step: 10
             set_flag: False
@@ -676,12 +676,12 @@
             text: '-'
             font_size: '25sp'
             on_release:
-                if root.scale_slider.value >= 60: root.scale_slider.value = root.scale_slider.value - 10
+                if root.scale_slider.value > 10: root.scale_slider.value = root.scale_slider.value - 10
         Button:
             text: '+'
             font_size: '25sp'
             on_release:
-                if root.scale_slider.value <= 190: root.scale_slider.value = root.scale_slider.value + 10
+                if root.scale_slider.value < 300: root.scale_slider.value = root.scale_slider.value + 10
     Button:
         text: tr._('Reset')
         size_hint_y: None
@@ -884,7 +884,7 @@
                 text: '-'
                 font_size: '25sp'
                 on_release:
-                    if root.scale_slider.value >= 20: root.scale_slider.value = root.scale_slider.value - 10
+                    if root.scale_slider.value > 10: root.scale_slider.value = root.scale_slider.value - 10
             Button:
                 text: '+'
                 font_size: '25sp'

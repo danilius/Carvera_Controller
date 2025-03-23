@@ -19,6 +19,9 @@ from carveracontroller.addons.probing.operations.Bore.BoreSettings import BoreSe
 from carveracontroller.addons.probing.operations.Boss.BossOperationType import BossOperationType
 from carveracontroller.addons.probing.operations.Boss.BossSettings import BossSettings
 
+from carveracontroller.addons.probing.operations.Angle.AngleOperationType import AngleOperationType
+from carveracontroller.addons.probing.operations.Angle.AngleSettings import AngleSettings
+
 class ProbingPopup(ModalView):
 
     controller: Controller
@@ -29,6 +32,7 @@ class ProbingPopup(ModalView):
         self.single_axis_settings = None
         self.bore_settings = None
         self.boss_settings = None
+        self.angle_settings = None
         self.controller = controller;
 
         self.preview_popup = ProbingPreviewPopup(controller)
@@ -44,6 +48,7 @@ class ProbingPopup(ModalView):
         self.single_axis_settings = self.ids.single_axis_settings
         self.bore_settings = self.ids.bore_settings
         self.boss_settings = self.ids.boss_settings
+        self.angle_settings = self.ids.angle_settings
 
     # def on_bore_boss_corner_probing_pressed(self, operation_key: str):
 
@@ -74,6 +79,13 @@ class ProbingPopup(ModalView):
         cfg = self.boss_settings.get_config()
         the_op = BossOperationType[operation_key].value
         self.show_preview(the_op, cfg)
+
+    def on_angle_probing_pressed(self, operation_key: str):
+
+        cfg = self.angle_settings.get_config()
+        the_op = AngleOperationType[operation_key].value
+        self.show_preview(the_op, cfg)
+
 
     def show_preview(self, operation: OperationsBase, cfg):
         missing_definition = operation.get_missing_config(cfg)

@@ -5,6 +5,7 @@
 #:include addons/probing/operations/SingleAxis/SingleAxisProbeSettings.kv
 #:include addons/probing/operations/Bore/BoreSettings.kv
 #:include addons/probing/operations/Boss/BossSettings.kv
+#:include addons/probing/operations/Angle/AngleSettings.kv
 
 
 
@@ -286,6 +287,66 @@
                             size_hint_x: .5
                             BossSettings:
                                 id: boss_settings
+
+                TabbedPanelItem:
+                    text: tr._('Angle')
+                    GridLayout:
+                        cols:2
+                        rows:1
+                        size_hint:1, 1
+                        spacing:dp(10)
+                        padding:dp(10)
+
+                        GridLayout:
+                            size_hint_x: 1
+                            cols: 3
+                            rows: 2
+                            spacing: dp(8)
+                            padding: 10
+
+                            ProbeButton:
+                                
+                                tooltip_txt: ''
+                                tooltip_image: ''
+                                on_press: root.on_angle_probing_pressed("XAbove")
+                                image: 'addons/probing/data/icons_1024x768/angle/probe_angle_x_above.png'
+                            ProbeButton:
+                                
+                                tooltip_txt: ''
+                                tooltip_image: ''
+                                on_press: root.on_angle_probing_pressed("YLeft")
+                                image: 'addons/probing/data/icons_1024x768/angle/probe_angle_y_left.png'
+                            ProbeButton:
+                                
+                                tooltip_txt: ''
+                                tooltip_image: ''
+                                on_press: root.on_angle_probing_pressed("ArbitraryNegative")
+                                image: 'addons/probing/data/icons_1024x768/angle/probe_angle_arbitrary_negative.png'
+                            ProbeButton:
+                                
+                                tooltip_txt: ''
+                                tooltip_image: ''
+                                on_press: root.on_angle_probing_pressed("XBelow")
+                                image: 'addons/probing/data/icons_1024x768/angle/probe_angle_x_below.png'
+                            ProbeButton:
+                                
+                                tooltip_txt: ''
+                                tooltip_image: ''
+                                on_press: root.on_angle_probing_pressed("YRight")
+                                image: 'addons/probing/data/icons_1024x768/angle/probe_angle_y_right.png'
+                            ProbeButton:
+                                
+                                tooltip_txt: ''
+                                tooltip_image: ''
+                                on_press: root.on_angle_probing_pressed("ArbitraryPositive")
+                                image: 'addons/probing/data/icons_1024x768/angle/probe_angle_arbitrary_positive.png'
+
+                        BoxLayout:
+                            size_hint_x: .5
+                            AngleSettings:
+                                id: angle_settings
+
+                
 
         #jogging controls
         BoxLayout:

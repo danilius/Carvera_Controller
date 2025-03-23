@@ -21,7 +21,6 @@ class ProbingPreviewPopup(ModalView):
         #
         # if self.cb_probe_normally_open.active:
         #     return ProbingConstants.switch_type_no
-        return 0
 
     def  start_probing(self):
         if len(self.gcode) > 0:

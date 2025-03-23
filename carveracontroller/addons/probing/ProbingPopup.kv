@@ -20,7 +20,7 @@
 
     GridLayout:
         cols:1
-        rows:3
+        rows:4
         spacing: dp(0)
         padding: dp(3)
         GridLayout:
@@ -480,6 +480,20 @@
                     disabled: (app.state != 'Idle' and app.state != 'Run' and app.state != 'Pause') or (app.playing and app.state != 'Pause')
                     padding: '25dp'
                     orientation: 'horizontal'
+
+        BoxLayout:
+            spacing: '5dp'
+            size_hint_y: None
+            height: '40dp'
+            halign: 'center'
+            Label:
+                size_hint_min_x: dp(90)
+                padding: '5dp'
+                halign: 'center'
+                valign: 'middle'
+                text_size: self.size
+                multiline: False
+                text: tr._('Note: Most of these operations require a true 3 axis probe, not the block supplied by Makera. See the community youtube page for more info')
 
         BoxLayout:
             spacing: '5dp'

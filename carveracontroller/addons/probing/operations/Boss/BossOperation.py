@@ -20,11 +20,23 @@ class BossOperation(OperationsBase):
 
         config = copy.deepcopy(input_config)
 
+        if not self.requires_x:
+             config[BossParameterDefinitions.XAxisDistance.code] = ''
+        if not self.requires_y:
+             config[BossParameterDefinitions.YAxisDistance.code] = ''
+
         return "M462 " + self.config_to_gcode(config)
 
 
     def get_missing_config(self, config: dict[str, float]):
-
+        if self.requires_x:
+            definition = BossParameterDefinitions.XAxisDistance
+            if not definition.code in config:
+                return definition
+        if self.requires_y:
+            definition = BossParameterDefinitions.YAxisDistance
+            if not definition.code in config:
+                return definition
         required_definitions = {name: value for name, value in BossParameterDefinitions.__dict__.items()
                                 if isinstance(value, ProbeSettingDefinition) and value.is_required}
 

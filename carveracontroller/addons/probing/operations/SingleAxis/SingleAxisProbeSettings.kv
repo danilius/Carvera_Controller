@@ -1,0 +1,121 @@
+<SingleAxisProbeSettings>:
+    GridLayout:
+        cols:1
+        rows:11
+        spacing:dp(3)
+        padding:dp(1)
+
+        ProbeSettingLabel:
+            label_text: 'X:'
+            hint_text: 'X Dis'
+            TextInput:
+                multiline: False
+                halign:'left'
+                input_type: 'number'
+                input_filter: 'float'
+                text: root.get_setting('XAxisDistance')
+                on_text: root.setting_changed('XAxisDistance', self.text)
+
+        ProbeSettingLabel:
+            label_text: 'Y:'
+            hint_text: 'Y Dist'
+            TextInput:
+                multiline: False
+                halign:'left'
+                input_type: 'number'
+                input_filter: 'float'
+                text: root.get_setting('YAxisDistance')
+                on_text: root.setting_changed('YAxisDistance', self.text)
+
+        ProbeSettingLabel:
+            label_text: 'Z:'
+            hint_text: 'Z Dist'
+            TextInput:
+                multiline: False
+                halign:'left'
+                input_type: 'number'
+                input_filter: 'float'
+                text: root.get_setting('ZAxisDistance')
+                on_text: root.setting_changed('ZAxisDistance', self.text)
+
+        ProbeSettingLabel:
+            label_text: 'Tip Dia:'
+            hint_text: 'probe tip diameter'
+            TextInput:
+                multiline: False
+                halign:'left'
+                input_type: 'number'
+                input_filter: 'float'
+                text: root.get_setting('ProbeTipDiameter')
+                on_text: root.setting_changed('ProbeTipDiameter', self.text)
+
+        ProbeSettingLabel:
+            label_text: 'Angle:'
+            TextInput:
+                multiline: False
+                halign:'left'
+                input_type: 'number'
+                input_filter: 'float'
+                text: root.get_setting('QAngle')
+                on_text: root.setting_changed('QAngle', self.text)
+
+        ProbeSettingLabel:
+            label_text: 'FF Rate:'
+            hint_text: 'FastFeedRate'
+            TextInput:
+                multiline: False
+                halign:'left'
+                input_type: 'number'
+                input_filter: 'float'
+                text: root.get_setting('FastFeedRate')
+                on_text: root.setting_changed('FastFeedRate', self.text)
+
+        ProbeSettingLabel:
+            label_text: 'Repeat:'
+            hint_text: 'RepeatOperationCount'
+            TextInput:
+                multiline: False
+                halign:'left'
+                input_type: 'number'
+                input_filter: 'float'
+                text: root.get_setting('RepeatOperationCount')
+                on_text: root.setting_changed('RepeatOperationCount', self.text)
+
+        ProbeSettingLabel:
+            label_text: 'Edge Retract:'
+            hint_text: 'EdgeRetractDistance'
+            TextInput:
+                multiline: False
+                halign:'left'
+                input_type: 'number'
+                input_filter: 'float'
+                text: root.get_setting('EdgeRetractDistance')
+                on_text: root.setting_changed('EdgeRetractDistance', self.text)
+
+        ProbeSettingLabel:
+            label_text: 'ZeroXY:'
+            hint_text: 'ZeroXY Position'
+            Switch:
+                id: zero_xy
+                canvas.before:
+                    Color:
+                        rgba: 50/255, 50/255, 50/255, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+                active: root.get_setting('ZeroXYPosition') == "1"
+                on_active: root.setting_changed('ZeroXYPosition', "1" if self.active else "0")
+
+        ProbeSettingLabel:
+            label_text: 'Normally Closed:'
+            hint_text: ''
+            Switch:
+                id: probe_is_nc
+                canvas.before:
+                    Color:
+                        rgba: 50/255, 50/255, 50/255, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+                active: root.get_setting('UseProbeNormallyClosed') == "1"
+                on_active: root.setting_changed('UseProbeNormallyClosed', "1" if self.active else "0")

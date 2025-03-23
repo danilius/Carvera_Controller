@@ -20,6 +20,7 @@ import datetime
 import threading
 import logging
 
+from carveracontroller.addons.probing.ProbingPopup import ProbingPopup
 class Lang(Observable):
     observers = []
     lang = None
@@ -1354,6 +1355,7 @@ class Makera(RelativeLayout):
     gcode_viewer = ObjectProperty()
     gcode_playing = BooleanProperty(False)
 
+    probing_popup = ObjectProperty()
     coord_config = {}
 
     progress_info = StringProperty()
@@ -1512,6 +1514,7 @@ class Makera(RelativeLayout):
         self.progress_popup = ProgressPopup()
         self.input_popup = InputPopup()
 
+        self.probing_popup = ProbingPopup(self.controller)
         self.comports_drop_down = DropDown(auto_width=False, width='250dp')
         self.wifi_conn_drop_down = DropDown(auto_width=False, width='250dp')
 
@@ -3575,9 +3578,12 @@ class Makera(RelativeLayout):
     
     def _is_popup_open(self):
         """Checks to see if any of the popups objects are open."""
-        popups_to_check = [self.file_popup._is_open, self.coord_popup._is_open, self.xyz_probe_popup._is_open, self.pairing_popup._is_open,
-                   self.upgrade_popup._is_open, self.language_popup._is_open, self.diagnose_popup._is_open, self.confirm_popup._is_open,
-                   self.message_popup._is_open, self.progress_popup._is_open, self.input_popup._is_open, self.config_popup._is_open]
+        popups_to_check = [self.file_popup._is_open, self.coord_popup._is_open, self.xyz_probe_popup._is_open,
+                           self.pairing_popup._is_open,
+                           self.upgrade_popup._is_open, self.language_popup._is_open, self.diagnose_popup._is_open,
+                           self.confirm_popup._is_open,
+                           self.message_popup._is_open, self.progress_popup._is_open, self.input_popup._is_open,
+                           self.config_popup._is_open, self.probing_popup._is_open]
 
         return any(popups_to_check)
     

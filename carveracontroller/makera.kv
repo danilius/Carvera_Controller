@@ -2,6 +2,8 @@
 #:import Factory kivy.factory.Factory
 #:import tr carveracontroller.__main__.tr
 #:include addons/tooltips/Tooltips.kv
+#:import tr __main__.tr
+#:include addons/probing/ProbingPopup.kv
 
 <Label>:
     font_name: 'ARIALUNI'
@@ -1005,6 +1007,16 @@
         on_release:
             root.select('')
             app.root.send_bug_report()
+    IconButton:
+        icon: 'addons/probing/data/probe.png'
+        icon_size: 35
+        small_icon: True
+        size_hint_y: None
+        # disabled: app.state == 'N/A'
+        height: '50dp'
+        on_release:
+            root.select('')
+            app.root.probing_popup.open()
 
 <StatusDropDown>:
     btn_connect_usb: btn_connect_usb
@@ -3407,11 +3419,12 @@
                                         RoundedRectangle:
                                             pos: self.pos
                                             size: self.size
-                                            radius: [dp(12),]
+                                            radius: [dp(3),]
                                     GridLayout:
                                         padding: '10dp'
                                         cols: 3
-                                        rows: 3
+                                        rows: 4
+                                        spacing: dp(3)
                                         GridBoxLayout:
                                             SmallRoundButton:
                                                 text: tr._('Unlock')
@@ -3475,6 +3488,19 @@
                                                 text: tr._('Jog Controls')
                                                 height: '35dp'
                                                 on_release: app.root.toggle_jog_control_ui()
+
+                                        # 4th row
+                                        GridBoxLayout:
+                                            SmallRoundButton:
+                                                text: tr._('Probing...')
+                                                on_release: app.root.probing_popup.open()
+
+                                        GridBoxLayout:
+                                            # Empty for now
+
+                                        GridBoxLayout:
+                                            # Empty for now
+
                             BoxLayout:
                                 BoxLayout:
                                     disabled: app.state != 'Idle'

@@ -51,7 +51,7 @@
                     on_text: root.setting_changed('ZAxisDistance', self.text)
 
             ProbeSettingLabel:
-                label_text: 'Tip Dia:'
+                label_text: 'D Tip Dia:'
                 hint_text: 'probe tip diameter'
                 ToolTipTextInput:
                     id: ProbeTipDiameter
@@ -66,7 +66,7 @@
                     on_text: root.setting_changed('ProbeTipDiameter', self.text)
 
             ProbeSettingLabel:
-                label_text: 'Angle:'
+                label_text: 'Q Angle:'
                 ToolTipTextInput:
                     tooltip_txt: tr._('Degrees to rotate the XY coordinate plane when probing.')
                     tooltip_image: 'addons/probing/data/icons_1024x768/general_parameters/probe_parameter_q.png'
@@ -79,7 +79,7 @@
                     on_text: root.setting_changed('QAngle', self.text)
 
             ProbeSettingLabel:
-                label_text: 'FF Rate:'
+                label_text: 'F Feed Rate:'
                 hint_text: 'FastFeedRate'
                 ToolTipTextInput:
                     tooltip_txt: tr._('Optional probing feed rate override')
@@ -92,7 +92,7 @@
                     on_text: root.setting_changed('FastFeedRate', self.text)
 
             ProbeSettingLabel:
-                label_text: 'Repeat:'
+                label_text: 'L Repeat:'
                 hint_text: 'RepeatOperationCount'
                 ToolTipTextInput:
                     tooltip_txt: tr._('Number of times to repeat the probing operation')
@@ -105,7 +105,7 @@
                     on_text: root.setting_changed('RepeatOperationCount', self.text)
 
             ProbeSettingLabel:
-                label_text: 'Edge Retract:'
+                label_text: 'R Edge Retract:'
                 hint_text: 'EdgeRetractDistance'
                 ToolTipTextInput:
                     tooltip_txt: tr._('Distance away from surface to retract before double tapping the probe')
@@ -118,7 +118,7 @@
                     on_text: root.setting_changed('EdgeRetractDistance', self.text)
 
             ProbeSettingLabel:
-                label_text: 'ZeroXY:'
+                label_text: 'S ZeroXY:'
                 hint_text: 'ZeroXY Position'
                 ToolTipSwitch:
                     id: zero_xy
@@ -133,7 +133,7 @@
                     on_active: root.setting_changed('ZeroXYPosition', "1" if self.active else "0")
 
             ProbeSettingLabel:
-                label_text: 'Normally Closed:'
+                label_text: 'I Normally Closed:'
                 hint_text: ''
                 ToolTipSwitch:
                     id: probe_is_nc

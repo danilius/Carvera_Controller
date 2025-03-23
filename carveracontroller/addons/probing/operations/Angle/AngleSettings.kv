@@ -36,9 +36,35 @@
                     input_filter: 'float'
                     text: root.get_setting('YAxisDistance')
                     on_text: root.setting_changed('YAxisDistance', self.text)
+            
+            ProbeSettingLabel:
+                label_text: 'E Probe Depth'
+                ToolTipTextInput:
+                    id: ProbeDepth
+                    tooltip_txt: tr._('How far below the start height to move down for probing the sides of the Angle/block')
+                    tooltip_image: ''
+                    multiline: False
+                    halign:'right'
+                    input_type: 'number'
+                    input_filter: 'float'
+                    text: root.get_setting('ProbeDepth')
+                    on_text: root.setting_changed('ProbeDepth', self.text)
 
             ProbeSettingLabel:
-                label_text: 'Tip Dia:'
+                label_text: 'Q Angle:'
+                ToolTipTextInput:
+                    tooltip_txt: tr._('Degrees to rotate the XY coordinate plane when probing.')
+                    tooltip_image: 'addons/probing/data/icons_1024x768/general_parameters/probe_parameter_q.png'
+                    tooltip_image_size: 200,200
+                    multiline: False
+                    halign:'right'
+                    input_type: 'number'
+                    input_filter: 'float'
+                    text: root.get_setting('QAngle')
+                    on_text: root.setting_changed('QAngle', self.text)
+
+            ProbeSettingLabel:
+                label_text: 'D Tip Dia:'
                 ToolTipTextInput:
                     id: ProbeTipDiameter
                     tooltip_txt: tr._('Effective Diameter of Probe Tip. Measure with M460')
@@ -52,7 +78,7 @@
                     on_text: root.setting_changed('ProbeTipDiameter', self.text)
 
             ProbeSettingLabel:
-                label_text: 'Pocket Depth:'
+                label_text: 'H Pocket Depth:'
                 tooltip_txt: 'test'
                 ToolTipTextInput:
                     id: PocketProbeDepth
@@ -66,7 +92,7 @@
                     on_text: root.setting_changed('PocketProbeDepth', self.text)
 
             ProbeSettingLabel:
-                label_text: 'FF Rate:'
+                label_text: 'F Feed Rate:'
                 ToolTipTextInput:
                     id: FastFeedRate
                     tooltip_txt: tr._('Optional probing feed rate override')
@@ -79,7 +105,7 @@
                     on_text: root.setting_changed('FastFeedRate', self.text)
 
             ProbeSettingLabel:
-                label_text: 'Rapid:'
+                label_text: 'K Rapid:'
                 ToolTipTextInput:
                     id: RapidFeedRate
                     tooltip_txt: tr._('Optional rapid feed rate override')
@@ -92,7 +118,7 @@
                     on_text: root.setting_changed('RapidFeedRate', self.text)
 
             ProbeSettingLabel:
-                label_text: 'Repeat:'
+                label_text: 'L Repeat:'
                 ToolTipTextInput:
                     id: RepeatOperationCount
                     tooltip_txt: tr._('Number of times to repeat the probing operation')
@@ -105,7 +131,7 @@
                     on_text: root.setting_changed('RepeatOperationCount', self.text)
 
             ProbeSettingLabel:
-                label_text: 'Edge Retract:'
+                label_text: 'R Edge Retract:'
                 ToolTipTextInput:
                     id: EdgeRetractDistance
                     tooltip_txt: tr._('Distance away from surface to retract before double tapping the probe')
@@ -118,7 +144,7 @@
                     on_text: root.setting_changed('EdgeRetractDistance', self.text)
 
             ProbeSettingLabel:
-                label_text: 'Btm Retract:'
+                label_text: 'C Btm Retract:'
                 ToolTipTextInput:
                     id: BottomSurfaceRetract
                     tooltip_txt: tr._('If Pocket Depth is enabled, how far above the surface to raise before continuing the operation')
@@ -129,35 +155,9 @@
                     input_filter: 'float'
                     text: root.get_setting('BottomSurfaceRetract')
                     on_text: root.setting_changed('BottomSurfaceRetract', self.text)
-            
-            ProbeSettingLabel:
-                label_text: 'Angle:'
-                ToolTipTextInput:
-                    tooltip_txt: tr._('Degrees to rotate the XY coordinate plane when probing.')
-                    tooltip_image: 'addons/probing/data/icons_1024x768/general_parameters/probe_parameter_q.png'
-                    tooltip_image_size: 200,200
-                    multiline: False
-                    halign:'right'
-                    input_type: 'number'
-                    input_filter: 'float'
-                    text: root.get_setting('QAngle')
-                    on_text: root.setting_changed('QAngle', self.text)
 
             ProbeSettingLabel:
-                label_text: 'ProbeDepth:'
-                ToolTipTextInput:
-                    id: ProbeDepth
-                    tooltip_txt: tr._('How far below the start height to move down for probing the sides of the Angle/block')
-                    tooltip_image: ''
-                    multiline: False
-                    halign:'right'
-                    input_type: 'number'
-                    input_filter: 'float'
-                    text: root.get_setting('ProbeDepth')
-                    on_text: root.setting_changed('ProbeDepth', self.text)
-
-            ProbeSettingLabel:
-                label_text: 'Visualize Angle:'
+                label_text: 'V Visualize:'
                 ToolTipTextInput:
                     id: VisualizeDistance
                     tooltip_txt: tr._('If set, the probe will trace the probed angle after the operation finishes')
@@ -170,7 +170,7 @@
                     on_text: root.setting_changed('VisualizeDistance', self.text)
 
             ProbeSettingLabel:
-                label_text: 'ZeroXY:'
+                label_text: 'S ZeroXY:'
                 hint_text: 'ZeroXY Position'
                 ToolTipSwitch:
                     id: ZeroXYPosition
@@ -185,7 +185,7 @@
                     on_active: root.setting_changed('ZeroXYPosition', "1" if self.active else "0")
 
             ProbeSettingLabel:
-                label_text: 'Normally Closed:'
+                label_text: 'I Normally Closed:'
                 hint_text: ''
                 ToolTipSwitch:
                     id: UseProbeNormallyClosed

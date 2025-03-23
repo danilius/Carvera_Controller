@@ -3,6 +3,9 @@
 #:include addons/probing/operations/OutsideCorner/OutsideCornerSettings.kv
 #:include addons/probing/operations/InsideCorner/InsideCornerSettings.kv
 #:include addons/probing/operations/SingleAxis/SingleAxisProbeSettings.kv
+#:include addons/probing/operations/Bore/BoreSettings.kv
+#:include addons/probing/operations/Boss/BossSettings.kv
+
 
 
 <ProbingPopup>:
@@ -27,7 +30,7 @@
 
             TabbedPanel:
                 do_default_tab: False
-                tab_width: dp(111)
+                tab_width: dp(130)
                 TabbedPanelItem:
                     text: tr._('Outside Corners')
                     GridLayout:
@@ -37,28 +40,42 @@
                         spacing:dp(10)
                         padding:dp(10)
                         GridLayout:
-                            size_hint_x: .5
+                            size_hint_x: 1
                             cols: 2
                             rows: 2
                             spacing: dp(8)
                             padding: 10
 
                             ProbeButton:
+                                
+                                tooltip_txt: ''
+                                tooltip_image: ''
                                 on_press: root.on_outside_corner_probing_pressed("TopLeft")
                                 image: 'addons/probing/data/icons_1024x768/outside_corner/X+Y-.png'
                             ProbeButton:
+                                
+                                tooltip_txt: ''
+                                tooltip_image: ''
                                 on_press: root.on_outside_corner_probing_pressed("TopRight")
                                 image: 'addons/probing/data/icons_1024x768/outside_corner/X-Y-.png'
                             ProbeButton:
+                                
+                                tooltip_txt: ''
+                                tooltip_image: ''
                                 on_press: root.on_outside_corner_probing_pressed("BottomLeft")
                                 image: 'addons/probing/data/icons_1024x768/outside_corner/X+Y+.png'
                             ProbeButton:
+                                
+                                tooltip_txt: ''
+                                tooltip_image: ''
                                 on_press: root.on_outside_corner_probing_pressed("BottomRight")
                                 image: 'addons/probing/data/icons_1024x768/outside_corner/X-Y+.png'
 
                         BoxLayout:
                             size_hint_x: .5
+                            halign: "right"
                             OutsideCornerSettings:
+                                halign: "right"
                                 id: outside_corner_settings
 
                 TabbedPanelItem:
@@ -70,22 +87,34 @@
                         spacing:dp(10)
                         padding:dp(10)
                         GridLayout:
-                            size_hint_x: .5
+                            size_hint_x: 1
                             cols: 2
                             rows: 2
                             spacing: dp(8)
                             padding: 10
 
                             ProbeButton:
+                                halign: 'right'
+                                tooltip_txt: ''
+                                tooltip_image: ''
                                 on_press: root.on_inside_corner_probing_pressed("TopLeft")
                                 image: 'addons/probing/data/icons_1024x768/inside_corner/inX+Y-.png'
                             ProbeButton:
+                                halign: 'left'
+                                tooltip_txt: ''
+                                tooltip_image: ''
                                 on_press: root.on_inside_corner_probing_pressed("TopRight")
                                 image: 'addons/probing/data/icons_1024x768/inside_corner/inX-Y-.png'
                             ProbeButton:
+                                
+                                tooltip_txt: ''
+                                tooltip_image: ''
                                 on_press: root.on_inside_corner_probing_pressed("BottomLeft")
                                 image: 'addons/probing/data/icons_1024x768/inside_corner/inX+Y+.png'
                             ProbeButton:
+                                
+                                tooltip_txt: ''
+                                tooltip_image: ''
                                 on_press: root.on_inside_corner_probing_pressed("BottomRight")
                                 image: 'addons/probing/data/icons_1024x768/inside_corner/inX-Y+.png'
 
@@ -104,42 +133,61 @@
                         padding:dp(10)
 
                         GridLayout:
-                            size_hint_x: .5
+                            size_hint_x: 1
                             cols: 3
                             rows: 3
                             spacing: dp(8)
                             padding: 10
 
                             EmptySpace:
+                                size_hint: [.33,.33]
                                 #nothing
 
                             ProbeButton:
+                                size_hint: [.33,.33]
+                                tooltip_txt: ''
+                                tooltip_image: ''
                                 on_press: root.on_single_axis_probing_pressed("Top")
                                 image: 'addons/probing/data/icons_1024x768/single_axis/Y-.png'
 
                             EmptySpace:
+                                size_hint: [.33,.33]
                                 #nothing
 
                             ProbeButton:
+                                size_hint: [.33,.33]
+                                tooltip_txt: ''
+                                tooltip_image: ''
                                 on_press: root.on_single_axis_probing_pressed("Left")
                                 image: 'addons/probing/data/icons_1024x768/single_axis/X+.png'
 
                             ProbeButton:
+                                size_hint: [.33,.33]
+                                tooltip_txt: ''
+                                tooltip_image: ''
                                 on_press: root.on_single_axis_probing_pressed("WorkpieceTop")
                                 image: 'addons/probing/data/icons_1024x768/single_axis/Z-.png'
 
                             ProbeButton:
+                                size_hint: [.33,.33]
+                                tooltip_txt: ''
+                                tooltip_image: ''
                                 on_press: root.on_single_axis_probing_pressed("Right")
                                 image: 'addons/probing/data/icons_1024x768/single_axis/X-.png'
 
                             EmptySpace:
+                                size_hint: [.33,.33]
                                 #nothing
 
                             ProbeButton:
+                                size_hint: [.33,.33]
+                                tooltip_txt: ''
+                                tooltip_image: ''
                                 on_press: root.on_single_axis_probing_pressed("Bottom")
                                 image: 'addons/probing/data/icons_1024x768/single_axis/Y+.png'
 
                             EmptySpace:
+                                size_hint: [.33,.33]
                                 #nothing
 
                         BoxLayout:
@@ -147,6 +195,97 @@
                             SingleAxisProbeSettings:
                                 id: single_axis_settings
 
+                TabbedPanelItem:
+                    text: tr._('Bore/Pocket')
+                    GridLayout:
+                        cols:2
+                        rows:1
+                        size_hint:1, 1
+                        spacing:dp(10)
+                        padding:dp(10)
+
+                        GridLayout:
+                            size_hint_x: 1
+                            cols: 2
+                            rows: 2
+                            spacing: dp(8)
+                            padding: 10
+
+                            ProbeButton:
+                                
+                                tooltip_txt: ''
+                                tooltip_image: 'addons/probing/data/icons_1024x768/inside_center/inside_center_motion_overview.png'
+                                on_press: root.on_bore_probing_pressed("CenterX")
+                                image: 'addons/probing/data/icons_1024x768/inside_center/inside_center_rectangular_pocket_x.png'
+                            ProbeButton:
+                                
+                                tooltip_txt: ''
+                                tooltip_image: 'addons/probing/data/icons_1024x768/inside_center/inside_center_motion_overview.png'
+                                on_press: root.on_bore_probing_pressed("CenterY")
+                                image: 'addons/probing/data/icons_1024x768/inside_center/inside_center_rectangular_pocket_y.png'
+                            ProbeButton:
+                                
+                                tooltip_txt: ''
+                                tooltip_image: 'addons/probing/data/icons_1024x768/inside_center/inside_center_motion_overview.png'
+                                on_press: root.on_bore_probing_pressed("CenterBore")
+                                image: 'addons/probing/data/icons_1024x768/inside_center/inside_center_circular_bore.png'
+                            ProbeButton:
+                                
+                                tooltip_txt: ''
+                                tooltip_image: 'addons/probing/data/icons_1024x768/inside_center/inside_center_motion_overview.png'
+                                on_press: root.on_bore_probing_pressed("CenterPocket")
+                                image: 'addons/probing/data/icons_1024x768/inside_center/inside_center_rectangular_pocket.png'
+
+                        BoxLayout:
+                            size_hint_x: .5
+                            BoreSettings:
+                                id: bore_settings
+
+                TabbedPanelItem:
+                    text: tr._('Boss/Block')
+                    GridLayout:
+                        cols:2
+                        rows:1
+                        size_hint:1, 1
+                        spacing:dp(10)
+                        padding:dp(10)
+
+                        GridLayout:
+                            size_hint_x: 1
+                            cols: 2
+                            rows: 2
+                            spacing: dp(8)
+                            padding: 10
+
+                            ProbeButton:
+                                
+                                tooltip_txt: ''
+                                tooltip_image: 'addons/probing/data/icons_1024x768/outside_center/outside_center_motion_overview.png'
+                                on_press: root.on_boss_probing_pressed("CenterX")
+                                image: 'addons/probing/data/icons_1024x768/outside_center/outside_center_rect_boss_x.png'
+                            ProbeButton:
+                                
+                                tooltip_txt: ''
+                                tooltip_image: 'addons/probing/data/icons_1024x768/outside_center/outside_center_motion_overview.png'
+                                on_press: root.on_boss_probing_pressed("CenterY")
+                                image: 'addons/probing/data/icons_1024x768/outside_center/outside_center_rect_boss_y.png'
+                            ProbeButton:
+                                
+                                tooltip_txt: ''
+                                tooltip_image: 'addons/probing/data/icons_1024x768/outside_center/outside_center_motion_overview.png'
+                                on_press: root.on_boss_probing_pressed("CenterBoss")
+                                image: 'addons/probing/data/icons_1024x768/outside_center/outside_center_circular_boss.png'
+                            ProbeButton:
+                                
+                                tooltip_txt: ''
+                                tooltip_image: 'addons/probing/data/icons_1024x768/outside_center/outside_center_motion_overview.png'
+                                on_press: root.on_boss_probing_pressed("CenterBlock")
+                                image: 'addons/probing/data/icons_1024x768/outside_center/outside_center_rect_boss.png'
+
+                        BoxLayout:
+                            size_hint_x: .5
+                            BossSettings:
+                                id: boss_settings
 
         #jogging controls
         BoxLayout:

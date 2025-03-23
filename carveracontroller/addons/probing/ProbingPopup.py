@@ -13,6 +13,11 @@ from carveracontroller.addons.probing.preview.ProbingPreviewPopup import Probing
 
 from carveracontroller.addons.probing.operations.InsideCorner.InsideCornerOperationType import InsideCornerOperationType
 
+from carveracontroller.addons.probing.operations.Bore.BoreOperationType import BoreOperationType
+from carveracontroller.addons.probing.operations.Bore.BoreSettings import BoreSettings
+
+from carveracontroller.addons.probing.operations.Boss.BossOperationType import BossOperationType
+from carveracontroller.addons.probing.operations.Boss.BossSettings import BossSettings
 
 class ProbingPopup(ModalView):
 
@@ -22,6 +27,8 @@ class ProbingPopup(ModalView):
         self.outside_corner_settings = None
         self.inside_corner_settings = None
         self.single_axis_settings = None
+        self.bore_settings = None
+        self.boss_settings = None
         self.controller = controller;
 
         self.preview_popup = ProbingPreviewPopup(controller)
@@ -35,6 +42,8 @@ class ProbingPopup(ModalView):
         self.outside_corner_settings = self.ids.outside_corner_settings
         self.inside_corner_settings = self.ids.inside_corner_settings
         self.single_axis_settings = self.ids.single_axis_settings
+        self.bore_settings = self.ids.bore_settings
+        self.boss_settings = self.ids.boss_settings
 
     # def on_bore_boss_corner_probing_pressed(self, operation_key: str):
 
@@ -52,6 +61,18 @@ class ProbingPopup(ModalView):
 
         cfg = self.outside_corner_settings.get_config()
         the_op = OutsideCornerOperationType[operation_key].value
+        self.show_preview(the_op, cfg)
+
+    def on_bore_probing_pressed(self, operation_key: str):
+
+        cfg = self.bore_settings.get_config()
+        the_op = BoreOperationType[operation_key].value
+        self.show_preview(the_op, cfg)
+
+    def on_boss_probing_pressed(self, operation_key: str):
+
+        cfg = self.boss_settings.get_config()
+        the_op = BossOperationType[operation_key].value
         self.show_preview(the_op, cfg)
 
     def show_preview(self, operation: OperationsBase, cfg):

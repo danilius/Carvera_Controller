@@ -3,10 +3,8 @@
     size: dp(100), dp(100)
     size_hint: None, None
 
-<ProbeButton@Button>:
-    background_color: 0,0,0,0  # the last zero is the critical on, make invisible
-    size: dp(100), dp(100)
-    size_hint: None, None
+<ProbeButton>:
+    background_color: 0,0,0,0  # the last zero is the critical one, make invisible
     image: ''
     canvas.before:
         Color:
@@ -16,11 +14,13 @@
             size: self.size
             radius: [dp(3),]
     Image:
+        id: img
         source: root.image
-        size: root.size
-        size_hint: None, None
-        center_x: self.parent.center_x
-        center_y: self.parent.center_y
+        size: self.parent.size
+        allow_stretch: True
+        keep_ratio: True
+        pos: self.parent.pos
+    
 
 <ProbeSettingLabel@GridLayout>:
     cols:2
@@ -32,14 +32,15 @@
     label_text:''
     Label:
         text: root.label_text
-        size_hint_min_x: dp(75)
+        size_hint_min_x: dp(90)
         halign: 'right'
         valign: 'middle'
         text_size: self.size
+        multiline: False
 
 <TextInput>
     multiline: False
-    halign:'left'
+    halign:'right'
     input_type: 'number'
     input_filter: 'float'
     padding: [4, 0, 5, 0]

@@ -148,6 +148,7 @@ from .__version__ import __version__
 
 from kivy.lang import Builder
 from .addons.tooltips.Tooltips import Tooltip,ToolTipButton,ToolTipDropDown 
+from .addons.probing.ProbingControls import ProbeButton
 
 def load_halt_translations(tr: Lang):
     """Loads the appropriate language translation"""

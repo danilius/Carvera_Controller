@@ -1,7 +1,5 @@
 import copy
 
-from docutils.nodes import definition
-
 from carveracontroller.addons.probing.operations.SingleAxis.SingleAxisProbeParameterDefinitions import \
     SingleAxisProbeParameterDefinitions
 from carveracontroller.addons.probing.operations.OperationsBase import OperationsBase, ProbeSettingDefinition

@@ -1,7 +1,7 @@
 [Unreleased]
 - Enhancement: The ability to reduce the size of the autolevel probe area. This enables the ability to avoid probing the stock where there might be obstacles preventing probing.
 - Enhancement: tooltip support. See https://github.com/Carvera-Community/Carvera_Controller/pull/143 for more information
--Enhancement: tooltip support added for switches and text input fields
+- Enhancement: tooltip support added for switches and text input fields
 - Enhancement: Added custom background images in a dropdown for the start file/probe screen to show bolt hole positions. The user can create their own by replicating one of the ones in the existing folder
 - Enhancement: Support copy keyboard shortcut from MDI window
 - Bugfix: Tooltips no longer persist when the parent object is unfocused

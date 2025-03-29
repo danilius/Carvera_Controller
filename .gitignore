@@ -84,9 +84,3 @@ xcuserdata
 project.pbxproj*backup
 packaging_assets/ios/dist
 packaging_assets/ios/carveracontroller-ios/carveracontrollerpkg/*
-Angle-probe-settings.json
-bore-probe-settings.json
-Boss-probe-settings.json
-inside-corner-settings.json
-outside-corner-settings.json
-single-axis-probe-settings.json

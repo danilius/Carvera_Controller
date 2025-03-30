@@ -3496,7 +3496,10 @@
                                                 on_release: app.root.probing_popup.open()
 
                                         GridBoxLayout:
-                                            # Empty for now
+                                            ToggleButton:
+                                                text: tr._('Light')
+                                                height: '35dp'
+                                                on_release: app.root.controller.setLightSwitch(not self.state=="normal")
 
                                         GridBoxLayout:
                                             # Empty for now

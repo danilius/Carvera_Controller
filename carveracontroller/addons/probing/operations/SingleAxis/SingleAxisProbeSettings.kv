@@ -1,0 +1,148 @@
+<SingleAxisProbeSettings>:
+    ScrollView:
+        do_scroll_x: False
+        size_hint: 1,1
+        bar_width: 4
+        bar_inactive_color: [.7,.7,.7,.9]
+        StackLayout:
+            height: self.minimum_height
+            size_hint_y: None
+            spacing:dp(3)
+            padding:dp(1)
+            halign:'right'
+
+            ProbeSettingLabel:
+                label_text: 'X:'
+                hint_text: 'X Dis'
+                ToolTipTextInput:
+                    tooltip_txt: tr._('X distance to probe')
+                    tooltip_image: ''
+                    multiline: False
+                    halign:'right'
+                    input_type: 'number'
+                    input_filter: 'float'
+                    text: root.get_setting('XAxisDistance')
+                    on_text: root.setting_changed('XAxisDistance', self.text)
+
+            ProbeSettingLabel:
+                label_text: 'Y:'
+                hint_text: 'Y Dist'
+                ToolTipTextInput:
+                    tooltip_txt: tr._('Y distance to probe')
+                    tooltip_image: ''
+                    multiline: False
+                    halign:'right'
+                    input_type: 'number'
+                    input_filter: 'float'
+                    text: root.get_setting('YAxisDistance')
+                    on_text: root.setting_changed('YAxisDistance', self.text)
+
+            ProbeSettingLabel:
+                label_text: 'Z:'
+                hint_text: 'Z Dist'
+                ToolTipTextInput:
+                    tooltip_txt: tr._('Z distance to probe')
+                    tooltip_image: ''
+                    multiline: False
+                    halign:'right'
+                    input_type: 'number'
+                    input_filter: 'float'
+                    text: root.get_setting('ZAxisDistance')
+                    on_text: root.setting_changed('ZAxisDistance', self.text)
+
+            ProbeSettingLabel:
+                label_text: 'D Tip Dia:'
+                hint_text: 'probe tip diameter'
+                ToolTipTextInput:
+                    id: ProbeTipDiameter
+                    tooltip_txt: tr._('Effective Diameter of Probe Tip. Measure with M460')
+                    tooltip_image: 'addons/probing/data/icons_1024x768/general_parameters/probe_parameter_d.png'
+                    tooltip_image_size: 200,200
+                    multiline: False
+                    halign:'right'
+                    input_type: 'number'
+                    input_filter: 'float'
+                    text: root.get_setting('ProbeTipDiameter')
+                    on_text: root.setting_changed('ProbeTipDiameter', self.text)
+
+            ProbeSettingLabel:
+                label_text: 'Q Angle:'
+                ToolTipTextInput:
+                    tooltip_txt: tr._('Degrees to rotate the XY coordinate plane when probing.')
+                    tooltip_image: 'addons/probing/data/icons_1024x768/general_parameters/probe_parameter_q.png'
+                    tooltip_image_size: 200,200
+                    multiline: False
+                    halign:'right'
+                    input_type: 'number'
+                    input_filter: 'float'
+                    text: root.get_setting('QAngle')
+                    on_text: root.setting_changed('QAngle', self.text)
+
+            ProbeSettingLabel:
+                label_text: 'F Feed Rate:'
+                hint_text: 'FastFeedRate'
+                ToolTipTextInput:
+                    tooltip_txt: tr._('Optional probing feed rate override')
+                    tooltip_image: ''
+                    multiline: False
+                    halign:'right'
+                    input_type: 'number'
+                    input_filter: 'float'
+                    text: root.get_setting('FastFeedRate')
+                    on_text: root.setting_changed('FastFeedRate', self.text)
+
+            ProbeSettingLabel:
+                label_text: 'L Repeat:'
+                hint_text: 'RepeatOperationCount'
+                ToolTipTextInput:
+                    tooltip_txt: tr._('Number of times to repeat the probing operation')
+                    tooltip_image: ''
+                    multiline: False
+                    halign:'right'
+                    input_type: 'number'
+                    input_filter: 'float'
+                    text: root.get_setting('RepeatOperationCount')
+                    on_text: root.setting_changed('RepeatOperationCount', self.text)
+
+            ProbeSettingLabel:
+                label_text: 'R Edge Retract:'
+                hint_text: 'EdgeRetractDistance'
+                ToolTipTextInput:
+                    tooltip_txt: tr._('Distance away from surface to retract before double tapping the probe')
+                    tooltip_image: ''
+                    multiline: False
+                    halign:'right'
+                    input_type: 'number'
+                    input_filter: 'float'
+                    text: root.get_setting('EdgeRetractDistance')
+                    on_text: root.setting_changed('EdgeRetractDistance', self.text)
+
+            ProbeSettingLabel:
+                label_text: 'S ZeroXY:'
+                hint_text: 'ZeroXY Position'
+                ToolTipSwitch:
+                    id: zero_xy
+                    tooltip_txt: tr._('This switch will set your current WCS to the surface you are probing. It will only set the currently selected axis/axes')
+                    canvas.before:
+                        Color:
+                            rgba: 50/255, 50/255, 50/255, 1
+                        Rectangle:
+                            pos: self.pos
+                            size: self.size
+                    active: root.get_setting('ZeroXYPosition') == "1"
+                    on_active: root.setting_changed('ZeroXYPosition', "1" if self.active else "0")
+
+            ProbeSettingLabel:
+                label_text: 'I Normally Closed:'
+                hint_text: ''
+                ToolTipSwitch:
+                    id: probe_is_nc
+                    tooltip_txt: tr._('Enable this switch if you have a normally closed probe instead of a normally open one')
+                    canvas.before:
+                        Color:
+                            rgba: 50/255, 50/255, 50/255, 1
+                        Rectangle:
+                            pos: self.pos
+                            size: self.size
+                    active: root.get_setting('UseProbeNormallyClosed') == "1"
+                    on_active: root.setting_changed('UseProbeNormallyClosed', "1" if self.active else "0")

@@ -3,6 +3,10 @@
 
 <ToolTipDropDown>:
 
+<ToolTipTextInput>:
+
+<ToolTipSwitch>:
+
 <Tooltip>:
     size_hint: None, None
     width: max(tooltip_label.texture_size[0] + 20, tooltip_image.width + 20)
@@ -30,8 +34,7 @@
         Image:
             id: tooltip_image
             size_hint: None, None
-            allow_stretch: False
-            keep_ratio: True
+            fit_mode: 'scale-down'
             size: self.texture_size
             pos_hint: {"center_x": 0.5}
 

@@ -11,6 +11,7 @@ import subprocess
 import os
 from pathlib import Path
 
+
 POT_FILE = "locales/messages.pot"
 LANGUAGES = ["en","zh-CN"]  # Supported Languages
 

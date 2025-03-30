@@ -11,9 +11,6 @@ import subprocess
 import os
 from pathlib import Path
 
-# Source files with UI text. This is analysed to create the .pot file
-PY_FILES = ["main.py", "Controller.py", "GcodeViewer.py"]  # Python source files
-KV_FILES = ["makera.kv","addons/probing/ProbingPopup.kv"]  # .kv files
 
 POT_FILE = "locales/messages.pot"
 LANGUAGES = ["en","zh-CN"]  # Supported Languages
@@ -24,12 +21,21 @@ PROJECT_PATH = BUILD_PATH.parent.joinpath(PACKAGE_NAME).resolve()
 PACKAGE_PATH = PROJECT_PATH.resolve()
 
 def generate_pot():
-    subprocess.run(["xgettext", "-d", "messages", "-o", POT_FILE, "--from-code=UTF-8"] + PY_FILES, cwd=PACKAGE_PATH)
-    print(f"Generated .pot file from Python files: {PY_FILES}")
+    for py_file in Path("./").rglob("*.py"):
+        py_file_path = str(py_file.resolve())  # Convert to absolute path
+        subprocess.run(
+            ["xgettext", "-j", "-d", "messages", "-o", POT_FILE, "--from-code=UTF-8", "--language=Python", py_file_path], 
+            cwd=PACKAGE_PATH
+        )
+        print(f"Appended .pot file with entries from {py_file}")
 
     # Process .kv files separately with --language=Python
-    for kv_file in KV_FILES:
-        subprocess.run(["xgettext", "-j", "-d", "messages", "-o", POT_FILE, "--from-code=UTF-8", "--language=Python", kv_file], cwd=PACKAGE_PATH)
+    for kv_file in Path("./").rglob("*.kv"):
+        kv_file_path = str(kv_file.resolve())  # Convert to absolute path
+        subprocess.run(
+            ["xgettext", "-j", "-d", "messages", "-o", POT_FILE, "--from-code=UTF-8", "--language=Python", kv_file_path], 
+            cwd=PACKAGE_PATH
+        )
         print(f"Appended .pot file with entries from {kv_file}")
 
 def generate_po():

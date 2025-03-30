@@ -12,6 +12,8 @@
 - Bugfix: Fixed firmware download button. Now opens the github releases page for the Community firmware
 - Bugfix: Fixed squished center buttons
 - Enhancement: Added 3 axis probe screen
+- Enhancement: update_translations.py now searches for all .py and .kv files in the project instead of manually adding each one
+
 
 [0.7.1]
 - Fix: Set a default for the A axis microsteps per degree config option

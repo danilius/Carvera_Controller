@@ -33,7 +33,7 @@ class ProbingPopup(ModalView):
         self.bore_settings = None
         self.boss_settings = None
         self.angle_settings = None
-        self.controller = controller;
+        self.controller = controller
 
         self.preview_popup = ProbingPreviewPopup(controller)
 
@@ -50,7 +50,6 @@ class ProbingPopup(ModalView):
         self.boss_settings = self.ids.boss_settings
         self.angle_settings = self.ids.angle_settings
 
-    # def on_bore_boss_corner_probing_pressed(self, operation_key: str):
 
     def on_single_axis_probing_pressed(self, operation_key: str):
         cfg = self.single_axis_settings.get_config()
@@ -99,7 +98,3 @@ class ProbingPopup(ModalView):
             self.preview_popup.probe_preview_label = "Missing required parameter " + missing_definition.label
 
         self.preview_popup.open()
-
-    def load_config(self):
-        # todo
-        pass

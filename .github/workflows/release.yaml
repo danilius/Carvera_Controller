@@ -162,42 +162,6 @@ jobs:
         path: ${{ github.workspace }}/dist/carveracontroller-community-*.appimage
         retention-days: 2
 
-  build-linux-artifacts-arm:
-    name: build-linux-arm
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-    - name: make dist folder
-      run: mkdir -p ${{ github.workspace }}/dist/
-
-    - uses: pguyot/arm-runner-action@v2
-      id: build_image
-      with:
-        base_image: raspios_lite_arm64:latest
-        image_additional_mb: 10240
-        copy_artifact_path: dist/carveracontroller-community-*.appimage
-        copy_artifact_dest: ${{ github.workspace }}/dist/
-        commands: |
-          sudo apt-get install -y git python3-dev build-essential xvfb squashfs-tools gettext
-          curl -sSL https://install.python-poetry.org | python3 - -y
-          export PATH="/home/runner/.local/bin:$PATH"
-          poetry config virtualenvs.in-project true
-          poetry install
-          poetry self add "poetry-dynamic-versioning[plugin]"
-          poetry dynamic-versioning
-          xvfb-run poetry run python scripts/build.py --os linux
-          poetry run bash ./scripts/rename-release-file.sh linux
-
-
-
-    - name: Upload artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: linux-arm-assets
-        path: ${{ github.workspace }}/dist/carveracontroller-community-*.appimage
-        retention-days: 2
-
-
   build-pypi-artifacts:
     name: build-python
     runs-on: ubuntu-20.04
@@ -231,7 +195,6 @@ jobs:
     - name: Publish package to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
 
-
   publish-release:
     needs: [ build-windows-artifacts, build-macos-artifacts, build-linux-artifacts ]
     runs-on: ubuntu-latest
@@ -250,20 +213,3 @@ jobs:
             windows-assets-*/carveracontroller-community-*-windows-x64.exe
             macos-assets-*/carveracontroller-community-*.dmg
             linux-assets/carveracontroller-community-*.appimage
-
-  publish-release-arm:
-    needs: [ build-linux-artifacts-arm ]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-
-      - name: Publish release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: linux-arm-assets/carveracontroller-community-*.appimage
-

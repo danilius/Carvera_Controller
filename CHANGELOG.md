@@ -1,21 +1,17 @@
-[Unreleased]
-- Enhancement: The ability to reduce the size of the autolevel probe area. This enables the ability to avoid probing the stock where there might be obstacles preventing probing.
-- Enhancement: tooltip support. See https://github.com/Carvera-Community/Carvera_Controller/pull/143 for more information
-- Enhancement: tooltip support added for switches and text input fields
-- Enhancement: Added custom background images in a dropdown for the start file/probe screen to show bolt hole positions. The user can create their own by replicating one of the ones in the existing folder
-- Enhancement: Support copy keyboard shortcut from MDI window
-- Bugfix: Tooltips no longer persist when the parent object is unfocused
+[0.8.0]
+- Enhancement: Added 3 axis probing screens for outside/inside corners, single axis, bore/pocket, boxx/block, and angles. Community Firmware V1.0.1c1.0.4_beta or higher is required to use.
 - Enhancement: Initial iOS platform support
-- Bugfix: Tooltips no longer cut off certain longer strings of text
-- Enhancement: Set and change to custom tool number
-- Bugfix: Fixed Speed/Feed scaling when using +/- buttons. Now can reach 10% and 300% scaling.
-- Bugfix: Fixed firmware download button. Now opens the github releases page for the Community firmware
-- Bugfix: Fixed squished center buttons
-- Enhancement: Added 3 axis probe screen
-- Enhancement: update_translations.py now searches for all .py and .kv files in the project instead of manually adding each one
+- Enhancement: The ability to reduce the size of the autolevel probe area. This enables the ability to avoid probing the stock where there might be obstacles preventing probing.
+- Enhancement: tooltip support. Hover mouse cursor for 0.5s for tool tip to popup. See https://github.com/Carvera-Community/Carvera_Controller/pull/143 for more information
+- Enhancement: Added custom background images in a dropdown for the start file/probe screen to show bolt hole positions. The user can create custom ones, see release for base image files.
+- Enhancement: Set and change to custom tool number (including beyond #6)
 - Enhancement: Added enclosure light switch to centre control panel
-- Bugfix: Fixed inability to type in MDI command text input
-
+- Enhancement: Support copy keyboard shortcut from MDI window
+- Enhancement: update_translations.py now searches for all .py and .kv files in the project instead of manually adding each one
+- Fix: Fixed squished center buttons
+- Fix: Fixed Speed/Feed scaling when using +/- buttons. Now can reach 10% and 300% scaling.
+- Fix: Fixed firmware download button. Now opens the github releases page for the Community firmware
+- Removed: ARM64 (Raspberry Pi etc) version of pre-compiled Linux package. We will be re-added at a later date. For now use the pypi version.
 
 [0.7.1]
 - Fix: Set a default for the A axis microsteps per degree config option

@@ -187,7 +187,7 @@ class Controller:
                 self.log.put((Controller.MSG_ERROR, str(sys.exc_info()[1])))
 
     # ----------------------------------------------------------------------
-    def autoCommand(self, margin=False, zprobe=False, zprobe_abs=False, leveling=False, goto_origin=False, z_probe_offset_x=0, z_probe_offset_y=0, i=3, j=3, h=5, buffer=False):
+    def autoCommand(self, margin=False, zprobe=False, zprobe_abs=False, leveling=False, goto_origin=False, z_probe_offset_x=0, z_probe_offset_y=0, i=3, j=3, h=5, buffer=False, auto_level_offsets = [0,0,0,0]):
         if not (margin or zprobe or leveling or goto_origin):
             return
         if abs(CNC.vars['xmin']) > CNC.vars['worksize_x'] or abs(CNC.vars['ymin']) > CNC.vars['worksize_y']:
@@ -195,13 +195,16 @@ class Controller:
         cmd = "M495 X%gY%g" % (CNC.vars['xmin'], CNC.vars['ymin'])
         if margin:
             cmd = cmd + "C%gD%g" % (CNC.vars['xmax'], CNC.vars['ymax'])
-        if zprobe:
-            if zprobe_abs:
+            self.executeCommand(cmd) #run margin command. Has to be two seperate commands to offset the start of the autolevel process
+        cmd = "M495 X%gY%g" % (CNC.vars['xmin'] + auto_level_offsets[0], CNC.vars['ymin'] + auto_level_offsets[2]) #reinitialize command with any autolevel offsets
+        if zprobe: 
+            if zprobe_abs: 
+                cmd = "M495 X%gY%g" % (CNC.vars['xmin'], CNC.vars['ymin']) #reset command for 4th axis
                 cmd = cmd + "O0"
-            else:
+            else: 
                 cmd = cmd + "O%gF%g" % (z_probe_offset_x, z_probe_offset_y)
         if leveling:
-            cmd = cmd + "A%gB%gI%dJ%dH%d" % (CNC.vars['xmax'] - CNC.vars['xmin'], CNC.vars['ymax'] - CNC.vars['ymin'], i, j, h)
+            cmd = cmd + "A%gB%gI%dJ%dH%d" % (CNC.vars['xmax'] - (CNC.vars['xmin']+auto_level_offsets[1]+ auto_level_offsets[0]) , CNC.vars['ymax'] - (CNC.vars['ymin']+auto_level_offsets[3] + auto_level_offsets[2]), i, j, h)
         if goto_origin:
             cmd = cmd + "P1"
         cmd = cmd + "\n"
@@ -378,6 +381,9 @@ class Controller:
             self.executeCommand("M6T0\n")
         elif tool == 'r':
             self.executeCommand("M6T8888\n")
+        elif tool == 'm':
+            #custom tool number
+            pass
         else:
             self.executeCommand("M6T%s\n" % tool)
 
@@ -386,6 +392,9 @@ class Controller:
             self.executeCommand("M493.2T0\n")
         elif tool == 'r':
             self.executeCommand("M493.2T8888\n")
+        elif tool == 'm':
+            #custom tool number
+            pass
         elif tool == 'y':
             self.executeCommand("M493.2T-1\n")
         else:
@@ -790,6 +799,7 @@ class Controller:
             self.executeCommand(f"G91G0{_dir}")
 
     # ----------------------------------------------------------------------
+
     def goto(self, x=None, y=None, z=None):
         cmd = "G90G0"
         if x is not None: cmd += "X%g" % (x)

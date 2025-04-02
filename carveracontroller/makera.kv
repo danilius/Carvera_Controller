@@ -1,6 +1,9 @@
 #:kivy 1.11.1
 #:import Factory kivy.factory.Factory
+#:import tr carveracontroller.__main__.tr
+#:include addons/tooltips/Tooltips.kv
 #:import tr __main__.tr
+#:include addons/probing/ProbingPopup.kv
 
 <Label>:
     font_name: 'ARIALUNI'
@@ -241,7 +244,6 @@
 
 <SmallRoundButton@Button>:
     background_color: 0,0,0,0  # the last zero is the critical on, make invisible
-    size_hint_y: None
     height: '35dp'
     canvas.before:
         Color:
@@ -304,7 +306,7 @@
 <JogSpeedDropDown>:
     on_select: app.root.ids.jog_speed_btn.text = tr._('Jog Speed:') + args[1]
     Button:
-        text: tr._('Same as Feed')
+        text: tr._('Match Feed')
         size_hint_y: None
         height: '40dp'
         on_release:
@@ -449,8 +451,9 @@
             title: tr._('max:')
             value: '0.000'
             color: (231/255, 76/255, 60/255, 1) if self.value != '0.000' else self.default_color
-    Button:
+    ToolTipButton:
         text: tr._('Clear')
+        tooltip_txt: tr._('Clear any existing autolevel offsets. When autolevel offsets are enabled the Z axis dropdown will be blue')
         size_hint_y: None
         height: '48dp'
         font_size: '20sp'
@@ -486,8 +489,9 @@
         on_release:
             root.select('Third Item')
             app.root.coord_popup.seta_popup.open()
-    Button:
+    ToolTipButton:
         text: tr._('Shrink')
+        tooltip_txt: tr._('Reset A Axis value to 0-360 while keeping the offset. Eg 374 becomes 14')
         size_hint_y: None
         height: '48dp'
         font_size: '20sp'
@@ -571,12 +575,12 @@
             text: '-'
             font_size: '25sp'
             on_release:
-                if root.scale_slider.value >= 60: root.scale_slider.value = root.scale_slider.value - 10
+                if root.scale_slider.value > 10: root.scale_slider.value = root.scale_slider.value - 10
         Button:
             text: '+'
             font_size: '25sp'
             on_release:
-                if root.scale_slider.value <= 190: root.scale_slider.value = root.scale_slider.value + 10
+                if root.scale_slider.value < 300: root.scale_slider.value = root.scale_slider.value + 10
     Button:
         text: tr._('Reset')
         size_hint_y: None
@@ -651,8 +655,8 @@
         height: '40dp'
         Slider:
             id: scale_slider
-            min: 50
-            max: 200
+            min: 10
+            max: 300
             value: 100
             step: 10
             set_flag: False
@@ -673,12 +677,12 @@
             text: '-'
             font_size: '25sp'
             on_release:
-                if root.scale_slider.value >= 60: root.scale_slider.value = root.scale_slider.value - 10
+                if root.scale_slider.value > 10: root.scale_slider.value = root.scale_slider.value - 10
         Button:
             text: '+'
             font_size: '25sp'
             on_release:
-                if root.scale_slider.value <= 190: root.scale_slider.value = root.scale_slider.value + 10
+                if root.scale_slider.value < 300: root.scale_slider.value = root.scale_slider.value + 10
     Button:
         text: tr._('Reset')
         size_hint_y: None
@@ -728,8 +732,9 @@
         height: '40dp'
         id: change_dropdown
         text: tr._('Change...')
-        values: 'Probe', 'Tool: 1', 'Tool: 2', 'Tool: 3', 'Tool: 4', 'Tool: 5', 'Tool: 6'
+        values: 'Probe', 'Tool: 1', 'Tool: 2', 'Tool: 3', 'Tool: 4', 'Tool: 5', 'Tool: 6', 'Custom'
         on_text:
+            if self.text == 'Custom': app.root.coord_popup.change_tool_popup.open()
             if self.text != tr._("Change..."): app.root.controller.changeToolCommand(self.text[-1])
             if self.text != tr._("Change..."): self.text = tr._('Change...')
             root.select('Third Item')
@@ -753,8 +758,9 @@
         height: '40dp'
         id: set_dropdown
         text: tr._('Set...')
-        values: 'Empty', 'Probe', 'Tool: 1', 'Tool: 2', 'Tool: 3', 'Tool: 4', 'Tool: 5', 'Tool: 6'
+        values: 'Empty', 'Probe', 'Tool: 1', 'Tool: 2', 'Tool: 3', 'Tool: 4', 'Tool: 5', 'Tool: 6', 'Custom'
         on_text:
+            if self.text == 'Custom': app.root.coord_popup.settool_popup.open()
             if self.text != tr._("Set..."): app.root.controller.setToolCommand(self.text[-1])
             if self.text != tr._("Set..."): self.text = tr._('Set...')
             root.select('Third Item')
@@ -879,7 +885,7 @@
                 text: '-'
                 font_size: '25sp'
                 on_release:
-                    if root.scale_slider.value >= 20: root.scale_slider.value = root.scale_slider.value - 10
+                    if root.scale_slider.value > 10: root.scale_slider.value = root.scale_slider.value - 10
             Button:
                 text: '+'
                 font_size: '25sp'
@@ -908,6 +914,7 @@
         small_icon: True
         size_hint_y: None
         height: '40dp'
+        tooltip_txt: tr._('Run File View')
         on_release:
             app.root.content.transition.direction = 'right'
             app.root.content.current = 'File'
@@ -917,6 +924,7 @@
         icon_size: 24
         small_icon: True
         size_hint_y: None
+        tooltip_txt: tr._('Manual Move View')
         height: '50dp'
         on_release:
             app.root.content.transition.direction = 'left'
@@ -929,6 +937,7 @@
         size_hint_y: None
         disabled: app.state == 'N/A'
         height: '50dp'
+        tooltip_txt: tr._('Diagnostics Menu')
         on_release:
             root.select('')
             app.root.diagnose_popup.open()
@@ -939,6 +948,7 @@
         size_hint_y: None
         height: '50dp'
         disabled: app.state != 'Idle'
+        tooltip_txt: tr._('Wifi Setup')
         on_release:
             app.root.startLoadWiFi(self)
     IconButton:
@@ -949,6 +959,7 @@
         height: '50dp' if app.model != 'CA1' else '0dp'
         opacity: 1 if app.model != 'CA1' else 0
         disabled: app.state != 'Idle'
+        tooltip_txt: tr._('Pair Probe')
         on_release:
             app.root.pairing_popup.pairing_note = ''
             app.root.pairing_popup.open()
@@ -957,6 +968,7 @@
         icon_size: 24
         small_icon: True
         size_hint_y: None
+        tooltip_txt: tr._('Update Firmware/Controller')
         notify: (app.fw_has_update or app.ctl_has_update) and app.state != 'N/A'
         disabled: app.state != 'Idle'
         height: '50dp'
@@ -969,6 +981,7 @@
         small_icon: True
         size_hint_y: None
         height: '50dp'
+        tooltip_txt: tr._('Language Selection')
         on_release:
             root.select('')
             app.root.language_popup.open()
@@ -978,18 +991,32 @@
         small_icon: True
         size_hint_y: None
         height: '50dp'
+        tooltip_txt: tr._('Settings')
         on_release:
             root.select('')
             app.root.config_popup.open()
     IconButton:
         icon: 'data/open_iconic_UI/oi--bug.png'
         icon_size: 24
+        tooltip_image: 'data/open_iconic_UI/oi--bug.png'
+        tooltip_image_size: [100,100]
+        tooltip_txt: tr._('Send Bug Report')
         small_icon: True
         size_hint_y: None
         height: '50dp'
         on_release:
             root.select('')
             app.root.send_bug_report()
+    IconButton:
+        icon: 'addons/probing/data/probe.png'
+        icon_size: 35
+        small_icon: True
+        size_hint_y: None
+        # disabled: app.state == 'N/A'
+        height: '50dp'
+        on_release:
+            root.select('')
+            app.root.probing_popup.open()
 
 <StatusDropDown>:
     btn_connect_usb: btn_connect_usb
@@ -1745,9 +1772,9 @@
         GridLayout:
             spacing: '3dp'
             size_hint_y: None
-            height: '110dp'
+            height: '240dp'
             cols: 5
-            rows: 4
+            rows: 8
             # row1
             Label:
                 size_hint_x: 0.2
@@ -1812,6 +1839,77 @@
                 on_text:
                     root.init()
 
+            #empty row
+            Label:
+                size_hint_x: 0.2
+            Label:
+                
+            Label:
+                
+            Label:
+                
+            Label:
+                
+
+            # row5 new section
+            Label:
+                size_hint_x: 0.2
+            Label:
+            Label:
+                id: lb_height
+                text: tr._('Offsets:   ')
+            MCQCheckBox:
+                id: cbx_autolevelOffsets
+            Label:
+            # row6
+            Label:
+                size_hint_x: 0.2
+            Label:
+                text: tr._('Left X-')
+            Label:
+                text: tr._('Right X+')
+            Label:
+                text: tr._('Front Y-')
+            Label:
+                text: tr._('Back Y+')
+            # row7
+
+            Label:
+                size_hint_x: 0.2
+            TextInput:
+                id: txt_auto_xn_offset
+                hint_text: tr._('Enter -X Offset')
+                multiline: False
+                text: '5'
+                input_type: 'number'
+                input_filter: 'float'
+                disabled: not cbx_autolevelOffsets.active
+            TextInput:
+                id: txt_auto_xp_offset
+                hint_text: tr._('Enter +X Offset')
+                multiline: False
+                text: '5'
+                input_type: 'number'
+                input_filter: 'float'
+                disabled: not cbx_autolevelOffsets.active
+            TextInput:
+                id: txt_auto_yn_offset
+                hint_text: tr._('Enter -Y Offset')
+                multiline: False
+                text: '5'
+                input_type: 'number'
+                input_filter: 'float'
+                disabled: not cbx_autolevelOffsets.active
+            TextInput:
+                id: txt_auto_yp_offset
+                hint_text: tr._('Enter +Y Offset')
+                multiline: False
+                text: '5'
+                input_type: 'number'
+                input_filter: 'float'
+                disabled: not cbx_autolevelOffsets.active
+
+
         BoxLayout:
             id: empty
         BoxLayout:
@@ -1829,6 +1927,13 @@
                     root.coord_popup.set_config('leveling', 'height', int(sp_height.text))
                     root.coord_popup.set_config('leveling', 'x_points', int(sp_x_points.text))
                     root.coord_popup.set_config('leveling', 'y_points', int(sp_y_points.text))
+                    root.coord_popup.set_config('leveling', 'xn_offset', float(txt_auto_xn_offset.text) if cbx_autolevelOffsets.active and txt_auto_xn_offset.text.strip() and txt_auto_xn_offset.text != '.' else 0.0)
+                    root.coord_popup.set_config('leveling', 'xp_offset', float(txt_auto_xp_offset.text) if cbx_autolevelOffsets.active and txt_auto_xp_offset.text.strip() and txt_auto_xp_offset.text != '.' else 0.0)
+                    root.coord_popup.set_config('leveling', 'yn_offset', float(txt_auto_yn_offset.text) if cbx_autolevelOffsets.active and txt_auto_yn_offset.text.strip() and txt_auto_yn_offset.text != '.' else 0.0)
+                    root.coord_popup.set_config('leveling', 'yp_offset', float(txt_auto_yp_offset.text) if cbx_autolevelOffsets.active and txt_auto_yp_offset.text.strip() and txt_auto_yp_offset.text != '.' else 0.0)
+                    if cbx_autolevelOffsets.active: root.coord_popup.set_config('zprobe', 'x_offset', float(txt_auto_xn_offset.text) if txt_auto_xn_offset.text.strip() and txt_auto_xn_offset.text != '.' else 0.0)
+                    if cbx_autolevelOffsets.active: root.coord_popup.set_config('zprobe', 'y_offset', float(txt_auto_yn_offset.text) if txt_auto_yn_offset.text.strip() and txt_auto_yn_offset.text != '.' else 0.0)
+
                     root.coord_popup.load_leveling_label()
                     if root.execute: app.root.execute_autolevel(int(sp_x_points.text), int(sp_y_points.text), False)
                     root.dismiss()
@@ -1963,7 +2068,7 @@
                                 width: '100dp'
                                 text: tr._("Download")
                                 on_release:
-                                    app.root.open_download()
+                                    app.root.open_fw_download()
                             Button:
                                 size_hint_x: None
                                 width: '100dp'
@@ -2078,11 +2183,7 @@
                         width: '100dp'
                         text: tr._("Upload File")
                         on_release:
-                            root.firmware_mode = False
-                            root.popup_manager.transition.direction = 'left'
-                            root.popup_manager.transition.duration = 0.3
-                            root.popup_manager.current = 'local_page'
-                            app.root.set_local_folder_to_last_opened()
+                            app.root.open_upload_local_file_popup()
                 BoxLayout:
                     size_hint_y: None
                     height: '5dp'
@@ -2528,6 +2629,18 @@
                 size_hint_x: None
                 width: '200dp'
                 orientation: 'vertical'
+                BoxLayout:
+                    padding: '5dp', '0dp', '5dp', '10dp'
+                    spacing: '5dp'
+                    size_hint_y: None
+                    height: '40dp'
+                    Label:
+                        text: tr._("Background:")
+                    Spinner:
+                        id: background_image_spinner
+                        text: "None"
+                        size_hint_x: 1.5
+                        on_text: root.update_background_image(self.text)
 
                 BoxLayout:
                     padding: '0.5dp'
@@ -2730,7 +2843,7 @@
                 Label:
                     id: lb_leveling
                     size_hint_y: None
-                    height: '25dp'
+                    height: '50dp'
                     text: tr._(" X Points: 10, Y Points: 10, Height: 5")
                     disabled:  (root.mode != 'Run' and root.mode != 'Leveling') or app.has_4axis
                     halign: "left"
@@ -3175,6 +3288,7 @@
             TopDataView:
                 id: feed_data_view
                 data_icon: 'data/feed.png'
+                tooltip_txt: tr._('Feed Rate Override')
                 main_text: "1000"
                 minr_text: "100%"
                 disabled: app.state == 'N/A'
@@ -3185,6 +3299,7 @@
             TopDataView:
                 id: spindle_data_view
                 data_icon: 'data/spindle.png'
+                tooltip_txt: tr._('Spindle and Vacuum Overrides')
                 main_text: "10000"
                 minr_text: "0.0 C"
                 disabled: app.state == 'N/A'
@@ -3195,6 +3310,7 @@
             TopDataView:
                 id: tool_data_view
                 data_icon: 'data/tool.png'
+                tooltip_txt: tr._('Tool Settings')
                 main_text: "6"
                 minr_text: "0.000"
                 disabled: app.state == 'N/A'
@@ -3205,6 +3321,7 @@
             TopDataView:
                 id: laser_data_view
                 data_icon: 'data/laser.png'
+                tooltip_txt: tr._('Laser Settings')
                 main_text: "10000"
                 minr_text: "100%"
                 disabled: app.state == 'N/A'
@@ -3285,25 +3402,29 @@
                                         on_release: root.controller.jog_with_speed("Y{}".format(root.step_xy.text), root.jog_speed)
                                 GridBoxLayout:
                         BoxLayout:
+                            disabled: app.state != 'Idle'
                             orientation: 'vertical'
-                            
-                            BoxLayout:
+                            padding: '10dp'
+                            Widget:
+                                size_hint_y: 0.5
                             BoxLayout:
                                 disabled: app.state != 'Idle'
                                 orientation: 'vertical'
-                                padding: '10dp'
+                                padding: '3dp'
                                 BoxLayout:
-                                    padding: '10dp'
+                                    padding: '3dp'
                                     canvas.before:
                                         Color:
                                             rgba: 50/255, 50/255, 50/255, 1
                                         RoundedRectangle:
                                             pos: self.pos
                                             size: self.size
-                                            radius: [dp(12),]
+                                            radius: [dp(3),]
                                     GridLayout:
+                                        padding: '10dp'
                                         cols: 3
-                                        rows: 3
+                                        rows: 4
+                                        spacing: dp(3)
                                         GridBoxLayout:
                                             SmallRoundButton:
                                                 text: tr._('Unlock')
@@ -3352,7 +3473,6 @@
                                         GridBoxLayout:
                                             Spinner:
                                                 center: 0.5, 0.5
-                                                size_hint_y: None
                                                 height: '35dp'
                                                 text: tr._('Goto...')
                                                 values: 'Clearance', 'Work Origin', 'Path Origin', 'Anchor1', 'Anchor2'
@@ -3365,10 +3485,25 @@
                                                 on_release: root.coord_popup.origin_popup.open()
                                         GridBoxLayout:
                                             ToggleButton:
-                                                text: tr._('Adv Jog Controls')
-                                                size_hint_y: None
+                                                text: tr._('Jog Controls')
                                                 height: '35dp'
                                                 on_release: app.root.toggle_jog_control_ui()
+
+                                        # 4th row
+                                        GridBoxLayout:
+                                            SmallRoundButton:
+                                                text: tr._('Probing...')
+                                                on_release: app.root.probing_popup.open()
+
+                                        GridBoxLayout:
+                                            ToggleButton:
+                                                text: tr._('Light')
+                                                height: '35dp'
+                                                on_release: app.root.controller.setLightSwitch(not self.state=="normal")
+
+                                        GridBoxLayout:
+                                            # Empty for now
+
                             BoxLayout:
                                 BoxLayout:
                                     disabled: app.state != 'Idle'
@@ -3389,9 +3524,8 @@
                                                     radius: [dp(12),]
                                             GridBoxLayout:
                                                 Button:
-                                                    text: tr._('Jog Speed: Same as Feed')
+                                                    text: tr._('Jog Speed: Match Feed')
                                                     id: jog_speed_btn
-                                                    size_hint_y: None
                                                     center: 0.5, 0.5
                                                     height: '35dp'
                                                     on_release: root.jog_speed_drop_down.open(self)
@@ -3401,7 +3535,6 @@
                                                     id: kb_jog_btn
                                                     text: tr._('Keyboard Jog Mode')
                                                     height: '35dp'
-                                                    size_hint_y: None
                                                     on_release: app.root.toggle_keyboard_jog_control()
 
                         BoxLayout:
@@ -3514,10 +3647,11 @@
                                                 orientation: 'horizontal'
                                                 size_hint_y: None
                                                 height: '33dp'
-                                                Button:
+                                                ToolTipButton:
                                                     id: toggle_mdi
                                                     width: '40dp'
                                                     size_hint_x: None
+                                                    tooltip_txt: tr._('Press to switch to MDI console to see console messages and send individual gcodes')
                                                     text: 'MDI'
                                                     on_release:
                                                         cmd_manager.transition.direction = 'left'
@@ -3530,6 +3664,7 @@
                                                     TransparentButton:
                                                         height: '0dp'
                                                         icon: 'data/to_start.png'
+                                                        tooltip_txt: tr._('Jump to first page in file')
                                                         icon_size: 18
                                                         disabled: app.loading_page or app.curr_page == 1 or (app.state != 'Idle' and app.state != 'N/A')
                                                         on_release:
@@ -3537,6 +3672,7 @@
                                                     TransparentButton:
                                                         height: '0dp'
                                                         icon: 'data/previous.png'
+                                                        tooltip_txt: tr._('Go to last page in file')
                                                         icon_size: 13
                                                         disabled: app.loading_page or app.curr_page == 1 or (app.state != 'Idle' and app.state != 'N/A')
                                                         on_release:
@@ -3544,6 +3680,7 @@
                                                     TransparentButton:
                                                         height: '0dp'
                                                         icon: 'data/start.png'
+                                                        tooltip_txt: tr._('Go to next page in file')
                                                         icon_size: 13
                                                         disabled: app.loading_page or app.curr_page == app.total_pages or (app.state != 'Idle' and app.state != 'N/A')
                                                         on_release:
@@ -3551,6 +3688,7 @@
                                                     TransparentButton:
                                                         height: '0dp'
                                                         icon: 'data/to_end.png'
+                                                        tooltip_txt: tr._('Jump to last page in file')
                                                         icon_size: 18
                                                         disabled: app.loading_page or app.curr_page == app.total_pages or (app.state != 'Idle' and app.state != 'N/A')
                                                         on_release:
@@ -3582,11 +3720,12 @@
                                                 orientation: 'horizontal'
                                                 size_hint_y: None
                                                 height: '33dp'
-                                                Button:
+                                                ToolTipButton:
                                                     id: toggle_file
                                                     width: '40dp'
                                                     size_hint_x: None
                                                     text: tr._('FILE')
+                                                    tooltip_txt: tr._('Retun to file view')
                                                     on_release:
                                                         cmd_manager.transition.direction = 'right'
                                                         cmd_manager.current = 'gcode_cmd_page'
@@ -3597,11 +3736,12 @@
                                                     # disabled: app.state != 'Idle'
                                                     on_text_validate:
                                                         if app.state == 'Idle' or app.state == 'Pause' : root.send_cmd()
-                                                Button:
+                                                ToolTipButton:
                                                     id: send_cmd
                                                     width: '40dp'
                                                     size_hint_x: None
                                                     text: tr._('send')
+                                                    tooltip_txt: tr._('The MDI is a console that allows you to send individual gcodes, and commands such as to change config values on the machine')
                                                     disabled: (app.state != 'Idle' and app.state != 'Pause' and root.allow_mdi_while_machine_running == '0')
                                                     on_release:
                                                         root.send_cmd()
@@ -3857,6 +3997,7 @@
                         size: self.size
                 IconButton:
                     icon: 'data/file.png'
+                    tooltip_txt: tr._('Select File')
                     icon_size: 21
                     disabled: app.state != 'Idle' and app.state != 'N/A' and not app.playing
                     on_release:
@@ -3872,6 +4013,7 @@
                 IconButton:
                     icon: 'data/start.png' if app.state == 'Pause' else 'data/config_start.png'
                     icon_size: 25
+                    tooltip_txt: tr._('Start File')
                     disabled: (app.state != 'Idle' or app.selected_remote_filename == '' or app.playing) and app.state != 'Pause'
                     on_release:
                         if app.state == 'Pause':\
@@ -3883,11 +4025,13 @@
                 IconButton:
                     icon: 'data/suspend.png'
                     disabled: app.state != 'Run' or not app.playing
+                    tooltip_txt: tr._('Pause File at Next Safe Opportunity and Enable MDI Control')
                     on_release:
                         app.root.controller.suspendCommand()
                 IconButton:
                     icon: 'data/abort.png'
                     icon_size: 24
+                    tooltip_txt: tr._('Abort File Now')
                     disabled: (app.state != 'Run' and app.state != 'Pause') or not app.playing
                     on_release:
                         app.root.controller.abortCommand()
@@ -3897,6 +4041,7 @@
                 IconButton:
                     icon: 'data/feedhold2.png' if app.state == 'Hold' else 'data/feedhold1.png'
                     icon_size: 24
+                    tooltip_txt: tr._('Pause File Without MDI')
                     disabled: app.state != 'Run' and app.state != 'Idle' and app.state != 'Hold'
                     on_release:
                         self.disabled = True
@@ -3936,6 +4081,7 @@
 
                 IconButton:
                     icon: 'data/stop.png'
+                    tooltip_txt: tr._('E-Stop')
                     icon_size: 40
                     disabled: app.state == 'N/A'
                     on_release:
@@ -4181,6 +4327,119 @@
                 text: tr._('Ok')
                 on_release:
                     app.root.controller.wcsSetA(float(txt_offset.text))
+                    root.dismiss()
+
+<SetToolPopup>:
+    size_hint: 0.5, 0.4
+    pos_hint: {"right": 0.75, "top": 0.7}
+    auto_dismiss: False
+    txt_offset: txt_offset
+    BoxLayout:
+        padding: '15dp'
+        orientation: 'vertical'
+        Label:
+            canvas.before:
+                Color:
+                    rgba: 45/255, 45/255, 45/255, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+            id: caption
+            size_hint_y: None
+            height: '30dp'
+            text: tr._('Set Current Tool Number')
+            halign: 'left'
+            valign: 'middle'
+        BoxLayout:
+            padding: '15dp'
+            orientation: 'vertical'
+        BoxLayout:
+            size_hint_y: None
+            height: '30dp'
+            Label:
+                text: 'Value:'
+                halign: "left"
+                valign: "center"
+                text_size: self.size
+            TextInput:
+                id: txt_offset
+                hint_text: tr._('Enter New Tool Number')
+                multiline: False
+                text: '0'
+                halign: "left"
+                input_type: 'number'
+                input_filter: 'int'
+        BoxLayout:
+            id: empty
+        BoxLayout:
+            spacing: '5dp'
+            size_hint_y: None
+            height: '40dp'
+            Button:
+                id: btn_cancel
+                text: tr._('Cancel')
+                on_release: root.dismiss()
+            Button:
+                id: btn_ok
+                text: tr._('Ok')
+                on_release:
+                    app.root.controller.setToolCommand(txt_offset.text)
+                    root.dismiss()
+<ChangeToolPopup>:
+    size_hint: 0.5, 0.4
+    pos_hint: {"right": 0.75, "top": 0.7}
+    auto_dismiss: False
+    txt_offset: txt_offset
+    BoxLayout:
+        padding: '15dp'
+        orientation: 'vertical'
+        Label:
+            canvas.before:
+                Color:
+                    rgba: 45/255, 45/255, 45/255, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+            id: caption
+            size_hint_y: None
+            height: '30dp'
+            text: tr._('Change Current Tool')
+            halign: 'left'
+            valign: 'middle'
+        BoxLayout:
+            padding: '15dp'
+            orientation: 'vertical'
+        BoxLayout:
+            size_hint_y: None
+            height: '30dp'
+            Label:
+                text: 'Value:'
+                halign: "left"
+                valign: "center"
+                text_size: self.size
+            TextInput:
+                id: txt_offset
+                hint_text: tr._('New Tool Number')
+                multiline: False
+                text: '0'
+                halign: "left"
+                input_type: 'number'
+                input_filter: 'int'
+        BoxLayout:
+            id: empty
+        BoxLayout:
+            spacing: '5dp'
+            size_hint_y: None
+            height: '40dp'
+            Button:
+                id: btn_cancel
+                text: tr._('Cancel')
+                on_release: root.dismiss()
+            Button:
+                id: btn_ok
+                text: tr._('Ok')
+                on_release:
+                    app.root.controller.changeToolCommand(txt_offset.text)
                     root.dismiss()
 
 <MoveAPopup>:

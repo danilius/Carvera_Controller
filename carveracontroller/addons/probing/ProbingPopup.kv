@@ -1,0 +1,505 @@
+#:include addons/probing/preview/ProbingPreviewPopup.kv
+#:include addons/probing/ProbingControls.kv
+#:include addons/probing/operations/OutsideCorner/OutsideCornerSettings.kv
+#:include addons/probing/operations/InsideCorner/InsideCornerSettings.kv
+#:include addons/probing/operations/SingleAxis/SingleAxisProbeSettings.kv
+#:include addons/probing/operations/Bore/BoreSettings.kv
+#:include addons/probing/operations/Boss/BossSettings.kv
+#:include addons/probing/operations/Angle/AngleSettings.kv
+
+
+
+<ProbingPopup>:
+    title:"Probing"
+    size_hint: 0.8, 0.8
+    pos_hint: {"center_x": 0.5, "center_y": 0.5}
+    auto_dismiss: False
+    step_xy: step_xy
+    step_z: step_z
+    step_a: step_a
+
+    GridLayout:
+        cols:1
+        rows:4
+        spacing: dp(0)
+        padding: dp(3)
+        GridLayout:
+            cols:2
+            rows:2
+            spacing: dp(10)
+            padding: dp(3)
+
+            TabbedPanel:
+                do_default_tab: False
+                tab_width: dp(130)
+                TabbedPanelItem:
+                    text: tr._('Outside Corners')
+                    GridLayout:
+                        cols:2
+                        rows:1
+                        size_hint:1, 1
+                        spacing:dp(10)
+                        padding:dp(10)
+                        GridLayout:
+                            size_hint_x: 1
+                            cols: 2
+                            rows: 2
+                            spacing: dp(8)
+                            padding: 10
+
+                            ProbeButton:
+                                
+                                tooltip_txt: ''
+                                tooltip_image: ''
+                                on_press: root.on_outside_corner_probing_pressed("TopLeft")
+                                image: 'addons/probing/data/icons_1024x768/outside_corner/X+Y-.png'
+                            ProbeButton:
+                                
+                                tooltip_txt: ''
+                                tooltip_image: ''
+                                on_press: root.on_outside_corner_probing_pressed("TopRight")
+                                image: 'addons/probing/data/icons_1024x768/outside_corner/X-Y-.png'
+                            ProbeButton:
+                                
+                                tooltip_txt: ''
+                                tooltip_image: ''
+                                on_press: root.on_outside_corner_probing_pressed("BottomLeft")
+                                image: 'addons/probing/data/icons_1024x768/outside_corner/X+Y+.png'
+                            ProbeButton:
+                                
+                                tooltip_txt: ''
+                                tooltip_image: ''
+                                on_press: root.on_outside_corner_probing_pressed("BottomRight")
+                                image: 'addons/probing/data/icons_1024x768/outside_corner/X-Y+.png'
+
+                        BoxLayout:
+                            size_hint_x: .5
+                            halign: "right"
+                            OutsideCornerSettings:
+                                halign: "right"
+                                id: outside_corner_settings
+
+                TabbedPanelItem:
+                    text: tr._('Inside Corners')
+                    GridLayout:
+                        cols:2
+                        rows:1
+                        size_hint:1, 1
+                        spacing:dp(10)
+                        padding:dp(10)
+                        GridLayout:
+                            size_hint_x: 1
+                            cols: 2
+                            rows: 2
+                            spacing: dp(8)
+                            padding: 10
+
+                            ProbeButton:
+                                halign: 'right'
+                                tooltip_txt: ''
+                                tooltip_image: ''
+                                on_press: root.on_inside_corner_probing_pressed("TopLeft")
+                                image: 'addons/probing/data/icons_1024x768/inside_corner/inX+Y-.png'
+                            ProbeButton:
+                                halign: 'left'
+                                tooltip_txt: ''
+                                tooltip_image: ''
+                                on_press: root.on_inside_corner_probing_pressed("TopRight")
+                                image: 'addons/probing/data/icons_1024x768/inside_corner/inX-Y-.png'
+                            ProbeButton:
+                                
+                                tooltip_txt: ''
+                                tooltip_image: ''
+                                on_press: root.on_inside_corner_probing_pressed("BottomLeft")
+                                image: 'addons/probing/data/icons_1024x768/inside_corner/inX+Y+.png'
+                            ProbeButton:
+                                
+                                tooltip_txt: ''
+                                tooltip_image: ''
+                                on_press: root.on_inside_corner_probing_pressed("BottomRight")
+                                image: 'addons/probing/data/icons_1024x768/inside_corner/inX-Y+.png'
+
+                        BoxLayout:
+                            size_hint_x: .5
+                            InsideCornerSettings:
+                                id: inside_corner_settings
+
+                TabbedPanelItem:
+                    text: tr._('Single Axis')
+                    GridLayout:
+                        cols:2
+                        rows:1
+                        size_hint:1, 1
+                        spacing:dp(10)
+                        padding:dp(10)
+
+                        GridLayout:
+                            size_hint_x: 1
+                            cols: 3
+                            rows: 3
+                            spacing: dp(8)
+                            padding: 10
+
+                            EmptySpace:
+                                size_hint: [.33,.33]
+                                #nothing
+
+                            ProbeButton:
+                                size_hint: [.33,.33]
+                                tooltip_txt: ''
+                                tooltip_image: ''
+                                on_press: root.on_single_axis_probing_pressed("Top")
+                                image: 'addons/probing/data/icons_1024x768/single_axis/Y-.png'
+
+                            EmptySpace:
+                                size_hint: [.33,.33]
+                                #nothing
+
+                            ProbeButton:
+                                size_hint: [.33,.33]
+                                tooltip_txt: ''
+                                tooltip_image: ''
+                                on_press: root.on_single_axis_probing_pressed("Left")
+                                image: 'addons/probing/data/icons_1024x768/single_axis/X+.png'
+
+                            ProbeButton:
+                                size_hint: [.33,.33]
+                                tooltip_txt: ''
+                                tooltip_image: ''
+                                on_press: root.on_single_axis_probing_pressed("WorkpieceTop")
+                                image: 'addons/probing/data/icons_1024x768/single_axis/Z-.png'
+
+                            ProbeButton:
+                                size_hint: [.33,.33]
+                                tooltip_txt: ''
+                                tooltip_image: ''
+                                on_press: root.on_single_axis_probing_pressed("Right")
+                                image: 'addons/probing/data/icons_1024x768/single_axis/X-.png'
+
+                            EmptySpace:
+                                size_hint: [.33,.33]
+                                #nothing
+
+                            ProbeButton:
+                                size_hint: [.33,.33]
+                                tooltip_txt: ''
+                                tooltip_image: ''
+                                on_press: root.on_single_axis_probing_pressed("Bottom")
+                                image: 'addons/probing/data/icons_1024x768/single_axis/Y+.png'
+
+                            EmptySpace:
+                                size_hint: [.33,.33]
+                                #nothing
+
+                        BoxLayout:
+                            size_hint_x: .5
+                            SingleAxisProbeSettings:
+                                id: single_axis_settings
+
+                TabbedPanelItem:
+                    text: tr._('Bore/Pocket')
+                    GridLayout:
+                        cols:2
+                        rows:1
+                        size_hint:1, 1
+                        spacing:dp(10)
+                        padding:dp(10)
+
+                        GridLayout:
+                            size_hint_x: 1
+                            cols: 2
+                            rows: 2
+                            spacing: dp(8)
+                            padding: 10
+
+                            ProbeButton:
+                                
+                                tooltip_txt: ''
+                                tooltip_image: 'addons/probing/data/icons_1024x768/inside_center/inside_center_motion_overview.png'
+                                on_press: root.on_bore_probing_pressed("CenterX")
+                                image: 'addons/probing/data/icons_1024x768/inside_center/inside_center_rectangular_pocket_x.png'
+                            ProbeButton:
+                                
+                                tooltip_txt: ''
+                                tooltip_image: 'addons/probing/data/icons_1024x768/inside_center/inside_center_motion_overview.png'
+                                on_press: root.on_bore_probing_pressed("CenterY")
+                                image: 'addons/probing/data/icons_1024x768/inside_center/inside_center_rectangular_pocket_y.png'
+                            ProbeButton:
+                                
+                                tooltip_txt: ''
+                                tooltip_image: 'addons/probing/data/icons_1024x768/inside_center/inside_center_motion_overview.png'
+                                on_press: root.on_bore_probing_pressed("CenterBore")
+                                image: 'addons/probing/data/icons_1024x768/inside_center/inside_center_circular_bore.png'
+                            ProbeButton:
+                                
+                                tooltip_txt: ''
+                                tooltip_image: 'addons/probing/data/icons_1024x768/inside_center/inside_center_motion_overview.png'
+                                on_press: root.on_bore_probing_pressed("CenterPocket")
+                                image: 'addons/probing/data/icons_1024x768/inside_center/inside_center_rectangular_pocket.png'
+
+                        BoxLayout:
+                            size_hint_x: .5
+                            BoreSettings:
+                                id: bore_settings
+
+                TabbedPanelItem:
+                    text: tr._('Boss/Block')
+                    GridLayout:
+                        cols:2
+                        rows:1
+                        size_hint:1, 1
+                        spacing:dp(10)
+                        padding:dp(10)
+
+                        GridLayout:
+                            size_hint_x: 1
+                            cols: 2
+                            rows: 2
+                            spacing: dp(8)
+                            padding: 10
+
+                            ProbeButton:
+                                
+                                tooltip_txt: ''
+                                tooltip_image: 'addons/probing/data/icons_1024x768/outside_center/outside_center_motion_overview.png'
+                                on_press: root.on_boss_probing_pressed("CenterX")
+                                image: 'addons/probing/data/icons_1024x768/outside_center/outside_center_rect_boss_x.png'
+                            ProbeButton:
+                                
+                                tooltip_txt: ''
+                                tooltip_image: 'addons/probing/data/icons_1024x768/outside_center/outside_center_motion_overview.png'
+                                on_press: root.on_boss_probing_pressed("CenterY")
+                                image: 'addons/probing/data/icons_1024x768/outside_center/outside_center_rect_boss_y.png'
+                            ProbeButton:
+                                
+                                tooltip_txt: ''
+                                tooltip_image: 'addons/probing/data/icons_1024x768/outside_center/outside_center_motion_overview.png'
+                                on_press: root.on_boss_probing_pressed("CenterBoss")
+                                image: 'addons/probing/data/icons_1024x768/outside_center/outside_center_circular_boss.png'
+                            ProbeButton:
+                                
+                                tooltip_txt: ''
+                                tooltip_image: 'addons/probing/data/icons_1024x768/outside_center/outside_center_motion_overview.png'
+                                on_press: root.on_boss_probing_pressed("CenterBlock")
+                                image: 'addons/probing/data/icons_1024x768/outside_center/outside_center_rect_boss.png'
+
+                        BoxLayout:
+                            size_hint_x: .5
+                            BossSettings:
+                                id: boss_settings
+
+                TabbedPanelItem:
+                    text: tr._('Angle')
+                    GridLayout:
+                        cols:2
+                        rows:1
+                        size_hint:1, 1
+                        spacing:dp(10)
+                        padding:dp(10)
+
+                        GridLayout:
+                            size_hint_x: 1
+                            cols: 3
+                            rows: 2
+                            spacing: dp(8)
+                            padding: 10
+
+                            ProbeButton:
+                                
+                                tooltip_txt: ''
+                                tooltip_image: ''
+                                on_press: root.on_angle_probing_pressed("XAbove")
+                                image: 'addons/probing/data/icons_1024x768/angle/probe_angle_x_above.png'
+                            ProbeButton:
+                                
+                                tooltip_txt: ''
+                                tooltip_image: ''
+                                on_press: root.on_angle_probing_pressed("YLeft")
+                                image: 'addons/probing/data/icons_1024x768/angle/probe_angle_y_left.png'
+                            ProbeButton:
+                                
+                                tooltip_txt: ''
+                                tooltip_image: ''
+                                on_press: root.on_angle_probing_pressed("ArbitraryNegative")
+                                image: 'addons/probing/data/icons_1024x768/angle/probe_angle_arbitrary_negative.png'
+                            ProbeButton:
+                                
+                                tooltip_txt: ''
+                                tooltip_image: ''
+                                on_press: root.on_angle_probing_pressed("XBelow")
+                                image: 'addons/probing/data/icons_1024x768/angle/probe_angle_x_below.png'
+                            ProbeButton:
+                                
+                                tooltip_txt: ''
+                                tooltip_image: ''
+                                on_press: root.on_angle_probing_pressed("YRight")
+                                image: 'addons/probing/data/icons_1024x768/angle/probe_angle_y_right.png'
+                            ProbeButton:
+                                
+                                tooltip_txt: ''
+                                tooltip_image: ''
+                                on_press: root.on_angle_probing_pressed("ArbitraryPositive")
+                                image: 'addons/probing/data/icons_1024x768/angle/probe_angle_arbitrary_positive.png'
+
+                        BoxLayout:
+                            size_hint_x: .5
+                            AngleSettings:
+                                id: angle_settings
+
+                
+
+        #jogging controls
+        BoxLayout:
+            spacing: '0dp'
+            size_hint_y: None
+            height: '120dp'
+            GridLayout:
+                cols:5
+                rows:1
+                size_hint:1, 1
+                spacing:dp(0)
+                padding:dp(0)
+                BoxLayout:
+                    disabled: (app.state != 'Idle' and app.state != 'Run' and app.state != 'Pause') or (app.playing and app.state != 'Pause')
+                    padding: '25dp'
+                    orientation: 'horizontal'
+                #X and Y controls
+                BoxLayout:
+                    orientation: 'horizontal'
+                    padding: '0dp'
+                    canvas.before:
+                        Color:
+                            rgba: 40/255, 40/255, 40/255, 1
+                        RoundedRectangle:
+                            pos: self.pos
+                            size: self.size
+                            radius: [self.height / 2,self.height / 2]
+                    BoxLayout:
+                        disabled: (app.state != 'Idle' and app.state != 'Run' and app.state != 'Pause') or (app.playing and app.state != 'Pause')
+                        padding: '0dp'
+                        canvas.before:
+                            Color:
+                                rgba: 50/255, 50/255, 50/255, 1
+                            Ellipse:
+                                pos: self.pos
+                                size: self.size
+                        GridLayout:
+                            cols: 3
+                            rows: 3
+                            GridBoxLayout:
+                            GridBoxLayout:
+                                SmallRoundButton:
+                                    text: 'Y-'
+                                    on_release: app.root.controller.jog_with_speed("Y-{}".format(root.step_xy.text), app.root.jog_speed)
+                            GridBoxLayout:
+                            GridBoxLayout:
+                                SmallRoundButton:
+                                    text: 'X-'
+                                    on_release: app.root.controller.jog_with_speed("X-{}".format(root.step_xy.text), app.root.jog_speed)
+                            GridBoxLayout:
+                                Label:
+                                Spinner:
+                                    id: step_xy
+                                    center: 0.5, 0.5
+                                    size_hint_y: None
+                                    height: '30dp'
+                                    text: '10'
+                                    values: '10', '1', '0.1', '0.01', '0.005'
+                                Label:
+                            GridBoxLayout:
+                                SmallRoundButton:
+                                    text: 'X+'
+                                    on_release: app.root.controller.jog_with_speed("X{}".format(root.step_xy.text), app.root.jog_speed)
+                            GridBoxLayout:
+                            GridBoxLayout:
+                                SmallRoundButton:
+                                    text: 'Y+'
+                                    on_release: app.root.controller.jog_with_speed("Y{}".format(root.step_xy.text), app.root.jog_speed)
+                            GridBoxLayout:
+                BoxLayout:
+                    disabled: (app.state != 'Idle' and app.state != 'Run' and app.state != 'Pause') or (app.playing and app.state != 'Pause')
+                    padding: '0dp'
+                    orientation: 'horizontal'
+                #A and Z controls
+                BoxLayout:
+                    disabled: (app.state != 'Idle' and app.state != 'Run' and app.state != 'Pause') or (app.playing and app.state != 'Pause')
+                    padding: '0dp'
+                    orientation: 'horizontal'
+                    canvas.before:
+                        Color:
+                            rgba: 50/255, 50/255, 50/255, 1
+                        RoundedRectangle:
+                            pos: self.pos
+                            size: self.size
+                            radius: [5,5]
+                    GridLayout:
+                        size_hint_y: 0.9
+                        cols: 2
+                        rows: 3
+                        GridBoxLayout:
+                            SmallRoundButton:
+                                text: 'A+'
+                                height: 30
+                                on_release: app.root.controller.jog_with_speed("A{}".format(root.step_a.text), app.root.jog_speed)
+                        GridBoxLayout:
+                            SmallRoundButton:
+                                text: 'Z+'
+                                height: 30
+                                on_release: app.root.controller.jog_with_speed("Z{}".format(root.step_z.text), app.root.jog_speed)
+                        GridBoxLayout:
+                            Label:
+                            Spinner:
+                                id: step_a
+                                center: 0.5, 0.5
+                                size_hint_y: 0.9
+                                height: '30dp'
+                                text: '90'
+                                values: '90', '10', '1', '0.1'
+                            Label:
+                        GridBoxLayout:
+                            Label:
+                            Spinner:
+                                id: step_z
+                                center: 0.5, 0.5
+                                size_hint_y: 0.9
+                                height: '30dp'
+                                text: '1'
+                                values: '10', '1', '0.1', '0.01', '0.005'
+                            Label:
+                        GridBoxLayout:
+                            SmallRoundButton:
+                                text: 'A-'
+                                height: 30
+                                on_release: app.root.controller.jog_with_speed("A-{}".format(root.step_a.text), app.root.jog_speed)
+                        GridBoxLayout:
+                            SmallRoundButton:
+                                text: 'Z-'
+                                height: 30
+                                on_release: app.root.controller.jog_with_speed("Z-{}".format(root.step_z.text), app.root.jog_speed)
+                BoxLayout:
+                    disabled: (app.state != 'Idle' and app.state != 'Run' and app.state != 'Pause') or (app.playing and app.state != 'Pause')
+                    padding: '25dp'
+                    orientation: 'horizontal'
+
+        BoxLayout:
+            spacing: '5dp'
+            size_hint_y: None
+            height: '40dp'
+            halign: 'center'
+            Label:
+                size_hint_min_x: dp(90)
+                padding: '5dp'
+                halign: 'center'
+                valign: 'middle'
+                text_size: self.size
+                multiline: False
+                text: tr._('Note: Most of these operations require a true 3 axis probe, not the manual probe supplied with the Carvera. See the community youtube page for more info')
+
+        BoxLayout:
+            spacing: '5dp'
+            size_hint_y: None
+            height: '40dp'
+            Button:
+                id: btn_close
+                text: tr._('Close')
+                on_release: root.dismiss()

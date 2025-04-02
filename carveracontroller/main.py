@@ -10,6 +10,7 @@ import locale
 from kivy.lang import Observable
 from os.path import dirname, join
 # os.environ['KIVY_GL_DEBUG'] = '1'
+from kivy.core.clipboard import Clipboard
 
 from kivy.utils import platform
 
@@ -19,6 +20,7 @@ import datetime
 import threading
 import logging
 
+from carveracontroller.addons.probing.ProbingPopup import ProbingPopup
 class Lang(Observable):
     observers = []
     lang = None
@@ -66,6 +68,9 @@ class Lang(Observable):
 import json
 import re
 import tempfile
+import os
+import platform
+import subprocess
 from kivy.app import App
 from kivy.clock import Clock
 from kivy.uix.widget import Widget
@@ -92,7 +97,11 @@ from kivy.properties import ObjectProperty, NumericProperty, ListProperty
 from kivy.config import Config
 from kivy.metrics import Metrics
 
-from serial.tools.list_ports import comports
+try:
+    from serial.tools.list_ports import comports
+except ImportError:
+    comports = None
+
 from functools import partial
 from .WIFIStream import MachineDetector
 from kivy.core.window import Window
@@ -100,6 +109,28 @@ from kivy.core.text import LabelBase
 from kivy.resources import resource_add_path
 from kivy.network.urlrequest import UrlRequest
 import webbrowser
+if sys.platform == "ios":
+    from pyobjus import autoclass
+    from pyobjus.dylib_manager import load_framework
+    try:
+        load_framework('/System/Library/Frameworks/UIKit.framework')
+
+        NSURL = autoclass('NSURL')
+        UIApplication = autoclass('UIApplication')
+
+
+        def ios_webbrowser_open(url, new=None):
+            nsurl = NSURL.URLWithString_(url)
+            app = UIApplication.sharedApplication()
+
+
+            options = {}
+            app.openURL_options_completionHandler_(nsurl, options, None)
+        webbrowser.open = ios_webbrowser_open
+    except:
+        # Doesn't work for iOS simulator
+        pass
+
 from pathlib import Path
 
 # import os
@@ -115,6 +146,9 @@ from .Controller import Controller, NOT_CONNECTED, STATECOLOR, STATECOLORDEF,\
     LOAD_DIR, LOAD_MV, LOAD_RM, LOAD_MKDIR, LOAD_WIFI, LOAD_CONN_WIFI, CONN_USB, CONN_WIFI, SEND_FILE
 from .__version__ import __version__
 
+from kivy.lang import Builder
+from .addons.tooltips.Tooltips import Tooltip,ToolTipButton,ToolTipDropDown 
+from .addons.probing.ProbingControls import ProbeButton
 
 def load_halt_translations(tr: Lang):
     """Loads the appropriate language translation"""
@@ -411,6 +445,8 @@ class CoordPopup(ModalView):
     sety_popup = ObjectProperty()
     setz_popup = ObjectProperty()
     seta_popup = ObjectProperty()
+    settool_popup = ObjectProperty()
+    change_tool_popup = ObjectProperty()
     MoveA_popup = ObjectProperty()
 
     def __init__(self, config, **kwargs):
@@ -422,9 +458,79 @@ class CoordPopup(ModalView):
         self.sety_popup = SetYPopup(self)
         self.setz_popup = SetZPopup(self)
         self.seta_popup = SetAPopup(self)
+        self.settool_popup = SetToolPopup(self)
+        self.change_tool_popup = ChangeToolPopup(self)
         self.MoveA_popup = MoveAPopup(self)
         self.mode = 'Run' # 'Margin' / 'ZProbe' / 'Leveling'
         super(CoordPopup, self).__init__(**kwargs)
+        self.user_play_file_image_dir = Config.get('carvera', 'custom_bkg_img_dir')
+        self.background_image_files = []
+
+        default_bkg_images = os.path.join(os.path.dirname(__file__), 'data/play_file_image_backgrounds')
+        
+        if os.path.exists(self.user_play_file_image_dir):
+            self.background_image_files = [
+                f.replace(".png", "") for f in os.listdir(self.user_play_file_image_dir) if f.endswith(".png")            
+            ]
+
+        for f in os.listdir(default_bkg_images):
+            if f.endswith(".png"):
+                self.background_image_files.append(f.replace(".png", ""))
+
+
+        # Ensure the spinner is updated after initialization
+        Clock.schedule_once(self.populate_spinner, 0)
+
+    def populate_spinner(self, dt):
+        if "background_image_spinner" in self.ids:
+            self.ids.background_image_spinner.values = ["None"] + self.background_image_files
+
+    def update_background_image(self, filename):
+        if filename != "None":
+            old_source = os.path.join(os.path.dirname(__file__), 'data/play_file_image_backgrounds', filename)
+            new_source = os.path.join(self.user_play_file_image_dir, filename)
+            cnc_workspace = self.ids.cnc_workspace
+            if os.path.isfile(new_source + ".png"):
+                cnc_workspace.update_background_image(new_source + ".png")
+            elif os.path.isfile(old_source + ".png"):
+                cnc_workspace.update_background_image(old_source + ".png")
+            else:
+                cnc_workspace.update_background_image("None")
+        else:
+            cnc_workspace = self.ids.cnc_workspace
+            cnc_workspace.update_background_image("None")
+    
+    def open_bkg_img_dir(self):
+        app = App.get_running_app()
+        folder_path = app.ids.coord_popup.user_play_file_image_dir
+
+        # Ensure the folder exists
+        if not os.path.exists(folder_path):
+            print(f"Folder '{folder_path}' does not exist!")
+            return
+
+        # Open based on OS
+        if platform.system() == "Windows":
+            os.startfile(folder_path)
+        elif platform.system() == "Darwin":  # macOS
+            subprocess.Popen(["open", folder_path])
+        else:  # Linux
+            subprocess.Popen(["xdg-open", folder_path])
+        
+        folder_path = os.path.join(os.path.dirname(__file__), 'data/play_file_image_backgrounds')
+
+        # Ensure the folder exists
+        if not os.path.exists(folder_path):
+            print(f"Folder '{folder_path}' does not exist!")
+            return
+
+        # Open based on OS
+        if platform.system() == "Windows":
+            os.startfile(folder_path)
+        elif platform.system() == "Darwin":  # macOS
+            subprocess.Popen(["open", folder_path])
+        else:  # Linux
+            subprocess.Popen(["xdg-open", folder_path])
 
     def set_config(self, key1, key2, value):
         self.config[key1][key2] = value
@@ -468,6 +574,7 @@ class CoordPopup(ModalView):
         self.auto_level_popup.sp_x_points.text = str(self.config['leveling']['x_points'])
         self.auto_level_popup.sp_y_points.text = str(self.config['leveling']['y_points'])
         self.auto_level_popup.sp_height.text = str(self.config['leveling']['height'])
+
         self.load_leveling_label()
 
     def load_origin_label(self):
@@ -496,6 +603,18 @@ class CoordPopup(ModalView):
         self.lb_leveling.text = tr._('X Points: ') + '%d ' % (self.config['leveling']['x_points']) \
                                 + tr._('Y Points: ') + '%d ' % (self.config['leveling']['y_points']) \
                                 + tr._('Height: ') + '%d' % (self.config['leveling']['height'])
+
+        any_offsets_set = False
+        for offset_type in ['xn_offset', 'xp_offset', 'yn_offset', 'yp_offset']:
+            if self.config['leveling'][offset_type] != 0:
+                any_offsets_set = True
+        
+        if any_offsets_set:
+            self.lb_leveling.text += tr._(' Offsets: ') \
+                                + tr._(' -X: ') + '%g ' % (round(self.config['leveling']['xn_offset'],4)) \
+                                + tr._(' +X: ') + '%g ' % (round(self.config['leveling']['xp_offset'],4)) \
+                                + tr._(' -Y: ') + '%g ' % (round(self.config['leveling']['yn_offset'],4)) \
+                                + tr._(' +Y: ') + '%g ' % (round(self.config['leveling']['yp_offset'],4))
 
     def toggle_config(self):
         # upldate main status
@@ -544,6 +663,16 @@ class SetAPopup(ModalView):
         self.coord_popup = coord_popup
         super(SetAPopup, self).__init__(**kwargs)
 
+class SetToolPopup(ModalView):
+    def __init__(self, coord_popup, **kwargs):
+        self.coord_popup = coord_popup
+        super(SetToolPopup, self).__init__(**kwargs)
+
+class ChangeToolPopup(ModalView):
+    def __init__(self, coord_popup, **kwargs):
+        self.coord_popup = coord_popup
+        super(ChangeToolPopup, self).__init__(**kwargs)
+
 class MoveAPopup(ModalView):
     def __init__(self, coord_popup, **kwargs):
         self.coord_popup = coord_popup
@@ -563,76 +692,76 @@ class MakeraConfigPanel(SettingsWithSidebar):
             elif key == 'default' and value == 'DEFAULT':
                 app.root.open_setting_default_confirm_popup()
 
-class JogSpeedDropDown(DropDown):
+class JogSpeedDropDown(ToolTipDropDown):
     pass
 
-class XDropDown(DropDown):
+class XDropDown(ToolTipDropDown):
     pass
 
-class YDropDown(DropDown):
+class YDropDown(ToolTipDropDown):
     pass
 
-class ZDropDown(DropDown):
+class ZDropDown(ToolTipDropDown):
     pass
 
-class ADropDown(DropDown):
+class ADropDown(ToolTipDropDown):
     pass
 
-class FeedDropDown(DropDown):
+class FeedDropDown(ToolTipDropDown):
     opened = False
 
     def on_dismiss(self):
         self.opened = False
 
-class SpindleDropDown(DropDown):
+class SpindleDropDown(ToolTipDropDown):
     opened = False
 
     def on_dismiss(self):
         self.opened = False
 
-class ToolDropDown(DropDown):
+class ToolDropDown(ToolTipDropDown):
     opened = False
 
     def on_dismiss(self):
         self.opened = False
 
-class LaserDropDown(DropDown):
+class LaserDropDown(ToolTipDropDown):
     opened = False
 
     def on_dismiss(self):
         self.opened = False
 
 
-class FuncDropDown(DropDown):
+class FuncDropDown(ToolTipDropDown):
     pass
 
-class StatusDropDown(DropDown):
+class StatusDropDown(ToolTipDropDown):
     def __init__(self, **kwargs):
         super(StatusDropDown, self).__init__(**kwargs)
 
-class ComPortsDropDown(DropDown):
+class ComPortsDropDown(ToolTipDropDown):
     def __init__(self, **kwargs):
         super(DropDown, self).__init__(**kwargs)
 
 
-class OperationDropDown(DropDown):
+class OperationDropDown(ToolTipDropDown):
     pass
 
-class MachineButton(Button):
+class MachineButton(ToolTipButton):
     ip = StringProperty("")
     port = NumericProperty(2222)
     busy = BooleanProperty(False)
 
-class IconButton(BoxLayout, Button):
+class IconButton(BoxLayout, ToolTipButton):
     icon = StringProperty("fresk.png")
 
-class TransparentButton(BoxLayout, Button):
+class TransparentButton(BoxLayout, ToolTipButton):
     icon = StringProperty("fresk.png")
 
-class TransparentGrayButton(BoxLayout, Button):
+class TransparentGrayButton(BoxLayout, ToolTipButton):
     icon = StringProperty("fresk.png")
 
-class WiFiButton(BoxLayout, Button):
+class WiFiButton(BoxLayout, ToolTipButton):
     ssid = StringProperty("")
     encrypted = BooleanProperty(False)
     strength = NumericProperty(1000)
@@ -640,14 +769,28 @@ class WiFiButton(BoxLayout, Button):
 
 class CNCWorkspace(Widget):
     config = {}
-
+    bg_rect = ObjectProperty(None)
+    bg_image = ""
     # -----------------------------------------------------------------------
     def __init__(self, **kwargs):
-        self.bind(size=self.on_draw)
+        self.bind(size = self.on_resize, pos = self.on_resize)
         super(CNCWorkspace, self).__init__(**kwargs)
+        self.bg_rect = None
+
+    def on_resize(self, *args):
+        self.draw()
 
     def load_config(self, config):
         self.config = config
+
+    def update_background_image(self, new_source):
+        if self.bg_rect and new_source != "None":
+            self.bg_rect.source = new_source
+            self.bg_image = new_source
+        else:
+            self.bg_image = ""
+        self.draw()
+
 
     def draw(self, *args):
         if self.x <= 100:
@@ -657,57 +800,63 @@ class CNCWorkspace(Widget):
         with self.canvas:
             # background
             Color(50 / 255, 50 / 255, 50 / 255, 1)
-            Rectangle(pos=self.pos, size=self.size)
-            app = App.get_running_app()
-
-            if not app.has_4axis:
-                # anchor1
-                if self.config['origin']['anchor'] == 1:
-                    Color(75 / 255, 75 / 255, 75 / 255, 1)
-                else:
-                    Color(55 / 255, 55 / 255, 55 / 255, 1)
-                Rectangle(pos=(self.x, self.y),
-                          size=(CNC.vars['anchor_length'] * zoom, CNC.vars['anchor_width'] * zoom))
-                Rectangle(pos=(self.x, self.y),
-                          size=(CNC.vars['anchor_width'] * zoom, CNC.vars['anchor_length'] * zoom))
-
-                # anchor2
-                if self.config['origin']['anchor'] == 2:
-                    Color(75 / 255, 75 / 255, 75 / 255, 1)
-                else:
-                    Color(55 / 255, 55 / 255, 55 / 255, 1)
-                Rectangle(pos=(self.x + CNC.vars['anchor2_offset_x'] * zoom, self.y + CNC.vars['anchor2_offset_y'] * zoom),
-                          size=(CNC.vars['anchor_length'] * zoom, CNC.vars['anchor_width'] * zoom))
-                Rectangle(pos=(self.x + CNC.vars['anchor2_offset_x'] * zoom, self.y + CNC.vars['anchor2_offset_y'] * zoom),
-                          size=(CNC.vars['anchor_width'] * zoom, CNC.vars['anchor_length'] * zoom))
-
+            if self.bg_image == "" or self.bg_image == "None":
+                Color(50 / 255, 50 / 255, 50 / 255, 1)
             else:
-                rotation_base_y_center = (CNC.vars['anchor_width'] + CNC.vars['rotation_offset_y']) * zoom
-                # draw rotation base
-                Color(60 / 255, 60 / 255, 60 / 255, 1)
-                Rectangle(pos=(self.x, self.y + rotation_base_y_center - CNC.vars['rotation_base_height'] * zoom / 2),
-                          size=(CNC.vars['rotation_base_width'] * zoom, CNC.vars['rotation_base_height'] * zoom))
-                # draw rotation head
-                Color(75 / 255, 75 / 255, 75 / 255, 1)
-                Rectangle(pos=(self.x, self.y + rotation_base_y_center - CNC.vars['rotation_head_height'] * zoom / 2),
-                          size=(CNC.vars['rotation_head_width'] * zoom, CNC.vars['rotation_head_height'] * zoom))
+                Color(1,1,1,1)
+            self.bg_rect = Rectangle(pos=self.pos, size=self.size, source = self.bg_image)
 
-                # draw rotation chuck
-                Color(75 / 255, 75 / 255, 75 / 255, 1)
-                Rectangle(pos=(self.x + (CNC.vars['rotation_head_width'] + CNC.vars['rotation_chuck_interval']) * zoom, self.y + rotation_base_y_center - CNC.vars['rotation_chuck_dia'] * zoom / 2),
-                          size=(CNC.vars['rotation_chuck_width'] * zoom, CNC.vars['rotation_chuck_dia'] * zoom))
+            app = App.get_running_app()
+            if self.bg_image == "" or self.bg_image == "None":
+                Color(50 / 255, 50 / 255, 50 / 255, 1)
+                if not app.has_4axis:
+                    # anchor1
+                    if self.config['origin']['anchor'] == 1:
+                        Color(75 / 255, 75 / 255, 75 / 255, 1)
+                    else:
+                        Color(55 / 255, 55 / 255, 55 / 255, 1)
+                    Rectangle(pos=(self.x, self.y),
+                            size=(CNC.vars['anchor_length'] * zoom, CNC.vars['anchor_width'] * zoom))
+                    Rectangle(pos=(self.x, self.y),
+                            size=(CNC.vars['anchor_width'] * zoom, CNC.vars['anchor_length'] * zoom))
 
-                # draw rotation tail
-                Color(75 / 255, 75 / 255, 75 / 255, 1)
-                Rectangle(pos=(self.x + (CNC.vars['rotation_base_width'] - CNC.vars['rotation_tail_width']) * zoom, self.y + rotation_base_y_center - CNC.vars['rotation_tail_height'] * zoom / 2),
-                          size=(CNC.vars['rotation_tail_width'] * zoom, CNC.vars['rotation_tail_height'] * zoom))
+                    # anchor2
+                    if self.config['origin']['anchor'] == 2:
+                        Color(75 / 255, 75 / 255, 75 / 255, 1)
+                    else:
+                        Color(55 / 255, 55 / 255, 55 / 255, 1)
+                    Rectangle(pos=(self.x + CNC.vars['anchor2_offset_x'] * zoom, self.y + CNC.vars['anchor2_offset_y'] * zoom),
+                            size=(CNC.vars['anchor_length'] * zoom, CNC.vars['anchor_width'] * zoom))
+                    Rectangle(pos=(self.x + CNC.vars['anchor2_offset_x'] * zoom, self.y + CNC.vars['anchor2_offset_y'] * zoom),
+                            size=(CNC.vars['anchor_width'] * zoom, CNC.vars['anchor_length'] * zoom))
 
-                # draw rotation probe position
-                # Color(200 / 255, 200 / 255, 200 / 255, 1)
-                # Line(points=[self.x + (CNC.vars['rotation_offset_x'] + CNC.vars['anchor_width'] - 5) * zoom, self.y + (CNC.vars['rotation_offset_y'] + CNC.vars['anchor_width']) * zoom,
-                #              self.x + (CNC.vars['rotation_offset_x'] + CNC.vars['anchor_width'] + 5) * zoom, self.y + (CNC.vars['rotation_offset_y'] + CNC.vars['anchor_width']) * zoom], width=1)
-                # Line(points=[self.x + (CNC.vars['rotation_offset_x'] + CNC.vars['anchor_width']) * zoom, self.y + (CNC.vars['rotation_offset_y'] + CNC.vars['anchor_width'] - 5) * zoom,
-                #              self.x + (CNC.vars['rotation_offset_x'] + CNC.vars['anchor_width']) * zoom, self.y + (CNC.vars['rotation_offset_y'] + CNC.vars['anchor_width'] + 5) * zoom], width=1)
+                else:
+                    rotation_base_y_center = (CNC.vars['anchor_width'] + CNC.vars['rotation_offset_y']) * zoom
+                    # draw rotation base
+                    Color(60 / 255, 60 / 255, 60 / 255, 1)
+                    Rectangle(pos=(self.x, self.y + rotation_base_y_center - CNC.vars['rotation_base_height'] * zoom / 2),
+                            size=(CNC.vars['rotation_base_width'] * zoom, CNC.vars['rotation_base_height'] * zoom))
+                    # draw rotation head
+                    Color(75 / 255, 75 / 255, 75 / 255, 1)
+                    Rectangle(pos=(self.x, self.y + rotation_base_y_center - CNC.vars['rotation_head_height'] * zoom / 2),
+                            size=(CNC.vars['rotation_head_width'] * zoom, CNC.vars['rotation_head_height'] * zoom))
+
+                    # draw rotation chuck
+                    Color(75 / 255, 75 / 255, 75 / 255, 1)
+                    Rectangle(pos=(self.x + (CNC.vars['rotation_head_width'] + CNC.vars['rotation_chuck_interval']) * zoom, self.y + rotation_base_y_center - CNC.vars['rotation_chuck_dia'] * zoom / 2),
+                            size=(CNC.vars['rotation_chuck_width'] * zoom, CNC.vars['rotation_chuck_dia'] * zoom))
+
+                    # draw rotation tail
+                    Color(75 / 255, 75 / 255, 75 / 255, 1)
+                    Rectangle(pos=(self.x + (CNC.vars['rotation_base_width'] - CNC.vars['rotation_tail_width']) * zoom, self.y + rotation_base_y_center - CNC.vars['rotation_tail_height'] * zoom / 2),
+                            size=(CNC.vars['rotation_tail_width'] * zoom, CNC.vars['rotation_tail_height'] * zoom))
+
+                    # draw rotation probe position
+                    # Color(200 / 255, 200 / 255, 200 / 255, 1)
+                    # Line(points=[self.x + (CNC.vars['rotation_offset_x'] + CNC.vars['anchor_width'] - 5) * zoom, self.y + (CNC.vars['rotation_offset_y'] + CNC.vars['anchor_width']) * zoom,
+                    #              self.x + (CNC.vars['rotation_offset_x'] + CNC.vars['anchor_width'] + 5) * zoom, self.y + (CNC.vars['rotation_offset_y'] + CNC.vars['anchor_width']) * zoom], width=1)
+                    # Line(points=[self.x + (CNC.vars['rotation_offset_x'] + CNC.vars['anchor_width']) * zoom, self.y + (CNC.vars['rotation_offset_y'] + CNC.vars['anchor_width'] - 5) * zoom,
+                    #              self.x + (CNC.vars['rotation_offset_x'] + CNC.vars['anchor_width']) * zoom, self.y + (CNC.vars['rotation_offset_y'] + CNC.vars['anchor_width'] + 5) * zoom], width=1)
 
 
             laser_x = CNC.vars['laser_module_offset_x'] if CNC.vars['lasermode'] else 0.0
@@ -729,6 +878,10 @@ class CNCWorkspace(Widget):
                 Color(231 / 255, 76 / 255, 60 / 255, 1)
                 zprobe_x = self.config['zprobe']['x_offset'] + (origin_x if self.config['zprobe']['origin'] == 1 else origin_x + CNC.vars['xmin'])
                 zprobe_y = self.config['zprobe']['y_offset'] + (origin_y if self.config['zprobe']['origin'] == 1 else origin_y + CNC.vars['ymin'])
+                if self.config['leveling']['active']:
+                    zprobe_x = self.config['zprobe']['x_offset'] + (origin_x if self.config['zprobe']['origin'] == 1 else origin_x + CNC.vars['xmin'])
+                    zprobe_y = self.config['zprobe']['y_offset'] + (origin_y if self.config['zprobe']['origin'] == 1 else origin_y + CNC.vars['ymin'])
+
                 if app.has_4axis:
                     zprobe_x = CNC.vars['rotation_offset_x'] + CNC.vars['anchor_width'] - 3.0
                     zprobe_y = CNC.vars['rotation_offset_y'] + CNC.vars['anchor_width']
@@ -738,8 +891,8 @@ class CNCWorkspace(Widget):
             # auto leveling
             if self.config['leveling']['active']:
                 Color(244/255, 208/255, 63/255, 1)
-                for x in Utils.xfrange(0.0, CNC.vars['xmax'] - CNC.vars['xmin'], self.config['leveling']['x_points']):
-                    for y in Utils.xfrange(0.0, CNC.vars['ymax'] - CNC.vars['ymin'], self.config['leveling']['y_points']):
+                for x in Utils.xfrange(self.config['leveling']['xn_offset'], CNC.vars['xmax'] - CNC.vars['xmin'] - self.config['leveling']['xp_offset'], self.config['leveling']['x_points']):
+                    for y in Utils.xfrange(self.config['leveling']['yn_offset'], CNC.vars['ymax'] - CNC.vars['ymin']-self.config['leveling']['yp_offset'], self.config['leveling']['y_points']):
                         Ellipse(pos=(self.x + (origin_x + CNC.vars['xmin'] + x) * zoom - 5, self.y + (origin_y + CNC.vars['ymin'] + y) * zoom - 5), size=(10, 10))
                         # print('x=%f, y=%f' % (x, y))
 
@@ -752,10 +905,10 @@ class SelectableRecycleBoxLayout(FocusBehavior, LayoutSelectionBehavior,
                                  RecycleBoxLayout):
     ''' Adds selection and focus behaviour to the view. '''
 
-class TopDataView(BoxLayout, Button):
+class TopDataView(BoxLayout, ToolTipButton):
     pass
 
-class DirectoryView(BoxLayout, Button):
+class DirectoryView(BoxLayout, ToolTipButton):
     pass
 
 class DropDownHint(Label):
@@ -769,6 +922,14 @@ class SelectableLabel(RecycleDataViewBehavior, Label):
     index = None
     selected = BooleanProperty(False)
     selectable = BooleanProperty(True)
+
+    def on_keyboard_down(self, instance, keyboard, keycode, text, modifiers):
+        mod = "ctrl" if sys.platform == "win32" else "meta"
+        if text == 'c' and self.selected and mod in modifiers:
+            if hasattr(self, 'text'):
+                Clipboard.copy(self.text.strip())
+            return True
+        return False
 
     def refresh_view_attrs(self, rv, index, data):
         ''' Catch and handle the view changes '''
@@ -790,6 +951,11 @@ class SelectableLabel(RecycleDataViewBehavior, Label):
     def apply_selection(self, rv, index, is_selected):
         ''' Respond to the selection of items in the view. '''
         self.selected = is_selected
+        if not is_selected:
+            Window.unbind(on_key_down=self.on_keyboard_down)
+        else:
+            Window.bind(on_key_down=self.on_keyboard_down)
+
 
 class SelectableBoxLayout(RecycleDataViewBehavior, BoxLayout):
     ''' Add selection support to the Label '''
@@ -1190,6 +1356,7 @@ class Makera(RelativeLayout):
     gcode_viewer = ObjectProperty()
     gcode_playing = BooleanProperty(False)
 
+    probing_popup = ObjectProperty()
     coord_config = {}
 
     progress_info = StringProperty()
@@ -1308,7 +1475,11 @@ class Makera(RelativeLayout):
                 'active': False,
                 'x_points': 5,
                 'y_points': 5,
-                'height': 5
+                'height': 5,
+                'xn_offset':0.0,
+                'xp_offset':0.0,
+                'yn_offset':0.0,
+                'yp_offset':0.0,
             }
         }
         self.update_coord_config()
@@ -1344,6 +1515,7 @@ class Makera(RelativeLayout):
         self.progress_popup = ProgressPopup()
         self.input_popup = InputPopup()
 
+        self.probing_popup = ProbingPopup(self.controller)
         self.comports_drop_down = DropDown(auto_width=False, width='250dp')
         self.wifi_conn_drop_down = DropDown(auto_width=False, width='250dp')
 
@@ -1432,6 +1604,9 @@ class Makera(RelativeLayout):
     def open_download(self):
         webbrowser.open(DOWNLOAD_ADDRESS, new = 2)
     
+    def open_fw_download(self):
+        webbrowser.open(FW_DOWNLOAD_ADDRESS, new = 2)
+    
     def send_bug_report(self):
         webbrowser.open('https://github.com/Carvera-Community/Carvera_Controller/issues')
         webbrowser.open('https://github.com/Carvera-Community/Carvera_Community_Firmware/issues')
@@ -1442,8 +1617,9 @@ class Makera(RelativeLayout):
             os.startfile(log_dir)
         else:
             # Linux and MacOS
-            opener = "open" if sys.platform == "darwin" else "xdg-open"
-            subprocess.Popen([opener, log_dir])
+            if sys.platform != "ios":
+                opener = "open" if sys.platform == "darwin" else "xdg-open"
+                subprocess.Popen([opener, log_dir])
 
     def open_update_popup(self):
         self.upgrade_popup.check_button.disabled = False
@@ -1544,8 +1720,8 @@ class Makera(RelativeLayout):
 
         zprobe_abs = False
         # calculate zprobe offset
-        zprobe_offset_x = self.coord_config['zprobe']['x_offset']
-        zprobe_offset_y = self.coord_config['zprobe']['y_offset']
+        zprobe_offset_x = self.coord_config['zprobe']['x_offset'] - self.coord_config['leveling']['xn_offset']
+        zprobe_offset_y = self.coord_config['zprobe']['y_offset'] -self.coord_config['leveling']['yn_offset']
         if self.coord_config['zprobe']['origin'] == 1:
             zprobe_offset_x = zprobe_offset_x - CNC.vars['xmin']
             zprobe_offset_y = zprobe_offset_y - CNC.vars['ymin']
@@ -1555,7 +1731,8 @@ class Makera(RelativeLayout):
         self.controller.autoCommand(apply_margin, apply_zprobe,
                                     zprobe_abs, apply_leveling, goto_origin,
                                     zprobe_offset_x, zprobe_offset_y, self.coord_config['leveling']['x_points'],
-                                    self.coord_config['leveling']['y_points'], self.coord_config['leveling']['height'], buffer)
+                                    self.coord_config['leveling']['y_points'], self.coord_config['leveling']['height'], buffer, 
+                                    [self.coord_config['leveling']['xn_offset'],self.coord_config['leveling']['xp_offset'],self.coord_config['leveling']['yn_offset'],self.coord_config['leveling']['yp_offset']])
 
         # change back to last tool if needed
         if buffer and self.upcoming_tool == 0 and (apply_margin or apply_zprobe or apply_leveling):
@@ -1648,11 +1825,12 @@ class Makera(RelativeLayout):
     # -----------------------------------------------------------------------
     def open_comports_drop_down(self, button):
         self.comports_drop_down.clear_widgets()
-        devices = sorted([x[0] for x in comports()])
-        for device in devices:
-            btn = Button(text=device, size_hint_y=None, height='35dp')
-            btn.bind(on_release=lambda btn: self.comports_drop_down.select(btn.text))
-            self.comports_drop_down.add_widget(btn)
+        if comports:
+            devices = sorted([x[0] for x in comports()])
+            for device in devices:
+                btn = Button(text=device, size_hint_y=None, height='35dp')
+                btn.bind(on_release=lambda btn: self.comports_drop_down.select(btn.text))
+                self.comports_drop_down.add_widget(btn)
         self.comports_drop_down.unbind(on_select=self.usb_event)
         self.comports_drop_down.bind(on_select=self.usb_event)
         self.comports_drop_down.open(button)
@@ -2081,6 +2259,19 @@ class Makera(RelativeLayout):
         self.input_popup.open(self)
 
     # -----------------------------------------------------------------------
+    def open_upload_local_file_popup(self):
+        # For iOS we use the native file picker
+        if sys.platform == 'ios':
+            from . import ios_helpers
+            ios_helpers.pick_nc_file()
+            return
+        self.file_popup.firmware_mode = False
+        self.file_popup.popup_manager.transition.direction = 'left'
+        self.file_popup.popup_manager.transition.duration = 0.3
+        self.file_popup.popup_manager.current = 'local_page'
+        self.set_local_folder_to_last_opened()
+
+    # -----------------------------------------------------------------------
     def open_wifi_password_input_popup(self):
         self.input_popup.lb_title.text = tr._('Input WiFi password of') + ' %s:' % self.input_popup.cache_var1
         self.input_popup.txt_content.text = ''
@@ -2298,9 +2489,9 @@ class Makera(RelativeLayout):
             app.model = model.strip()
             if app.model == 'CA1':
                 self.tool_drop_down.set_dropdown.values = ['Probe', 'Tool: 1', 'Tool: 2', 'Tool: 3', 'Tool: 4', 'Tool: 5',
-                                                           'Tool: 6', 'Laser']
+                                                           'Tool: 6', 'Laser', 'Custom']
                 self.tool_drop_down.change_dropdown.values = ['Probe', 'Tool: 1', 'Tool: 2', 'Tool: 3', 'Tool: 4',
-                                                              'Tool: 5', 'Tool: 6', 'Laser']
+                                                              'Tool: 5', 'Tool: 6', 'Laser', 'Custom']
                 CNC.vars['rotation_base_width'] = 300
                 CNC.vars['rotation_head_width'] = 38
 
@@ -3388,9 +3579,12 @@ class Makera(RelativeLayout):
     
     def _is_popup_open(self):
         """Checks to see if any of the popups objects are open."""
-        popups_to_check = [self.file_popup._is_open, self.coord_popup._is_open, self.xyz_probe_popup._is_open, self.pairing_popup._is_open,
-                   self.upgrade_popup._is_open, self.language_popup._is_open, self.diagnose_popup._is_open, self.confirm_popup._is_open,
-                   self.message_popup._is_open, self.progress_popup._is_open, self.input_popup._is_open, self.config_popup._is_open]
+        popups_to_check = [self.file_popup._is_open, self.coord_popup._is_open, self.xyz_probe_popup._is_open,
+                           self.pairing_popup._is_open,
+                           self.upgrade_popup._is_open, self.language_popup._is_open, self.diagnose_popup._is_open,
+                           self.confirm_popup._is_open,
+                           self.message_popup._is_open, self.progress_popup._is_open, self.input_popup._is_open,
+                           self.config_popup._is_open, self.probing_popup._is_open]
 
         return any(popups_to_check)
     
@@ -3840,9 +4034,11 @@ def set_config_defaults(default_lang):
     if not Config.has_option('carvera', 'remote_folder_3'): Config.set('carvera', 'remote_folder_3', '')
     if not Config.has_option('carvera', 'remote_folder_4'): Config.set('carvera', 'remote_folder_4', '')
     if not Config.has_option('carvera', 'remote_folder_5'): Config.set('carvera', 'remote_folder_5', '')
+    if not Config.has_option('carvera', 'custom_bkg_img_dir'): Config.set('carvera', 'custom_bkg_img_dir', '')
     if not Config.has_option('graphics', 'allow_screensaver'): Config.set('graphics', 'allow_screensaver', '0')
     if not Config.has_option('graphics', 'width'): Config.set('graphics', 'width', '1440')
     if not Config.has_option('graphics', 'height'): Config.set('graphics', 'height', '900')
+
     Config.write()
 
 def load_constants():
@@ -3864,12 +4060,14 @@ def load_constants():
     global FW_UPD_ADDRESS
     global CTL_UPD_ADDRESS
     global DOWNLOAD_ADDRESS
+    global FW_DOWNLOAD_ADDRESS
 
     global LANGS
 
     FW_UPD_ADDRESS = 'https://raw.githubusercontent.com/carvera-community/carvera_community_firmware/master/version.txt'
     CTL_UPD_ADDRESS = 'https://raw.githubusercontent.com/carvera-community/carvera_controller/main/CHANGELOG.md'
     DOWNLOAD_ADDRESS = 'https://github.com/carvera-community/carvera_controller/releases/latest'
+    FW_DOWNLOAD_ADDRESS = 'https://github.com/Carvera-Community/Carvera_Community_Firmware/releases/latest'
 
 
     LANGS = {
@@ -3880,7 +4078,6 @@ def load_constants():
     SHORT_LOAD_TIMEOUT = 3  # s
     WIFI_LOAD_TIMEOUT = 30 # s
     HEARTBEAT_TIMEOUT = 10
-
     MAX_TOUCH_INTERVAL = 0.15
     GCODE_VIEW_SPEED = 1
 
@@ -3912,7 +4109,11 @@ def main():
     base_path = app_base_path()
     register_fonts(base_path)
     register_images(base_path)
-    MakeraApp().run()
+
+    # Make it global to be able to access it from native APIs
+    global global_app
+    global_app = MakeraApp()
+    global_app.run()
 
 if __name__ == '__main__':
     main()

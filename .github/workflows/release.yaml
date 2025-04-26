@@ -122,9 +122,9 @@ jobs:
         platform: [ x64, aarch64 ]
         include:
           - platform: x64
-            image: ubuntu-20.04
+            image: ubuntu-24.04
           - platform: aarch64
-            image: ubuntu-20.04
+            image: ubuntu-24.04
     defaults:
       run:
         shell: bash

@@ -122,7 +122,7 @@ jobs:
         platform: [ x64, aarch64 ]
         include:
           - platform: x64
-            image: ubuntu-24.04
+            image: ubuntu-22.04
           - platform: aarch64
             image: ubuntu-24.04-arm
     defaults:
@@ -158,13 +158,13 @@ jobs:
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: linux-assets
+        name: linux-assets-${{ matrix.platform }}
         path: ${{ github.workspace }}/dist/carveracontroller-community-*.appimage
         retention-days: 2
 
   build-pypi-artifacts:
     name: build-python
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     permissions:
       id-token: write
 
@@ -212,4 +212,4 @@ jobs:
           files: |
             windows-assets-*/carveracontroller-community-*-windows-x64.exe
             macos-assets-*/carveracontroller-community-*.dmg
-            linux-assets/carveracontroller-community-*.appimage
+            linux-assets-*/carveracontroller-community-*.appimage

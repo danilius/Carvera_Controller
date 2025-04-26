@@ -119,12 +119,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [ x64 ]  # github hosted arm runners not standard yet
+        platform: [ x64, aarch64 ]
         include:
           - platform: x64
             image: ubuntu-20.04
-          # - platform: aarch64
-          #   image: ubuntu-20.04
+          - platform: aarch64
+            image: ubuntu-20.04
     defaults:
       run:
         shell: bash

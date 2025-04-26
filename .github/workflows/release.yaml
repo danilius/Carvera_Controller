@@ -124,7 +124,7 @@ jobs:
           - platform: x64
             image: ubuntu-24.04
           - platform: aarch64
-            image: ubuntu-24.04
+            image: ubuntu-24.04-arm
     defaults:
       run:
         shell: bash

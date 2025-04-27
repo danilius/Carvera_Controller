@@ -1434,6 +1434,7 @@ class Makera(RelativeLayout):
         'laser_switch':       [0.0, 0],
         'laser_slider':       [0.0, 0],
         'light_switch':       [0.0, 0],
+        'ext_control':        [0.0, 0],
         'tool_sensor_switch': [0.0, 0],
         'air_switch':         [0.0, 0],
         'wp_charge_switch'  : [0.0, 0],

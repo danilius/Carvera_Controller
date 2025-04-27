@@ -3521,6 +3521,12 @@
                                                 on_release: app.root.controller.setLightSwitch(not self.state=="normal")
 
                                         GridBoxLayout:
+                                            SmallRoundToggleButton:
+                                                text: tr._('Ext. Control')
+                                                height: '35dp'
+                                                on_release: app.root.controller.setExternalControl(100 if self.state=="down" else 0)
+
+                                        GridBoxLayout:
                                             # Empty for now
 
                             BoxLayout:

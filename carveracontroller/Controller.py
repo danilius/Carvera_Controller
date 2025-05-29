@@ -195,6 +195,8 @@ class Controller:
         cmd = "M495 X%gY%g" % (CNC.vars['xmin'], CNC.vars['ymin'])
         if margin:
             cmd = cmd + "C%gD%g" % (CNC.vars['xmax'], CNC.vars['ymax'])
+            if buffer:
+                cmd = "buffer " + cmd
             self.executeCommand(cmd) #run margin command. Has to be two seperate commands to offset the start of the autolevel process
         cmd = "M495 X%gY%g" % (CNC.vars['xmin'] + auto_level_offsets[0], CNC.vars['ymin'] + auto_level_offsets[2]) #reinitialize command with any autolevel offsets
         if zprobe: 

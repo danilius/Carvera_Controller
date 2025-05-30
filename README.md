@@ -9,7 +9,8 @@ The Controller software works on the following systems:
 - Windows 7 x64 or newer
 - MacOS using Intel CPUs running Ventura (13) or above
 - MacOS using Apple Silicon CPUs running Sonoma (14) or above
-- Linux using x64 CPUs running a Linux distribution with Glibc 2.31 or above (eg. Ubuntu 20.04 or higher)
+- Linux using x64 CPUs running a Linux distribution with Glibc 2.35 or above (eg. Ubuntu 22.04 or higher)
+- Linux using aarch64 CPUs (eg Raspberyy Pi 3+) running a Linux distribution with Glibc 2.39 or above (eg. Ubuntu 24.04 or higher)
 - Apple iPad with iOS 17.6 or higher
 - Other systems might be work via the Python Package, see below for more details.
 
@@ -21,6 +22,7 @@ See the assets section of [latest release](https://github.com/carvera-community/
 - carveracontroller-community-\<version\>-Intel.dmg - MacOS with Intel CPU
 - carveracontroller-community-\<version\>-AppleSilicon.dmg - MacOS with Apple CPU (M1 etc)
 - carveracontroller-community-\<version\>-x86_64.appimage - Linux AppImage for x64 systems
+- carveracontroller-community-\<version\>-aarch64.appimage - Linux AppImage for aarch64 systems
 
 ### Usage: Linux App Images
 

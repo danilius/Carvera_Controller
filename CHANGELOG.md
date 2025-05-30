@@ -1,7 +1,8 @@
-[unreleased]
+[0.8.2]
 - Fix: Linux ARM64 appimage builds
 - Change: Minimum Linux X64 appimage build requires running a Linux distribution with Glibc 2.35 or above (eg. Ubuntu 22.04 or higher)
 - Fix: Show all .bin files as possible options during firmware upload
+- Fix: Fix wrong Z calibration position when running margin command on CA1 when there is high network latency
 
 [0.8.1]
 - Fix: Windows Builds in CI

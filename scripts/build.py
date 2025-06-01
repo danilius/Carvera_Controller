@@ -174,7 +174,7 @@ def main():
     parser.add_argument('--no-appimage', dest='appimage', action='store_false')
 
     # temp workaround for https://github.com/kivy/kivy/issues/8653
-    patch_pyinstaller.main()
+    # patch_pyinstaller.main()
 
     args = parser.parse_args()
     os = args.os

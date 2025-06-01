@@ -62,7 +62,7 @@ To contribute to this project or set up a local development environment, follow 
 - [Poetry](https://python-poetry.org/) is required for dependency management. Poetry simplifies packaging and simplifies the management of Python dependencies.
 - One of the python dependencies [QuickLZ](https://pypi.org/project/pyquicklz/) will be compiled by Poetry when installed. Ensure that you have a compiler that Poetry/Pip can use and the Pythong headers. On a debian based Linux system this can be accomplished with `sudo apt-get install python3-dev build essential`. On Windows installation of (just) the Visual C++ 14.x compiler is required, this can be accomplished with [MSBuild tools package](https://aka.ms/vs/17/release/vs_BuildTools.exe).
 - [Squashfs-tools](https://github.com/plougher/squashfs-tools) is required if building Linux AppImages. On Debian based systems it's provided by the package `squashfs-tools`. This is only required if packaging for linux.
-- [gettext](https://www.gnu.org/software/gettext/) is required for language file generation. [Gnuwin32](https://gnuwin32.sourceforge.net/packages/gettext.htm) project has a version for Windows
+- [gettext](https://www.gnu.org/software/gettext/) is required for language file generation. [gettext-iconv-windows](https://mlocati.github.io/articles/gettext-iconv-windows.html) project has a version with Windows packages.
 - For building iOS app, you need a working XCode installation as well as the build tool that can be installed with `brew install autoconf automake libtool pkg-config`
 
 ### Installing Poetry
@@ -71,6 +71,12 @@ Follow the official installation instructions to install Poetry. The simplest me
 
 ```bash
 curl -sSL https://install.python-poetry.org | python3 -
+```
+
+or on Windows:
+
+```bash
+(Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content | py -
 ```
 
 Once installed, make sure Poetry is in your system's PATH so you can run it from any terminal window. Verify the installation by checking the version:

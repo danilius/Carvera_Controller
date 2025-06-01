@@ -3511,64 +3511,79 @@ class Makera(RelativeLayout):
                 return False
             with open(config_file, 'r') as fd:
                 data = json.loads(fd.read())
-                basic_config = []
-                advanced_config = []
-                restore_config = []
-                self.setting_type_list.clear()
-                for setting in data:
-                    if 'key' in setting and 'default' in setting:
-                        self.setting_default_list[setting['key']] = setting['default']
-                    if 'type' in setting:
-                        has_setting = False
-                        if setting['type'] != 'title':
-                            if 'key' in setting and 'section' in setting and setting['key'] in self.setting_list:
-                                has_setting = True
-                                self.config.setdefaults(setting['section'], {
-                                    setting['key']: Utils.from_config(setting['type'],
-                                                                      self.setting_list[setting['key']])})
-                                self.setting_type_list[setting['key']] = setting['type']
-                            elif 'default' in setting:
-                                has_setting = True
-                                self.config.setdefaults(setting['section'], {setting['key']: Utils.from_config(setting['type'], setting['default'])})
-                                self.setting_type_list[setting['key']] = setting['type']
-                                self.setting_change_list[setting['key']] = setting['default']
-                                # This warning message doesn't make sense since settings values not in config.txt will just use the firmware default value.
-                                #
-                                # Until functionality is added to the firmware to output the complete settings values we should not display such messages
-                                #
-                                # self.controller.log.put(
-                                #     (Controller.MSG_NORMAL, 'Can not load config, Key: {}'.format(setting['key'])))
-                            elif setting['key'].lower() != 'restore' and setting['key'].lower() != 'default' :
-                                self.controller.log.put((Controller.MSG_ERROR, 'Load config error, Key: {}'.format(setting['key'])))
-                                self.controller.close()
-                                self.updateStatus()
-                                return False
-                        else:
+
+            app = App.get_running_app()
+            if app.model == 'CA1':
+                # The Carvera Air generally uses the same default values as the original Carvera
+                # However if there are any differences we store them in a seperate config file
+            
+                ca1_config_diff_file = os.path.join(os.path.dirname(__file__), "config_ca1_diff.json")
+                with open(ca1_config_diff_file, 'r') as fd:
+                    ca1_diff_data = json.loads(fd.read())
+
+                for ca1_diff_setting in ca1_diff_data:
+                    for setting in data:
+                        if (ca1_diff_setting.get("key") == setting.get("key")) and (ca1_diff_setting.get("section") == setting.get("section")):
+                            setting.update(ca1_diff_setting)
+            
+            basic_config = []
+            advanced_config = []
+            restore_config = []
+            self.setting_type_list.clear()
+            for setting in data:
+                if 'key' in setting and 'default' in setting:
+                    self.setting_default_list[setting['key']] = setting['default']
+                if 'type' in setting:
+                    has_setting = False
+                    if setting['type'] != 'title':
+                        if 'key' in setting and 'section' in setting and setting['key'] in self.setting_list:
                             has_setting = True
-                        # construct json objects
-                        if has_setting:
-                            if 'section' in setting and setting['section'] == 'Basic':
-                                basic_config.append(setting)
-                            elif 'section' in setting and setting['section'] == 'Advanced':
-                                advanced_config.append(setting)
-                        elif 'section' in setting and setting['section'] == 'Restore':
                             self.config.setdefaults(setting['section'], {
-                                setting['key']: Utils.from_config(setting['type'], '')})
-                            restore_config.append(setting)
-                # clear title section
-                for basic in basic_config:
-                    if basic['type'] == 'title' and 'section' in basic:
-                        basic.pop('section')
-                    elif 'default' in basic:
-                        basic.pop('default')
-                for advanced in advanced_config:
-                    if advanced['type'] == 'title' and 'section' in advanced:
-                        advanced.pop('section')
-                    elif 'default' in advanced:
-                        advanced.pop('default')
-                self.config_popup.settings_panel.add_json_panel('Machine - Basic', self.config, data=json.dumps(basic_config))
-                self.config_popup.settings_panel.add_json_panel('Machine - Advanced', self.config, data=json.dumps(advanced_config))
-                self.config_popup.settings_panel.add_json_panel('Machine - Restore', self.config, data=json.dumps(restore_config))
+                                setting['key']: Utils.from_config(setting['type'],
+                                                                    self.setting_list[setting['key']])})
+                            self.setting_type_list[setting['key']] = setting['type']
+                        elif 'default' in setting:
+                            has_setting = True
+                            self.config.setdefaults(setting['section'], {setting['key']: Utils.from_config(setting['type'], setting['default'])})
+                            self.setting_type_list[setting['key']] = setting['type']
+                            self.setting_change_list[setting['key']] = setting['default']
+                            # This warning message doesn't make sense since settings values not in config.txt will just use the firmware default value.
+                            #
+                            # Until functionality is added to the firmware to output the complete settings values we should not display such messages
+                            #
+                            # self.controller.log.put(
+                            #     (Controller.MSG_NORMAL, 'Can not load config, Key: {}'.format(setting['key'])))
+                        elif setting['key'].lower() != 'restore' and setting['key'].lower() != 'default' :
+                            self.controller.log.put((Controller.MSG_ERROR, 'Load config error, Key: {}'.format(setting['key'])))
+                            self.controller.close()
+                            self.updateStatus()
+                            return False
+                    else:
+                        has_setting = True
+                    # construct json objects
+                    if has_setting:
+                        if 'section' in setting and setting['section'] == 'Basic':
+                            basic_config.append(setting)
+                        elif 'section' in setting and setting['section'] == 'Advanced':
+                            advanced_config.append(setting)
+                    elif 'section' in setting and setting['section'] == 'Restore':
+                        self.config.setdefaults(setting['section'], {
+                            setting['key']: Utils.from_config(setting['type'], '')})
+                        restore_config.append(setting)
+            # clear title section
+            for basic in basic_config:
+                if basic['type'] == 'title' and 'section' in basic:
+                    basic.pop('section')
+                elif 'default' in basic:
+                    basic.pop('default')
+            for advanced in advanced_config:
+                if advanced['type'] == 'title' and 'section' in advanced:
+                    advanced.pop('section')
+                elif 'default' in advanced:
+                    advanced.pop('default')
+            self.config_popup.settings_panel.add_json_panel('Machine - Basic', self.config, data=json.dumps(basic_config))
+            self.config_popup.settings_panel.add_json_panel('Machine - Advanced', self.config, data=json.dumps(advanced_config))
+            self.config_popup.settings_panel.add_json_panel('Machine - Restore', self.config, data=json.dumps(restore_config))
         return True
 
     # -----------------------------------------------------------------------

@@ -1,0 +1,10 @@
+[
+    {
+        "type": "numeric",
+        "title": "A Axis Microsteps per degree rotation",
+        "desc": "Changes the number of microsteps between degrees of rotation. Useful if you change the A axis gearing.",
+        "section": "Advanced",
+        "key": "delta_steps_per_mm",
+        "default": "888.888889"
+    }
+]

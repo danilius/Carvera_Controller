@@ -1,6 +1,8 @@
 [unreleased]
 - Enhancement: Initial support for rotated WCS in visualizations
 - Change: Minimum Python version increased to 3.9
+- Change: Controller no longer warnings about missing config key values in MDI because it's assumed that firmware defaults are used instead
+- Enhancement: Controller support for updating setting definition if machine model is CA1 (via config_ca1_diff.json)
 
 [0.8.2]
 - Fix: Linux ARM64 appimage builds

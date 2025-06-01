@@ -3532,8 +3532,12 @@ class Makera(RelativeLayout):
                                 self.config.setdefaults(setting['section'], {setting['key']: Utils.from_config(setting['type'], setting['default'])})
                                 self.setting_type_list[setting['key']] = setting['type']
                                 self.setting_change_list[setting['key']] = setting['default']
-                                self.controller.log.put(
-                                    (Controller.MSG_NORMAL, 'Can not load config, Key: {}'.format(setting['key'])))
+                                # This warning message doesn't make sense since settings values not in config.txt will just use the firmware default value.
+                                #
+                                # Until functionality is added to the firmware to output the complete settings values we should not display such messages
+                                #
+                                # self.controller.log.put(
+                                #     (Controller.MSG_NORMAL, 'Can not load config, Key: {}'.format(setting['key'])))
                             elif setting['key'].lower() != 'restore' and setting['key'].lower() != 'default' :
                                 self.controller.log.put((Controller.MSG_ERROR, 'Load config error, Key: {}'.format(setting['key'])))
                                 self.controller.close()

@@ -1466,13 +1466,14 @@
                     size_hint_y: None
                     height: '30dp'
                     Label:
-                        text: tr._('Probe Height:')
+                        text: tr._('Block Thickness:')
                         halign: "left"
                         valign: "middle"
                         text_size: self.size
-                    TextInput:
+                    ToolTipTextInput:
                         id: txt_probe_height
-                        hint_text: tr._('Height Above Workpiece')
+                        hint_text: tr._('Thickness of probing block')
+                        tooltip_txt: tr._('The mm thickness between the conductive surface of the probe block and the workpiece. Used as part of the probing calculation to determine the Z height')
                         multiline: False
                         text: '9'
                         input_type: 'number'
@@ -1633,13 +1634,14 @@
             size_hint_y: None
             height: '30dp'
             Label:
-                text: tr._('Probe Height:')
+                text: tr._('Block Thickness:')
                 halign: "left"
                 valign: "middle"
                 text_size: self.size
-            TextInput:
+            ToolTipTextInput:
                 id: txt_probe_height
-                hint_text: tr._('Height Above Workpiece')
+                hint_text: tr._('Thickness of probing block')
+                tooltip_txt: tr._('The mm thickness between the conductive surface of the probe block and the workpiece. Used as part of the probing calculation to determine the Z height')
                 multiline: False
                 text: '9'
                 input_type: 'number'

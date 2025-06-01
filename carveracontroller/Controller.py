@@ -8,6 +8,7 @@ import sys
 import time
 import threading
 import webbrowser
+import math
 
 from datetime import datetime
 
@@ -532,6 +533,10 @@ class Controller:
 
         # strip of rest into a dict of name: [values,...,]
         d = {a: [float(y) for y in b.split(',')] for a, b in [x.split(':') for x in l[1:]]}
+        if 'R' in d:
+            CNC.vars["rotation_angle"] = float(d['R'][0])
+        else:
+            CNC.vars["rotation_angle"] = 0.0
         CNC.vars["mx"] = float(d['MPos'][0])
         CNC.vars["my"] = float(d['MPos'][1])
         CNC.vars["mz"] = float(d['MPos'][2])
@@ -543,8 +548,8 @@ class Controller:
         CNC.vars["wy"] = float(d['WPos'][1])
         CNC.vars["wz"] = float(d['WPos'][2])
         CNC.vars["wa"] = 0.0
-        CNC.vars["wcox"] = round(CNC.vars["mx"] - CNC.vars["wx"], 3)
-        CNC.vars["wcoy"] = round(CNC.vars["my"] - CNC.vars["wy"], 3)
+        CNC.vars["wcox"] = round(CNC.vars["mx"] - (math.cos(CNC.vars["rotation_angle"] * math.pi / 180) * CNC.vars["wx"] - math.sin(CNC.vars["rotation_angle"] * math.pi / 180) * CNC.vars["wy"]), 3)
+        CNC.vars["wcoy"] = round(CNC.vars["my"] - (math.sin(CNC.vars["rotation_angle"] * math.pi / 180) * CNC.vars["wx"] + math.cos(CNC.vars["rotation_angle"] * math.pi / 180) * CNC.vars["wy"]), 3)
         CNC.vars["wcoz"] = round(CNC.vars["mz"] - CNC.vars["wz"], 3)
         CNC.vars["wcoa"] = round(CNC.vars["mz"] - CNC.vars["wz"], 3)
         if 'F' in d:

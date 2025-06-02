@@ -326,6 +326,12 @@ class Controller:
         else:
             self.executeCommand("M822\n")
 
+    def setExternalControl(self, pwm=100):
+        if pwm > 0:
+            self.executeCommand("M851 S%g\n" % (pwm))
+        else:
+            self.executeCommand("M852\n")
+
     def setToolSensorSwitch(self, switch):
         if switch:
             self.executeCommand("M831\n")

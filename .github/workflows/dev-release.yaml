@@ -46,7 +46,7 @@ jobs:
     - name: Build release
       shell: pwsh
       run: |
-        $date = Get-Date -Format "yyyy.MM.dd"
+        $date = Get-Date -Format "yyyy.M.d"
         poetry run python scripts/build.py --os windows --version $date
 
     - name: Rename artifact

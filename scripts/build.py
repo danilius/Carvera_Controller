@@ -287,7 +287,7 @@ def main():
         remove_shared_libraries(frozen_dir, 'libstdc++.so.*', 'libtinfo.so.*', 'libreadline.so.*', 'libdrm.so.*')
 
         if appimage:
-            run_appimage_builder()
+            run_appimage_builder(package_version)
     
     if os == "macos":
         # Need to manually revise the version string due to

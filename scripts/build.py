@@ -208,6 +208,67 @@ def version_type(version_string):
     return version_string
 
 
+def rename_release_file(os_name, package_version):
+    if os_name == "macos":
+        arch = platform.machine()
+        if arch == "arm64":
+            arch_name = "AppleSilicon"
+        else:
+            arch_name = "Intel"
+        file_name = f"carveracontroller-community-{package_version}-{arch_name}.dmg"
+        src = "./dist/carveracontroller-community.dmg"
+        dst = f"./dist/{file_name}"
+    elif os_name == "windows":
+        arch = platform.architecture()[0]
+        arch_name = "x64" if arch == "64bit" else "x86"
+        file_name = f"carveracontroller-community-{package_version}-windows-{arch_name}.exe"
+        src = "./dist/carveracontroller.exe"
+        dst = f"./dist/{file_name}"
+    elif os_name == "linux":
+        arch_name = platform.machine()
+        file_name = f"carveracontroller-community-{package_version}-{arch_name}.appimage"
+        src = "./dist/carveracontroller-community.AppImage"
+        dst = f"./dist/{file_name}"
+
+    shutil.move(src, dst)
+
+
+def create_macos_dmg():
+    dmg_path = "./dist/carveracontroller-community.dmg"
+    app_src = "./dist/carveracontroller.app"
+    app_dst = "./dist/Carvera Controller Community.app"
+
+    if os.path.exists(dmg_path):
+        os.remove(dmg_path)
+
+    # Rename .app
+    if os.path.exists(app_src):
+        os.rename(app_src, app_dst)
+    else:
+        raise FileNotFoundError(f"Source app not found: {app_src}")
+
+    cmd = [
+        "create-dmg",
+        "--volname", "carvera-controller-community",
+        "--background", "packaging_assets/dmg_background.jpg",
+        "--volicon", "packaging_assets/icon-src.icns",
+        "--window-pos", "200", "200",
+        "--window-size", "640", "324",
+        "--icon", "Carvera Controller Community.app", "130", "130",
+        "--icon-size", "64",
+        "--hide-extension", "Carvera Controller Community.app",
+        "--app-drop-link", "510", "130",
+        "--format", "UDBZ",
+        "--no-internet-enable",
+        dmg_path,
+        app_dst
+    ]
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    if result.returncode != 0:
+        logger.error("Error creating DMG:", result.stderr)
+        raise RuntimeError("create-dmg failed")
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -295,7 +356,11 @@ def main():
         import PyInstaller.utils.osx as osxutils
         fix_macos_version_string(package_version)
         osxutils.sign_binary(f"dist/{PACKAGE_NAME}.app", deep=True)
+        create_macos_dmg()
     
+    logger.info("Renaming artifacts to have version number and platform in filename")
+    rename_release_file(os, package_version)
+
     logger.info("Restoring files modified by codegen")
     restore_codegen_files(ROOT_PATH, PROJECT_PATH)
 

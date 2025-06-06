@@ -49,9 +49,6 @@ jobs:
         $date = Get-Date -Format "yyyy.M.d"
         poetry run python scripts/build.py --os windows --version $date
 
-    - name: Rename artifact
-      run: poetry run bash ./scripts/rename-release-file.sh windows
-
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
@@ -86,20 +83,14 @@ jobs:
       uses: ./.github/actions/bootstrap-poetry
       with:
         os: macos
+  
+    - name: Install create-dmg
+      run: brew install create-dmg
 
     - name: Build release
       run: |
         DATE=$(date +'%Y.%m.%d')
         poetry run python scripts/build.py --os macos --version "$DATE"
-
-    - name: Install create-dmg
-      run: brew install create-dmg
-
-    - name: Create dmg file
-      run: ./scripts/create-dmg.sh
-
-    - name: Rename artifact
-      run: poetry run bash ./scripts/rename-release-file.sh macos
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
@@ -143,9 +134,6 @@ jobs:
       run: |
         DATE=$(date +'%Y.%m.%d')
         xvfb-run poetry run python scripts/build.py --os linux --version "$DATE"
-
-    - name: Rename artifact
-      run: poetry run bash ./scripts/rename-release-file.sh linux
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4

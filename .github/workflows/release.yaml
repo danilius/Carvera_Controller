@@ -46,9 +46,6 @@ jobs:
     - name: Build release
       run: poetry run python scripts/build.py --os windows --version ${{ github.ref_name }}
 
-    - name: Rename artifact
-      run: poetry run bash ./scripts/rename-release-file.sh windows
-
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
@@ -83,18 +80,12 @@ jobs:
       uses: ./.github/actions/bootstrap-poetry
       with:
         os: macos
-
-    - name: Build release
-      run: poetry run python scripts/build.py --os macos --version ${{ github.ref_name }}
-
+    
     - name: Install create-dmg
       run: brew install create-dmg
 
-    - name: Create dmg file
-      run: ./scripts/create-dmg.sh
-
-    - name: Rename artifact
-      run: poetry run bash ./scripts/rename-release-file.sh macos
+    - name: Build release
+      run: poetry run python scripts/build.py --os macos --version ${{ github.ref_name }}
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
@@ -136,9 +127,6 @@ jobs:
 
     - name: Build release
       run: xvfb-run poetry run python scripts/build.py --os linux --version ${{ github.ref_name }}
-
-    - name: Rename artifact
-      run: poetry run bash ./scripts/rename-release-file.sh linux
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4

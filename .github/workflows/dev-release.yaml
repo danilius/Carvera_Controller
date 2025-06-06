@@ -168,6 +168,8 @@ jobs:
           release=$(gh release view dev --json assets)
           echo "$release"
           echo "asset_names=$(echo "$release" | jq -r '[.assets[].name]')" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Delete all assets from dev release
         if: steps.get_release.outputs.asset_names != ''
@@ -177,6 +179,8 @@ jobs:
             echo "Deleting asset name: $name"
             gh release delete-asset dev $name -y
           done
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download artifacts
         uses: actions/download-artifact@v4

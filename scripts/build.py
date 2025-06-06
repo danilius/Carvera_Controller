@@ -3,16 +3,18 @@ from __future__ import annotations
 
 import argparse
 import logging
+import re
+import shutil
 import subprocess
 import sys
 import os
 import platform
+import toml
 from glob import glob
 from pathlib import Path
 
 import PyInstaller.__main__
 import pyinstaller_versionfile
-from dunamai import Version
 from ruamel.yaml import YAML
 
 from update_translations import compile_mo
@@ -97,10 +99,6 @@ def build_pyinstaller_args(
 def run_pyinstaller(build_args: list[str]) -> None:
     PyInstaller.__main__.run(build_args)
 
-def get_version_info() -> str:
-    version_str = Version.from_any_vcs().serialize()
-    logger.info(f"Version determined to be {version_str}")
-    return version_str
 
 def generate_versionfile(package_version: str, output_filename: str) -> Path:
     logger.info("Generate versionfile.txt.")
@@ -118,8 +116,9 @@ def generate_versionfile(package_version: str, output_filename: str) -> Path:
 
     return versionfile_path
 
-def run_appimage_builder()-> None:
-    revise_appimage_definition()
+
+def run_appimage_builder(package_version: str)-> None:
+    revise_appimage_definition(package_version)
     command = f"appimage-builder --recipe {ROOT_ASSETS_PATH}/AppImageBuilder.yml"
     result = subprocess.run(command, shell=True, capture_output=False, text=True)
     if result.returncode != 0:
@@ -135,7 +134,7 @@ def remove_shared_libraries(freeze_dir, *filename_patterns):
             os.remove(file_path)
 
 
-def revise_appimage_definition():
+def revise_appimage_definition(package_version: str):
     yaml = YAML()
     with open(f"{ROOT_ASSETS_PATH}/AppImageBuilder-template.yml") as file:
         appimage_def = yaml.load(file)
@@ -144,7 +143,7 @@ def revise_appimage_definition():
     appimage_def["AppImage"]["arch"] = platform.machine()
 
     # version
-    appimage_def["AppDir"]["app_info"]["version"] = get_version_info()
+    appimage_def["AppDir"]["app_info"]["version"] = package_version
 
     with open(f"{ROOT_ASSETS_PATH}/AppImageBuilder.yml", 'wb') as file:
         yaml.dump(appimage_def, file)
@@ -158,44 +157,121 @@ def fix_macos_version_string(version)-> None:
         logger.error(f"stderr: {result.stderr}")
         sys.exit(result.returncode)
 
+
+def codegen_version_string(package_version: str, project_path: str, root_path: str)-> None:
+    # Update the __version__.py file used by the project
+    with open(project_path.joinpath("__version__.py").resolve(), "w") as f:
+        f.write(f"__version__ = '{package_version}'\n")
+    
+    # Update the value of `version` in` pyproject.toml
+    pyproject_path = root_path.joinpath("pyproject.toml").resolve()
+    data = toml.load(pyproject_path)
+    if "tool" not in data or "poetry" not in data["tool"]:
+        raise ValueError("[tool.poetry] section not found in pyproject.toml")
+    data["tool"]["poetry"]["version"] = package_version
+    with open(pyproject_path, "w", encoding="utf-8") as f:
+        toml.dump(data, f)
+
+
+def backup_codegen_files(root_path, project_path):
+    backup_dir = Path('scripts/backup')
+    files_to_backup = [
+        Path(root_path, 'pyproject.toml'),
+        Path(project_path, '__version__.py')
+    ]
+    backup_dir.mkdir(parents=True, exist_ok=True)
+    for file_path in files_to_backup:
+        if file_path.exists():
+            shutil.copy2(file_path, backup_dir / file_path.name)
+        else:
+            print(f"File not found: {file_path}")
+
+
+def restore_codegen_files(root_path, project_path):
+    backup_dir = Path('scripts/backup')
+    files_to_restore = [
+        { "source_name": 'pyproject.toml', "restore_path": root_path / 'pyproject.toml'} ,
+        { "source_name": '__version__.py', "restore_path": project_path / '__version__.py'}
+    ]
+    for file in files_to_restore:
+        source_path = Path(backup_dir / file["source_name"])
+        if source_path.exists():
+            shutil.copy2(source_path, file["restore_path"])
+            print(f"Restored {file["source_name"]}")
+        else:
+            print(f"Backup not found: {file["source_name"]}")
+
+
+def version_type(version_string):
+    if not re.match(r'^\d+\.\d+\.\d+$', version_string):
+        raise argparse.ArgumentTypeError("Must be in X.Y.Z format (e.g., 1.2.3)")
+    return version_string
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--os",
         metavar="os",
         required=True,
-        choices=["windows", "macos", "linux", "ios"],
+        choices=["windows", "macos", "linux", "ios", "pypi"],
         type=str,
         default="linux",
-        help="Choices are: windows, macos, or linux. Default is linux."
+        help="Choices are: windows, macos, pypi or linux. Default is linux."
     )
 
     parser.add_argument('--no-appimage', dest='appimage', action='store_false')
 
+    parser.add_argument(
+        "--version",
+        metavar="version",
+        required=True,
+        type=version_type,
+        help="Version string to use for build."
+    )
+
     args = parser.parse_args()
     os = args.os
     appimage = args.appimage
-    package_version = get_version_info()
+    package_version = args.version
     output_filename = PACKAGE_NAME
     versionfile_path = None
+
+    logger.info(f"Version determined to be {package_version}")
+
+    logger.info("Backing up files that will be modified by codegen")
+    backup_codegen_files(ROOT_PATH, PROJECT_PATH)
+
+    logger.info("Revising files by codegen")
+    codegen_version_string(package_version, PROJECT_PATH, ROOT_PATH)
 
     # Compile translation files
     compile_mo()
 
+    ######### Non-PyInstaller builds #########
+    if os == "pypi":
+        logger.info("Performing pypi build via poetry")
+        result = subprocess.run("poetry build", shell=True, capture_output=True, text=True, check=True)
+
+    if os == "ios":
+        # For iOS we need some special handling as it is not supported by pyinstaller
+        # Execute the build_ios.sh script
+        command = f"{BUILD_PATH}/build_ios.sh {package_version}"
+        result = subprocess.run(command, shell=True, capture_output=True, text=True, check=True)
+        if result.stderr:
+            logger.error(f"Error from build_ios.sh: {result.stderr}")
+        logger.info(f"Stdout from build_ios.sh: {result.stdout}")
+
+    ######### Pre PyInstaller tweaks #########
     if os == "windows":
+        # Windows needs a versionfile created for metadata in the binary artifact
         versionfile_path = generate_versionfile(
             package_version=package_version,
             output_filename=output_filename,
         )
 
-    # For iOS we need some special handling as it is not supported by pyinstaller
-    if os == "ios":
-        # Execute the build_ios.sh script
-        command = f"{BUILD_PATH}/build_ios.sh {package_version}"
-        result = subprocess.run(command, shell=True, capture_output=True, text=True, check=True)
-        print(result.stdout)
-        print(result.stderr)
-    else:
+    ######### Run PyInstaller for all os expcept those that don't use it #########
+    if os not in ("ios", "pypi"):
         build_args = build_pyinstaller_args(
             os=os,
             output_filename=output_filename,
@@ -203,6 +279,7 @@ def main():
         )
         run_pyinstaller(build_args=build_args)
 
+    ######### Post PyInstaller tweaks #########
     if os == "linux":
         # Need to remove some libs for opinionated backwards compatibility
         # https://github.com/pyinstaller/pyinstaller/issues/6993 
@@ -216,8 +293,11 @@ def main():
         # Need to manually revise the version string due to
         # https://github.com/pyinstaller/pyinstaller/issues/6943
         import PyInstaller.utils.osx as osxutils
-        fix_macos_version_string(get_version_info())
+        fix_macos_version_string(package_version)
         osxutils.sign_binary(f"dist/{PACKAGE_NAME}.app", deep=True)
+    
+    logger.info("Restoring files modified by codegen")
+    restore_codegen_files(ROOT_PATH, PROJECT_PATH)
 
 if __name__ == "__main__":
     main()

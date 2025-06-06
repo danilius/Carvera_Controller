@@ -22,6 +22,7 @@ share/python-wheels/
 *.egg
 MANIFEST
 scripts/versionfile.txt
+scripts/backup/
 
 # PyInstaller
 #  Usually these files are written by a python script from a template

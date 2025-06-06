@@ -167,15 +167,16 @@ jobs:
         run: |
           release=$(gh release view dev --json assets)
           echo "$release"
-          echo "asset_names=$(echo "$release" | jq -r '[.assets[].name]')" >> $GITHUB_OUTPUT
+          asset_names=$(echo "$release" | jq -r '.assets[].name' | paste -sd ',' -)
+          echo "asset_names=$asset_names" >> $GITHUB_OUTPUT
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Delete all assets from dev release
         if: steps.get_release.outputs.asset_names != ''
         run: |
-          # Convert JSON array (eg: ["1.txt","example.txt"]) to newline-separated list
-          echo "$asset_names" | jq -r '.[]' | while read name; do
+          IFS=',' read -ra NAMES <<< "$asset_names"
+          for name in "${NAMES[@]}"; do
             echo "Deleting asset name: $name"
             gh release delete-asset dev $name -y
           done

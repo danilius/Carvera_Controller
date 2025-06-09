@@ -1617,6 +1617,17 @@ class Makera(RelativeLayout):
     
     def open_fw_download(self):
         webbrowser.open(FW_DOWNLOAD_ADDRESS, new = 2)
+
+    def open_fw_upload(self):
+        self.file_popup.firmware_mode = True
+        if sys.platform == 'ios':
+            from . import ios_helpers
+            ios_helpers.pick_file()
+        else:
+            self.file_popup.popup_manager.transition.duration = 0
+            self.file_popup.popup_manager.current = 'local_page'
+            self.file_popup.open()
+            self.file_popup.local_rv.child_dir('')
     
     def send_bug_report(self):
         webbrowser.open('https://github.com/Carvera-Community/Carvera_Controller/issues')
@@ -2274,7 +2285,7 @@ class Makera(RelativeLayout):
         # For iOS we use the native file picker
         if sys.platform == 'ios':
             from . import ios_helpers
-            ios_helpers.pick_nc_file()
+            ios_helpers.pick_file()
             return
         self.file_popup.firmware_mode = False
         self.file_popup.popup_manager.transition.direction = 'left'

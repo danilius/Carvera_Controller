@@ -3659,7 +3659,7 @@
                                                     on_release:
                                                         cmd_manager.transition.direction = 'left'
                                                         cmd_manager.current = 'manual_cmd_page'
-                                                        manual_cmd.focus = True
+                                                        if not root.has_onscreen_keyboard: manual_cmd.focus = True
                                                 BoxLayout:
                                                     halign: 'center'
                                                     valign: 'middle'

@@ -163,7 +163,7 @@ void load_custom_builtin_importer(void) {
         "        f = fullname.replace('.', '_')\n" \
         "        mod = sys.modules.get(f)\n" \
         "        if mod is None:\n" \
-        "            print('LOAD DYNAMIC', f, sys.modules.keys())\n" \
+        "            #print('LOAD DYNAMIC', f, sys.modules.keys())\n" \
         "            try:\n" \
         "                mod = imp.load_dynamic(f, f)\n" \
         "            except ImportError:\n" \

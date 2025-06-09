@@ -1579,6 +1579,10 @@ class Makera(RelativeLayout):
         # status switch timer
         Clock.schedule_interval(self.switch_status, 8)
 
+        self.has_onscreen_keyboard = False
+        if sys.platform == "ios":
+            self.has_onscreen_keyboard = True
+
         #
         threading.Thread(target=self.monitorSerial).start()
 
@@ -2688,36 +2692,46 @@ class Makera(RelativeLayout):
     # -----------------------------------------------------------------------
     def compress_file(self,input_filename):
         try:
-            # 如果上传的文件为固件，则直接返回原文件名不进行压缩
+            # If the uploaded file is a firmware file, return the original filename without compression.
             if input_filename.find('.bin') != -1:
                 return input_filename
-            # 打开输入文件和输出文件
-            output_filename = input_filename + '.lz'
+
+            # Check if the filename.lz is writeable
+            can_write_in_lz = os.access(input_filename + '.lz', os.W_OK)
+            if not can_write_in_lz:
+                print(f"Compression failed: Cannot write to '{input_filename}.lz', using temp dir")
+                # First copy the file to the temp dir
+                shutil.copy(input_filename, self.temp_dir)
+                input_filename = os.path.join(self.temp_dir, os.path.basename(input_filename))
+                # Then compress the file to the temp dir
+                output_filename = os.path.join(self.temp_dir, os.path.basename(input_filename) + '.lz')
+            else:
+                output_filename = input_filename + '.lz'
             sum = 0
             self.fileCompressionBlocks = 0
             self.decompercent = 0
             self.decompercentlast = 0
             with open(input_filename, 'rb') as f_in, open(output_filename, 'wb') as f_out:
                 while True:
-                    # 读取块数据
+                    # Read block data
                     block = f_in.read(BLOCK_SIZE)
                     if not block:
                         break
-                    # 计算sum和
+                    # Calculate the sum
                     for byte in block:
                         sum += byte
-                    # 压缩块数据
+                    # Compress the block data
                     compressed_block = quicklz.compress(block)
 
-                    # 计算压缩后数据库的大小
+                    # Calculate the size of the compressed data block
                     cmprs_size = len(compressed_block)
                     buffer_hdr = struct.pack('>I', cmprs_size)
-                    # 写入压缩后的块数据的长度到输出文件
+                    # Write the length of the compressed data block to the output file
                     f_out.write(buffer_hdr)
-                    # 写入压缩后的块数据到输出文件
+                    # Write the compressed data block to the output file
                     f_out.write(compressed_block)
                     self.fileCompressionBlocks += 1
-                # 写入校验和
+                # Write the checksum
                 sumdata = struct.pack('>H', sum & 0xffff)
                 f_out.write(sumdata)
 
@@ -2861,7 +2875,7 @@ class Makera(RelativeLayout):
             if not self.file_popup.firmware_mode:
                 self.update_recent_local_dir_list(os.path.dirname(self.uploading_file))
 
-            # 如果为压缩后的'.lz'文件则等待解压缩完成
+            # If it is a compressed ‘.lz’ file, wait for the decompression to complete.
             if self.uploading_file.endswith('.lz'):
                 self.log = logging.getLogger('File.Decompress')
                 self.decompstatus = True
@@ -2875,6 +2889,9 @@ class Makera(RelativeLayout):
                 callback(remotename[:-3], origin_path)
             else:
                 callback(remotename, local_path)
+        # For iOS we display the file list remotely only so we need to refresh it but on main thread
+        if upload_result and not self.file_popup.firmware_mode and not self.uploading_file.endswith('.lz'):
+            Clock.schedule_once(self.file_popup.remote_rv.current_dir, 0)
 
 
     # -----------------------------------------------------------------------
@@ -2983,6 +3000,8 @@ class Makera(RelativeLayout):
         Clock.schedule_once(partial(self.progressUpdate, value * 100.0 / self.fileCompressionBlocks, '', True), 0)
         if value == self.fileCompressionBlocks:
             Clock.schedule_once(self.progressFinish, 0)
+            # Refresh the remote dir since upload finished
+            Clock.schedule_once(self.file_popup.remote_rv.current_dir, 0)
             self.decompstatus = False
 
     # -----------------------------------------------------------------------

@@ -147,7 +147,7 @@ void load_custom_builtin_importer(void) {
         "# Custom builtin importer for precompiled modules\n" \
         "class CustomBuiltinImporter(object):\n" \
         "    def find_module(self, fullname, mpath=None):\n" \
-        "        # print(f'find_module() fullname={fullname} mpath={mpath}')\n" \
+        "        #print(f'find_module() fullname={fullname} mpath={mpath}')\n" \
         "        if '.' not in fullname:\n" \
         "            return\n" \
         "        if not mpath:\n" \
@@ -155,7 +155,7 @@ void load_custom_builtin_importer(void) {
         "        part = fullname.rsplit('.')[-1]\n" \
         "        for ext in EXTS:\n" \
         "           fn = join(list(mpath)[0], '{}{}'.format(part, ext))\n" \
-        "           # print('find_module() {}'.format(fn))\n" \
+        "           #print('find_module() {}'.format(fn))\n" \
         "           if exists(fn):\n" \
         "               return self\n" \
         "        return\n" \
@@ -163,12 +163,12 @@ void load_custom_builtin_importer(void) {
         "        f = fullname.replace('.', '_')\n" \
         "        mod = sys.modules.get(f)\n" \
         "        if mod is None:\n" \
-        "            # print('LOAD DYNAMIC', f, sys.modules.keys())\n" \
+        "            #print('LOAD DYNAMIC', f, sys.modules.keys())\n" \
         "            try:\n" \
         "                mod = imp.load_dynamic(f, f)\n" \
         "            except ImportError:\n" \
-        "                # import traceback; traceback.print_exc();\n" \
-        "                # print('LOAD DYNAMIC FALLBACK', fullname)\n" \
+        "                #import traceback; traceback.print_exc();\n" \
+        "                #print('LOAD DYNAMIC FALLBACK', fullname)\n" \
         "                mod = imp.load_dynamic(fullname, fullname)\n" \
         "            sys.modules[fullname] = mod\n" \
         "            return mod\n" \

@@ -260,6 +260,7 @@
 			buildConfigurationList = 1D6058960D05DD3E006BFB54 /* Build configuration list for PBXNativeTarget "CarveraController" */;
 			buildPhases = (
 				113D17E2153E3DB5001310A5 /* ShellScript */,
+				30291A362DF6FEB400D6F7E7 /* ShellScript */,
 				113D17E2153E3DB5001310A6 /* ShellScript */,
 				113D17E2153E3DB5001310A7 /* ShellScript */,
 				1D60588D0D05DD3D006BFB54 /* Resources */,
@@ -363,6 +364,23 @@
 			shellPath = /bin/bash;
 			shellScript = "find \"$PROJECT_DIR\"/carveracontrollerpkg/ -regex '.*\\.py' -delete\n";
 		};
+		30291A362DF6FEB400D6F7E7 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Update __version__.py \n\nVERSION_FILE=\"$PROJECT_DIR/carveracontrollerpkg/__version__.py\"\n\n# Get the current version from Info.plist\nAPP_VERSION=$(/usr/libexec/PlistBuddy -c \"Print CFBundleShortVersionString\" \"$INFOPLIST_FILE\")\n\n# Replace the version line in the Python file\nsed -i '' -E \"s/^(__version__ = ')[^']+'/\\1$APP_VERSION'/\" \"$VERSION_FILE\"\n\necho \"Updated __version__.py to version $APP_VERSION\"\n";
+		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -413,7 +431,7 @@
 					"$(inherited)",
 					/Users/mamonney/Carvera_Controller/dist/lib,
 				);
-				MARKETING_VERSION = 0.7.2;
+				MARKETING_VERSION = 0.8.2;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = "-all_load";
 				PRODUCT_BUNDLE_IDENTIFIER = net.xwaves.carveracommunitycontroller;
@@ -463,7 +481,7 @@
 					"$(inherited)",
 					/Users/mamonney/Carvera_Controller/dist/lib,
 				);
-				MARKETING_VERSION = 0.7.2;
+				MARKETING_VERSION = 0.8.2;
 				OTHER_LDFLAGS = "-all_load";
 				PRODUCT_BUNDLE_IDENTIFIER = net.xwaves.carveracommunitycontroller;
 				PRODUCT_NAME = carveracontroller;

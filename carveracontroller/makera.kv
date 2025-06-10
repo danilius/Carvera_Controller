@@ -2,7 +2,6 @@
 #:import Factory kivy.factory.Factory
 #:import tr carveracontroller.__main__.tr
 #:include addons/tooltips/Tooltips.kv
-#:import tr __main__.tr
 #:include addons/probing/ProbingPopup.kv
 
 <Label>:
@@ -2076,11 +2075,7 @@
                                 width: '100dp'
                                 text: tr._("Update")
                                 on_release:
-                                    app.root.file_popup.firmware_mode = True
-                                    app.root.file_popup.popup_manager.transition.duration = 0
-                                    app.root.file_popup.popup_manager.current = 'local_page'
-                                    app.root.file_popup.open()
-                                    app.root.file_popup.local_rv.child_dir('')
+                                    app.root.open_fw_upload()
                         TextInput:
                             id: fw_upd_text
                             multiline: True
@@ -3664,7 +3659,7 @@
                                                     on_release:
                                                         cmd_manager.transition.direction = 'left'
                                                         cmd_manager.current = 'manual_cmd_page'
-                                                        manual_cmd.focus = True
+                                                        if not root.has_onscreen_keyboard: manual_cmd.focus = True
                                                 BoxLayout:
                                                     halign: 'center'
                                                     valign: 'middle'

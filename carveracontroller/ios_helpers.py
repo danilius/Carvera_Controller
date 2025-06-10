@@ -6,7 +6,7 @@ import ctypes
 # Present the document picker
 ios_lib = ctypes.CDLL(None)  # Load the main iOS application binary
 
-def pick_nc_file():
+def pick_file():
     try:
         ios_lib.objc_getClass.restype = ctypes.c_void_p
         ios_lib.sel_registerName.restype = ctypes.c_void_p

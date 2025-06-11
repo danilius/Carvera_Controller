@@ -23,6 +23,8 @@ share/python-wheels/
 MANIFEST
 scripts/versionfile.txt
 scripts/backup/
+.buildozer/
+dev-CHANGELOG.md
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -86,5 +88,3 @@ xcuserdata
 project.pbxproj*backup
 packaging_assets/ios/dist
 packaging_assets/ios/carveracontroller-ios/carveracontrollerpkg/*
-
-.buildozer/

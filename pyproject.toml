@@ -4,7 +4,7 @@ requires = [ "poetry-core>=1.0.0",]
 [tool.poetry]
 name = "carvera-controller-community"
 description = "Community developed controller for the Carvera CNC"
-version = "0.0.0"  # version is managed by the build.py script
+version = "0.0.0"
 license = "GPL-2.0"
 readme = "README.md"
 authors = [ "Carvera-Community",]
@@ -23,6 +23,8 @@ python = "<3.14,>=3.9"
 Kivy = "^2.3.1"
 pyserial = "^3.5"
 pyquicklz = "^1.4.1"
+cython = "^3.1.2"
+virtualenv = "^20.31.2"
 
 [tool.poetry.group.dev.dependencies]
 pyinstaller = "^6.11.0"
@@ -35,3 +37,7 @@ toml = "^0.10.2"
 [tool.poetry.group.ios-dev.dependencies.kivy-ios]
 git = "https://github.com/zittix/kivy-ios.git"
 branch = "fix_custom_recipes"
+
+[tool.poetry.group.android-dev.dependencies]
+buildozer = "^1.5.0"
+

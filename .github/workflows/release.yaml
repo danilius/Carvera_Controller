@@ -165,8 +165,60 @@ jobs:
     - name: Publish package to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
 
+  build-android-artifacts:
+    name: build-android-armeabi-v7a
+    runs-on: ${{ matrix.image }}
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [ x64 ]
+        include:
+          - platform: x64
+            image: ubuntu-22.04
+    defaults:
+      run:
+        shell: bash
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v5
+      with:
+        python-version: 3.12
+
+    - name: Install poetry and dependencies
+      uses: ./.github/actions/bootstrap-poetry
+      with:
+        os: linux
+    
+    - name: Install MTDev
+      run: sudo apt-get install -y mtdev-tools gettext
+    
+    # Set up Java 17 required by Gradle
+    - name: Setup Java 17 required by Gradle
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'  # or 'zulu', 'liberica', etc.
+        java-version: '17'
+
+    - name: Install prereqs
+      run: |
+        poetry run ./scripts/install_android_prereqs.sh
+        
+    - name: Build release
+      run: |
+        DATE=$(date +'%Y.%m.%d')
+        xvfb-run poetry run python scripts/build.py --os android --version ${{ github.ref_name }} --automation
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: android-assets-${{ matrix.platform }}
+        path: ${{ github.workspace }}/dist/carveracontroller-community-*.apk
+        retention-days: 2
+
   publish-release:
-    needs: [ build-windows-artifacts, build-macos-artifacts, build-linux-artifacts ]
+    needs: [ build-windows-artifacts, build-macos-artifacts, build-linux-artifacts, build-android-artifacts ]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -177,9 +229,10 @@ jobs:
         uses: actions/download-artifact@v4
 
       - name: Publish release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v2.2.2
         with:
           files: |
             windows-assets-*/carveracontroller-community-*-windows-x64.exe
             macos-assets-*/carveracontroller-community-*.dmg
             linux-assets-*/carveracontroller-community-*.appimage
+            android-assets-*/carveracontroller-community-*.apk

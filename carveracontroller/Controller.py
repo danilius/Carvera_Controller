@@ -527,7 +527,8 @@ class Controller:
         time.sleep(6)
 
     def parseBracketAngle(self, line,):
-        # <Idle|MPos:68.9980,-49.9240,40.0000,12.3456|WPos:68.9980,-49.9240,40.0000,5.3|F:12345.12,100.0|S:1.2,100.0|T:1|L:0>
+        # R: Rotation Angle; G: active Coord System;
+        # <Idle|MPos:68.9980,-49.9240,40.0000,12.3456|WPos:68.9980,-49.9240,40.0000,5.3|R:0.0|G:0|F:12345.12,100.0|S:1.2,100.0|T:1|L:0>
         # F: Feed, overide | S: Spindle RPM
         ln = line[1:-1]  # strip off < .. >
 
@@ -543,6 +544,10 @@ class Controller:
             CNC.vars["rotation_angle"] = float(d['R'][0])
         else:
             CNC.vars["rotation_angle"] = 0.0
+        if 'G' in d:
+            CNC.vars["active_coord_system"] = int(d['G'][0])
+        else:
+            CNC.vars["active_coord_system"] = 0
         CNC.vars["mx"] = float(d['MPos'][0])
         CNC.vars["my"] = float(d['MPos'][1])
         CNC.vars["mz"] = float(d['MPos'][2])

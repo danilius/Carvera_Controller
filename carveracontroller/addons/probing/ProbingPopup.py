@@ -1,26 +1,26 @@
 from kivy.clock import Clock
 from kivy.uix.modalview import ModalView
 
-from carveracontroller.Controller import Controller
-from carveracontroller.addons.probing.operations.OperationsBase import OperationsBase
-from carveracontroller.addons.probing.operations.OutsideCorner.OutsideCornerOperationType import OutsideCornerOperationType
-from carveracontroller.addons.probing.operations.OutsideCorner.OutsideCornerSettings import OutsideCornerSettings
-from carveracontroller.addons.probing.operations.InsideCorner.InsideCornerSettings import InsideCornerSettings
-from carveracontroller.addons.probing.operations.SingleAxis.SingleAxisProbeOperationType import \
+from ... import Controller
+from .operations.OperationsBase import OperationsBase
+from .operations.OutsideCorner.OutsideCornerOperationType import OutsideCornerOperationType
+from .operations.OutsideCorner.OutsideCornerSettings import OutsideCornerSettings
+from .operations.InsideCorner.InsideCornerSettings import InsideCornerSettings
+from .operations.SingleAxis.SingleAxisProbeOperationType import \
     SingleAxisProbeOperationType
-from carveracontroller.addons.probing.operations.SingleAxis.SingleAxisProbeSettings import SingleAxisProbeSettings
-from carveracontroller.addons.probing.preview.ProbingPreviewPopup import ProbingPreviewPopup
+from .operations.SingleAxis.SingleAxisProbeSettings import SingleAxisProbeSettings
+from .preview.ProbingPreviewPopup import ProbingPreviewPopup
 
-from carveracontroller.addons.probing.operations.InsideCorner.InsideCornerOperationType import InsideCornerOperationType
+from .operations.InsideCorner.InsideCornerOperationType import InsideCornerOperationType
 
-from carveracontroller.addons.probing.operations.Bore.BoreOperationType import BoreOperationType
-from carveracontroller.addons.probing.operations.Bore.BoreSettings import BoreSettings
+from .operations.Bore.BoreOperationType import BoreOperationType
+from .operations.Bore.BoreSettings import BoreSettings
 
-from carveracontroller.addons.probing.operations.Boss.BossOperationType import BossOperationType
-from carveracontroller.addons.probing.operations.Boss.BossSettings import BossSettings
+from .operations.Boss.BossOperationType import BossOperationType
+from .operations.Boss.BossSettings import BossSettings
 
-from carveracontroller.addons.probing.operations.Angle.AngleOperationType import AngleOperationType
-from carveracontroller.addons.probing.operations.Angle.AngleSettings import AngleSettings
+from .operations.Angle.AngleOperationType import AngleOperationType
+from .operations.Angle.AngleSettings import AngleSettings
 
 class ProbingPopup(ModalView):
 

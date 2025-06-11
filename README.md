@@ -36,6 +36,7 @@ The Controller software works on the following systems:
 - Linux using x64 CPUs running a Linux distribution with Glibc 2.35 or above (eg. Ubuntu 22.04 or higher)
 - Linux using aarch64 CPUs (eg Raspberyy Pi 3+) running a Linux distribution with Glibc 2.39 or above (eg. Ubuntu 24.04 or higher)
 - Apple iPad with iOS 17.6 or higher
+- Android devices with Android 10 or higher
 - Other systems might be work via the Python Package, see below for more details.
 
 ## Installation
@@ -47,6 +48,7 @@ See the assets section of [latest release](https://github.com/carvera-community/
 - carveracontroller-community-\<version\>-AppleSilicon.dmg - MacOS with Apple CPU (M1 etc)
 - carveracontroller-community-\<version\>-x86_64.appimage - Linux AppImage for x64 systems
 - carveracontroller-community-\<version\>-aarch64.appimage - Linux AppImage for aarch64 systems
+- carveracontroller-community-\<version\>-android-armeabi-v7a.apk - Android installable package
 
 ### Usage: Linux App Images
 
@@ -88,6 +90,7 @@ To contribute to this project or set up a local development environment, follow 
 - [Squashfs-tools](https://github.com/plougher/squashfs-tools) is required if building Linux AppImages. On Debian based systems it's provided by the package `squashfs-tools`. This is only required if packaging for linux.
 - [gettext](https://www.gnu.org/software/gettext/) is required for language file generation. [gettext-iconv-windows](https://mlocati.github.io/articles/gettext-iconv-windows.html) project has a version with Windows packages.
 - For building iOS app, you need a working XCode installation as well as the build tool that can be installed with `brew install autoconf automake libtool pkg-config`
+- Building the Android app needs a Linux host. The prerequisites can be found here: [buildozer prerequisites](https://buildozer.readthedocs.io/en/latest/installation.html). A script to install them is provided in `scripts/install_android_prereqs.sh`. Be aware that buildozer downloads/installs multiple GB of Android development tooling.
 
 ### Installing Poetry
 
@@ -157,10 +160,10 @@ The application is packaged using PyInstaller (except for iOS). This tool conver
 poetry run python scripts/build.py --os os --version version [--no-appimage]
 ```
 
-The options for `os` are windows, macos, linux, pypi or ios. If selecting `linux`, an appimage is built by default unless --no-appimage is specified.
+The options for `os` are windows, macos, linux, pypi, ios or android. If selecting `linux`, an appimage is built by default unless --no-appimage is specified.
 For iOS, the project will be open in XCode and needs to be built from there to simplify the signing process.
 
-The value of `version` should be in the format of X.Y.Z e.g., 1.2.3.
+The value of `version` should be in the format of X.Y.Z e.g., 1.2.3 or v1.2.3.
 
 ### Setting up translations
 

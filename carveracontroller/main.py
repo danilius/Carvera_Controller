@@ -5,6 +5,28 @@ import struct
 # import os
 # os.environ["KIVY_METRICS_DENSITY"] = '1'
 
+def is_android():
+    return 'ANDROID_ARGUMENT' in os.environ or 'ANDROID_PRIVATE' in os.environ or 'ANDROID_APP_PATH' in os.environ
+
+if is_android():
+    try:
+        from jnius import autoclass
+
+        DisplayMetrics = autoclass('android.util.DisplayMetrics')
+        WindowManager = autoclass('android.view.WindowManager')
+        PythonActivity = autoclass('org.kivy.android.PythonActivity')
+
+        activity = PythonActivity.mActivity
+        metrics = DisplayMetrics()
+        activity.getWindowManager().getDefaultDisplay().getMetrics(metrics)
+        screen_width_density  = int(metrics.widthPixels  * 10 / 960) / 10
+        screen_height_density = int(metrics.heightPixels * 10 / 550) / 10
+
+        os.environ["KIVY_METRICS_DENSITY"] = str(min(screen_width_density, screen_height_density))
+
+    except ImportError:
+        print("Pyjnius Import Fail.")
+
 import gettext
 import locale
 from kivy.lang import Observable
@@ -12,7 +34,7 @@ from os.path import dirname, join
 # os.environ['KIVY_GL_DEBUG'] = '1'
 from kivy.core.clipboard import Clipboard
 
-from kivy.utils import platform
+from kivy.utils import platform as kivy_platform
 
 import sys
 import time
@@ -20,7 +42,40 @@ import datetime
 import threading
 import logging
 
-from carveracontroller.addons.probing.ProbingPopup import ProbingPopup
+# Add Android imports
+if kivy_platform == 'android':
+    from android import mActivity
+    from android.storage import primary_external_storage_path
+    from android.permissions import request_permissions, Permission, check_permission
+    from jnius import autoclass
+    Intent = autoclass('android.content.Intent')
+    Settings = autoclass('android.provider.Settings')
+    Environment = autoclass('android.os.Environment')
+
+def has_all_files_access():
+    if kivy_platform == 'android':
+        try:
+            return Environment.isExternalStorageManager()
+        except Exception as e:
+            print(f"Error checking storage manager status: {e}")
+            return False
+    return True
+
+def request_android_permissions():
+    if kivy_platform == 'android':
+        try:
+            # Check if we already have all files access
+            if has_all_files_access():
+                print("Already have all files access permission")
+                return
+
+            # Request all files access permission
+            intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
+            mActivity.startActivity(intent)
+        except Exception as e:
+            print(f"Error requesting permissions: {e}")
+
+from .addons.probing.ProbingPopup import ProbingPopup
 class Lang(Observable):
     observers = []
     lang = None
@@ -196,9 +251,6 @@ def init_lang():
             pass
 
     return default_lang
-
-def is_android():
-    return 'ANDROID_ARGUMENT' in os.environ or 'ANDROID_PRIVATE' in os.environ or 'ANDROID_APP_PATH' in os.environ
 
 def app_base_path():
     """
@@ -1158,10 +1210,14 @@ class LocalRV(DataRV):
     def __init__(self, **kwargs):
         super(LocalRV, self).__init__(**kwargs)
         self.register_event_type('on_select')
-
-        self.curr_dir = os.path.abspath('./gcodes')
-        if not os.path.exists(self.curr_dir):
-            self.curr_dir = os.path.join(os.path.dirname(__file__), 'gcodes')
+        if kivy_platform == 'android':
+            self.curr_dir = os.path.abspath('.carveracontroller/gcodes')
+            if not os.path.exists(self.curr_dir):
+                self.curr_dir = os.path.join(os.path.dirname(__file__), 'carveracontroller/gcodes')
+        else:
+            self.curr_dir = os.path.abspath('./gcodes')
+            if not os.path.exists(self.curr_dir):
+                self.curr_dir = os.path.join(os.path.dirname(__file__), 'gcodes')
         self.curr_dir_name = os.path.basename(os.path.normpath(self.curr_dir))
 
     # -----------------------------------------------------------------------
@@ -1873,17 +1929,19 @@ class Makera(RelativeLayout):
             self.common_local_dir_list.append({'name': tr._('Desktop'), 'path': str(home_path.joinpath('Desktop')), 'icon': 'data/folder-desktop.png'})
 
         # android storage
-        if platform == 'android':
+        if kivy_platform == 'android':
+            print('Android storage permission check')
             try:
-                import android
-                from android.storage import primary_external_storage_path
-                from android.permissions import request_permissions, Permission
-                request_permissions([Permission.READ_EXTERNAL_STORAGE, Permission.WRITE_EXTERNAL_STORAGE])
+                # Request permissions first
+                request_android_permissions()
+                
+                # Add primary storage path
                 android_storage_path = primary_external_storage_path()
-                self.common_local_dir_list.append(
-                    {'name': tr._('Storage'), 'path': str(android_storage_path), 'icon': 'data/folder-home.png'})
-            except:
-                print('Get Android Storage Error!')
+                if android_storage_path and os.path.exists(android_storage_path):
+                    self.common_local_dir_list.append(
+                        {'name': tr._('Storage'), 'path': str(android_storage_path), 'icon': 'data/folder-home.png'})
+            except Exception as e:
+                print(f'Get Android Storage Error: {e}')
 
         # windows disks
         available_drives = ['%s:' % d for d in string.ascii_uppercase if os.path.exists('%s:' % d)]
@@ -1898,8 +1956,12 @@ class Makera(RelativeLayout):
                     folder = Config.get('carvera', 'local_folder_' + str(index + 1))
                     if folder:
                         self.recent_local_dir_list.append(folder)
-            if len(self.recent_local_dir_list) == 0:
-                self.update_recent_local_dir_list(str(os.path.abspath('./gcodes')))
+            if kivy_platform == 'android':
+                if len(self.recent_local_dir_list) == 0:
+                    self.update_recent_local_dir_list(str(os.path.abspath('carveracontroller/gcodes')))
+            else:
+                if len(self.recent_local_dir_list) == 0:
+                    self.update_recent_local_dir_list(str(os.path.abspath('./gcodes')))
 
     def update_recent_local_dir_list(self, new_dir):
         if new_dir in self.recent_local_dir_list:
@@ -4042,28 +4104,14 @@ class MakeraApp(App):
         self.title = tr._('Carvera Controller Community') + ' v' + __version__
         self.icon = os.path.join(os.path.dirname(__file__), 'icon.png')
 
-        return Makera(ctl_version=__version__)
+        return Makera(ctl_version=__version__) 
+    
+    def on_start(self):
+        Window.update_viewport()
 
-def android_tweaks():
-    """Android specific app changes"""
-    try:
-        from jnius import autoclass
 
-        DisplayMetrics = autoclass('android.util.DisplayMetrics')
-        WindowManager = autoclass('android.view.WindowManager')
-        PythonActivity = autoclass('org.kivy.android.PythonActivity')
-
-        activity = PythonActivity.mActivity
-        metrics = DisplayMetrics()
-        activity.getWindowManager().getDefaultDisplay().getMetrics(metrics)
-
-        screen_width_density  = int(metrics.widthPixels  * 10 / 960) / 10
-        screen_height_density = int(metrics.heightPixels * 10 / 550) / 10
-
-        os.environ["KIVY_METRICS_DENSITY"] = str(min(screen_width_density, screen_height_density))
-
-    except ImportError:
-        print("Pyjnius Import Fail.")
+    def on_pause(self):
+        return True
 
 def load_app_configs():
     if Config.has_option('carvera', 'ui_density_override') and Config.get('carvera', 'ui_density_override') == "1":
@@ -4150,8 +4198,6 @@ def load_constants():
 
 
 def main():
-    if is_android():
-        android_tweaks()
 
     # load the global constants
     load_constants()

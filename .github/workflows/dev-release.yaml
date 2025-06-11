@@ -5,15 +5,10 @@ on:
       - develop
 jobs:
   build-windows-artifacts:
-    name: build-windows-${{ matrix.platform }}
+    name: build-windows-x64
     runs-on: windows-latest
     strategy:
       fail-fast: false
-      matrix:
-        platform: [win32]
-        include:
-          - platform: win32
-            arch: x64
     defaults:
       run:
         shell: bash
@@ -144,14 +139,9 @@ jobs:
   
   build-android-artifacts:
     name: build-android-armeabi-v7a
-    runs-on: ${{ matrix.image }}
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
-      matrix:
-        platform: [ 64 ]
-        include:
-          - platform: 64
-            image: ubuntu-22.04
     defaults:
       run:
         shell: bash
@@ -178,9 +168,8 @@ jobs:
         distribution: 'temurin'  # or 'zulu', 'liberica', etc.
         java-version: '17'
 
-    - name: Install prereqs
-      run: |
-        poetry run ./scripts/install_android_prereqs.sh
+    - name: Install android prereqs
+      run: poetry run ./scripts/install_android_prereqs.sh
 
     - name: Build release
       run: |
@@ -211,7 +200,10 @@ jobs:
 
       - name: Download artifacts
         uses: actions/download-artifact@v4
-      
+
+      - name: Generate dev release notes
+        run: python3 ./scripts/dev_release_notes.py
+
       - name: Force move 'dev' tag to latest commit on develop
         run: |
           git tag -f dev
@@ -226,3 +218,4 @@ jobs:
             linux-assets-*/carveracontroller-community-*.appimage
             android-assets-*/carveracontroller-community-*.apk
           tag_name: dev
+          body_path: dev-CHANGELOG.md

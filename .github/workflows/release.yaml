@@ -5,15 +5,10 @@ on:
       - "v*.*.*"
 jobs:
   build-windows-artifacts:
-    name: build-windows-${{ matrix.platform }}
+    name: build-windows-x64
     runs-on: windows-latest
     strategy:
       fail-fast: false
-      matrix:
-        platform: [win32]
-        include:
-          - platform: win32
-            arch: x64
     defaults:
       run:
         shell: bash
@@ -167,14 +162,9 @@ jobs:
 
   build-android-artifacts:
     name: build-android-armeabi-v7a
-    runs-on: ${{ matrix.image }}
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
-      matrix:
-        platform: [ x64 ]
-        include:
-          - platform: x64
-            image: ubuntu-22.04
     defaults:
       run:
         shell: bash

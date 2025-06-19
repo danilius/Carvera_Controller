@@ -12,6 +12,7 @@
 - Enhancement: Controller config option to select what kind of keyboard to use, physical/virtual/both with options for different size virtual
 - Enhancement: Default the values in the Set Origin screen to the current origin offsets
 - Enhancement: 3D visualisation for endmill now is transparent and conical to improve visability
+- Fix: Movements around the A axis were incorrectly visualised as straight lines between points instead of arcs around the rotational axis
 
 [0.8.2]
 - Fix: Linux ARM64 appimage builds

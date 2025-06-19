@@ -9,7 +9,8 @@
 - Enhancement: Initial Android builds
 - Fix: Compressed gcode now stored in temp directory if source directory isn't writable
 - Fix: Fix MDI window showing the keyboard for onscreen keyboard devices on iOS
-- Enhancement: Controller config option to select what kind of keyboard to use, physical/virtual/both with options for different size virtual.
+- Enhancement: Controller config option to select what kind of keyboard to use, physical/virtual/both with options for different size virtual
+- Enhancement: Default the values in the Set Origin screen to the current origin offsets
 
 [0.8.2]
 - Fix: Linux ARM64 appimage builds

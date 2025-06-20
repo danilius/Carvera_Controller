@@ -13,6 +13,7 @@
 - Change: Add UI to select X/Y or X/Y/Z WCS zeroing during 3D probing of corners and boss
 - Enhancement: Controller config option to select what kind of keyboard to use, physical/virtual/both with options for different size virtual
 - Enhancement: Default the values in the Set Origin screen to the current origin offsets
+- Enhancement: Switch to File view after starting gcode playback
 - Enhancement: 3D visualisation for endmill now is transparent and conical to improve visability
 - Fix: Movements around the A axis were incorrectly visualised as straight lines between points instead of arcs around the rotational axis
 

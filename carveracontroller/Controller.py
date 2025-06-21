@@ -504,9 +504,7 @@ class Controller:
         
         self.executeCommand("buffer M600\n")
         self.executeCommand(self.escape(play_command))
-        time.sleep(0.5)
         self.executeCommand(f"goto {start_line}\n")
-        time.sleep(2)  # wait for controller to render up to start_line in the visulisation
         self.executeCommand("resume\n")
 
     def abortCommand(self):

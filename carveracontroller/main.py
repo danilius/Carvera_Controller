@@ -1793,7 +1793,7 @@ class Makera(RelativeLayout):
         self.ctl_version_checked = True
 
     # -----------------------------------------------------------------------
-    def play(self, file_name, start_line):
+    def play(self, file_name):
         # stop review play first
         self.gcode_playing = False
         self.gcode_viewer.dynamic_display = False
@@ -1801,10 +1801,7 @@ class Makera(RelativeLayout):
         self.apply(True)
         # play file
         CNC.vars["playedseconds"] = 0
-        if start_line:
-            self.controller.playStartLineCommand(file_name, start_line)
-        else:
-            self.controller.playCommand(file_name)
+        self.controller.playCommand(file_name)
 
     # -----------------------------------------------------------------------
     def apply(self, buffer = False):

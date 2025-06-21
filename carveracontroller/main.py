@@ -3257,6 +3257,8 @@ class Makera(RelativeLayout):
                     self.tool_data_view.main_text = tr._("Probe")
                 elif CNC.vars["tool"] == 8888:
                     self.tool_data_view.main_text = tr._("Laser")
+                elif CNC.vars["tool"] == 99990:
+                    self.tool_data_view.main_text = tr._("3DProb")
                 else:
                     self.tool_data_view.main_text = "{:.0f}".format(CNC.vars["tool"])
             self.tool_drop_down.status_wpvoltage.value = "{:.2f}v".format(CNC.vars["wpvoltage"])

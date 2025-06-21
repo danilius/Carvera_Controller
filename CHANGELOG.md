@@ -16,6 +16,7 @@
 - Enhancement: Switch to File view after starting gcode playback
 - Enhancement: 3D visualisation for endmill now is transparent and conical to improve visability
 - Fix: Movements around the A axis were incorrectly visualised as straight lines between points instead of arcs around the rotational axis
+- Change: 3D Probe is an option in the "Set" Tool menu. This sets the tool to number 99990
 
 [0.8.2]
 - Fix: Linux ARM64 appimage builds

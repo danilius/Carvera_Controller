@@ -497,6 +497,18 @@ class Controller:
             play_command = "play %s\n" % '/'.join(filename.split('\\')).replace(' ', '\x01')
         self.executeCommand(self.escape(play_command))
 
+    def playStartLineCommand(self, filename, start_line):
+        play_command = "play %s\n" % filename.replace(' ', '\x01')
+        if '\\' in filename:
+            play_command = "play %s\n" % '/'.join(filename.split('\\')).replace(' ', '\x01')
+        
+        self.executeCommand("buffer M600\n")
+        self.executeCommand(self.escape(play_command))
+        time.sleep(0.5)
+        self.executeCommand(f"goto {start_line}\n")
+        time.sleep(2)  # wait for controller to render up to start_line in the visulisation
+        self.executeCommand("resume\n")
+
     def abortCommand(self):
         self.executeCommand("abort\n")
 

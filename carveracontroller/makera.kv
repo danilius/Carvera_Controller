@@ -2865,6 +2865,7 @@
                 BoxLayout:
                     size_hint_y: None
                     height: '25dp'
+                    padding: '5dp', 0, 0, 0
                     disabled: root.mode != 'Run'
                     canvas.before:
                         Color:
@@ -2876,11 +2877,13 @@
                         id: cbx_startline
                     MCQLabel:
                         on_press: cbx_startline._do_press()
-                        text: tr._(' Resume at line:')
+                        text: tr._('  Resume at line:')
                     TextInput:
                         id: txt_startline
                         hint_text: tr._('Number')
                         multiline: False
+                        size_hint_x: None
+                        width: '80dp'  # 10 chars should be enough for anybody :)
                         text: ''
                         halign: "right"
                         input_type: 'number'

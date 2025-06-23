@@ -17,13 +17,15 @@ See the [CHANGELOG](CHANGELOG.md) and [screenshots](docs/screenshots/) for more 
 * **Laser Safety** prompt to **remind** operators to put on **safety glasses**
 * **Multiple developers** with their own **Carvera** machines _"drinking their own [software] champagne"_ daily and working to improve the machine's capabilities.
 * Various **Quality-of-life** improvements:
-   * **Controller config settings** (UI Density, screensaver disable, Allow MDI while machine running)
-   * Enclosure **light switch toggle** in the center control panel
+   * **Controller config settings** (UI Density, screensaver disable, Allow MDI while machine running, virtual keyboard)
+   * **Enclosure light** and **External Ouput** switch toggle in the center control panel
    * Machine **reconnect** functionality with stored last used **machine network address**
+   * **Set Origin** Screen pre-populated with **current** offset values
    * **Collet Clamp/Unclamp** buttons in Tool Changer menu for the original Carvera
    * Better file browser **upload-and-select** workflow
    * **Previous** file browsing location is **reopened** and **previously** used locations stored to **quick access list**
    * **Greater speed/feed** override scaling range from **10%** and up to **300%**
+   * **Improved** 3D gcode visualisations, including **correct rendering** of movements around the **A axis**
 
 
 ## Supported OS

@@ -8,6 +8,7 @@ import sys
 import time
 import threading
 import webbrowser
+import math
 
 from datetime import datetime
 
@@ -325,6 +326,12 @@ class Controller:
         else:
             self.executeCommand("M822\n")
 
+    def setExternalControl(self, pwm=100):
+        if pwm > 0:
+            self.executeCommand("M851 S%g\n" % (pwm))
+        else:
+            self.executeCommand("M852\n")
+
     def setToolSensorSwitch(self, switch):
         if switch:
             self.executeCommand("M831\n")
@@ -520,7 +527,8 @@ class Controller:
         time.sleep(6)
 
     def parseBracketAngle(self, line,):
-        # <Idle|MPos:68.9980,-49.9240,40.0000,12.3456|WPos:68.9980,-49.9240,40.0000,5.3|F:12345.12,100.0|S:1.2,100.0|T:1|L:0>
+        # R: Rotation Angle; G: active Coord System;
+        # <Idle|MPos:68.9980,-49.9240,40.0000,12.3456|WPos:68.9980,-49.9240,40.0000,5.3|R:0.0|G:0|F:12345.12,100.0|S:1.2,100.0|T:1|L:0>
         # F: Feed, overide | S: Spindle RPM
         ln = line[1:-1]  # strip off < .. >
 
@@ -532,6 +540,14 @@ class Controller:
 
         # strip of rest into a dict of name: [values,...,]
         d = {a: [float(y) for y in b.split(',')] for a, b in [x.split(':') for x in l[1:]]}
+        if 'R' in d:
+            CNC.vars["rotation_angle"] = float(d['R'][0])
+        else:
+            CNC.vars["rotation_angle"] = 0.0
+        if 'G' in d:
+            CNC.vars["active_coord_system"] = int(d['G'][0])
+        else:
+            CNC.vars["active_coord_system"] = 0
         CNC.vars["mx"] = float(d['MPos'][0])
         CNC.vars["my"] = float(d['MPos'][1])
         CNC.vars["mz"] = float(d['MPos'][2])
@@ -543,8 +559,8 @@ class Controller:
         CNC.vars["wy"] = float(d['WPos'][1])
         CNC.vars["wz"] = float(d['WPos'][2])
         CNC.vars["wa"] = 0.0
-        CNC.vars["wcox"] = round(CNC.vars["mx"] - CNC.vars["wx"], 3)
-        CNC.vars["wcoy"] = round(CNC.vars["my"] - CNC.vars["wy"], 3)
+        CNC.vars["wcox"] = round(CNC.vars["mx"] - (math.cos(CNC.vars["rotation_angle"] * math.pi / 180) * CNC.vars["wx"] - math.sin(CNC.vars["rotation_angle"] * math.pi / 180) * CNC.vars["wy"]), 3)
+        CNC.vars["wcoy"] = round(CNC.vars["my"] - (math.sin(CNC.vars["rotation_angle"] * math.pi / 180) * CNC.vars["wx"] + math.cos(CNC.vars["rotation_angle"] * math.pi / 180) * CNC.vars["wy"]), 3)
         CNC.vars["wcoz"] = round(CNC.vars["mz"] - CNC.vars["wz"], 3)
         CNC.vars["wcoa"] = round(CNC.vars["mz"] - CNC.vars["wz"], 3)
         if 'F' in d:

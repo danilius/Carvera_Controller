@@ -5,6 +5,28 @@ import struct
 # import os
 # os.environ["KIVY_METRICS_DENSITY"] = '1'
 
+def is_android():
+    return 'ANDROID_ARGUMENT' in os.environ or 'ANDROID_PRIVATE' in os.environ or 'ANDROID_APP_PATH' in os.environ
+
+if is_android():
+    try:
+        from jnius import autoclass
+
+        DisplayMetrics = autoclass('android.util.DisplayMetrics')
+        WindowManager = autoclass('android.view.WindowManager')
+        PythonActivity = autoclass('org.kivy.android.PythonActivity')
+
+        activity = PythonActivity.mActivity
+        metrics = DisplayMetrics()
+        activity.getWindowManager().getDefaultDisplay().getMetrics(metrics)
+        screen_width_density  = int(metrics.widthPixels  * 10 / 960) / 10
+        screen_height_density = int(metrics.heightPixels * 10 / 550) / 10
+
+        os.environ["KIVY_METRICS_DENSITY"] = str(min(screen_width_density, screen_height_density))
+
+    except ImportError:
+        print("Pyjnius Import Fail.")
+
 import gettext
 import locale
 from kivy.lang import Observable
@@ -12,7 +34,7 @@ from os.path import dirname, join
 # os.environ['KIVY_GL_DEBUG'] = '1'
 from kivy.core.clipboard import Clipboard
 
-from kivy.utils import platform
+from kivy.utils import platform as kivy_platform
 
 import sys
 import time
@@ -20,7 +42,40 @@ import datetime
 import threading
 import logging
 
-from carveracontroller.addons.probing.ProbingPopup import ProbingPopup
+# Add Android imports
+if kivy_platform == 'android':
+    from android import mActivity
+    from android.storage import primary_external_storage_path
+    from android.permissions import request_permissions, Permission, check_permission
+    from jnius import autoclass
+    Intent = autoclass('android.content.Intent')
+    Settings = autoclass('android.provider.Settings')
+    Environment = autoclass('android.os.Environment')
+
+def has_all_files_access():
+    if kivy_platform == 'android':
+        try:
+            return Environment.isExternalStorageManager()
+        except Exception as e:
+            print(f"Error checking storage manager status: {e}")
+            return False
+    return True
+
+def request_android_permissions():
+    if kivy_platform == 'android':
+        try:
+            # Check if we already have all files access
+            if has_all_files_access():
+                print("Already have all files access permission")
+                return
+
+            # Request all files access permission
+            intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
+            mActivity.startActivity(intent)
+        except Exception as e:
+            print(f"Error requesting permissions: {e}")
+
+from .addons.probing.ProbingPopup import ProbingPopup
 class Lang(Observable):
     observers = []
     lang = None
@@ -92,7 +147,7 @@ from kivy.uix.behaviors import FocusBehavior
 from kivy.uix.recycleview.layout import LayoutSelectionBehavior
 from kivy.uix.label import Label
 from kivy.properties import BooleanProperty
-from kivy.graphics import Color, Rectangle, Ellipse, Line
+from kivy.graphics import Color, Rectangle, Ellipse, Line, PushMatrix, PopMatrix, Translate, Rotate
 from kivy.properties import ObjectProperty, NumericProperty, ListProperty
 from kivy.config import Config
 from kivy.metrics import Metrics
@@ -196,9 +251,6 @@ def init_lang():
             pass
 
     return default_lang
-
-def is_android():
-    return 'ANDROID_ARGUMENT' in os.environ or 'ANDROID_PRIVATE' in os.environ or 'ANDROID_APP_PATH' in os.environ
 
 def app_base_path():
     """
@@ -308,6 +360,25 @@ class OriginPopup(ModalView):
     def __init__(self, coord_popup, **kwargs):
         self.coord_popup = coord_popup
         super(OriginPopup, self).__init__(**kwargs)
+
+    def on_open(self):
+        super().on_open()
+        # Use the same logic as CoordPopup.load_origin_label to set offsets
+        app = App.get_running_app()
+        if app.has_4axis:
+            x = round(CNC.vars["wcox"] - CNC.vars['anchor1_x'] - CNC.vars['rotation_offset_x'], 4)
+            y = round(CNC.vars['wcoy'] - CNC.vars['anchor1_y'] - CNC.vars['rotation_offset_y'], 4)
+        else:
+            laser_x = CNC.vars['laser_module_offset_x'] if CNC.vars['lasermode'] else 0.0
+            laser_y = CNC.vars['laser_module_offset_y'] if CNC.vars['lasermode'] else 0.0
+            if self.coord_popup.config['origin']['anchor'] == 2:
+                x = round(CNC.vars['wcox'] + laser_x - CNC.vars["anchor1_x"] - CNC.vars["anchor2_offset_x"], 4)
+                y = round(CNC.vars['wcoy'] + laser_y - CNC.vars["anchor1_y"] - CNC.vars["anchor2_offset_y"], 4)
+            else:
+                x = round(CNC.vars['wcox'] + laser_x - CNC.vars["anchor1_x"], 4)
+                y = round(CNC.vars['wcoy'] + laser_y - CNC.vars["anchor1_y"], 4)
+        self.txt_x_offset.text = str(x)
+        self.txt_y_offset.text = str(y)
 
     def selected_anchor(self):
         if self.cbx_anchor2.active:
@@ -681,7 +752,7 @@ class MakeraConfigPanel(SettingsWithSidebar):
     def on_config_change(self, config, section, key, value):
         app = App.get_running_app()
         if not app.root.config_loading:
-            if section in ['carvera', 'graphics']:
+            if section in ['carvera', 'graphics', 'kivy']:
                 app.root.controller_setting_change_list[key] = value
                 app.root.config_popup.btn_apply.disabled = False
             elif section != 'Restore':
@@ -870,31 +941,41 @@ class CNCWorkspace(Widget):
 
             # work area
             Color(0, 0.8, 0, 1)
-            Line(width=(2 if self.config['margin']['active'] else 1), rectangle=(self.x + (origin_x + CNC.vars['xmin']) * zoom, self.y + (origin_y + CNC.vars['ymin']) * zoom,
-                                     (CNC.vars['xmax'] - CNC.vars['xmin']) * zoom, (CNC.vars['ymax'] - CNC.vars['ymin']) * zoom))
+            PushMatrix()
+            Translate(self.x + origin_x * zoom, self.y + origin_y * zoom)
+            Rotate(angle=CNC.vars['rotation_angle'])  # Use degrees directly
+            Line(width=(2 if self.config['margin']['active'] else 1), 
+                 rectangle=(CNC.vars['xmin'] * zoom, CNC.vars['ymin'] * zoom,
+                           (CNC.vars['xmax'] - CNC.vars['xmin']) * zoom, 
+                           (CNC.vars['ymax'] - CNC.vars['ymin']) * zoom))
+            PopMatrix()
 
             # z probe
             if self.config['zprobe']['active']:
                 Color(231 / 255, 76 / 255, 60 / 255, 1)
-                zprobe_x = self.config['zprobe']['x_offset'] + (origin_x if self.config['zprobe']['origin'] == 1 else origin_x + CNC.vars['xmin'])
-                zprobe_y = self.config['zprobe']['y_offset'] + (origin_y if self.config['zprobe']['origin'] == 1 else origin_y + CNC.vars['ymin'])
-                if self.config['leveling']['active']:
-                    zprobe_x = self.config['zprobe']['x_offset'] + (origin_x if self.config['zprobe']['origin'] == 1 else origin_x + CNC.vars['xmin'])
-                    zprobe_y = self.config['zprobe']['y_offset'] + (origin_y if self.config['zprobe']['origin'] == 1 else origin_y + CNC.vars['ymin'])
-
                 if app.has_4axis:
                     zprobe_x = CNC.vars['rotation_offset_x'] + CNC.vars['anchor_width'] - 3.0
                     zprobe_y = CNC.vars['rotation_offset_y'] + CNC.vars['anchor_width']
-                Ellipse(pos=(self.x + zprobe_x * zoom - 7.5, self.y + zprobe_y * zoom - 7.5), size=(15, 15))
-
+                else:
+                    zprobe_x = self.config['zprobe']['x_offset'] + (0 if self.config['zprobe']['origin'] == 1 else CNC.vars['xmin'])
+                    zprobe_y = self.config['zprobe']['y_offset'] + (0 if self.config['zprobe']['origin'] == 1 else CNC.vars['ymin'])
+                
+                PushMatrix()
+                Translate(self.x + origin_x * zoom, self.y + origin_y * zoom)
+                Rotate(angle=CNC.vars['rotation_angle'])
+                Ellipse(pos=(zprobe_x * zoom - 7.5, zprobe_y * zoom - 7.5), size=(15, 15))
+                PopMatrix()
 
             # auto leveling
             if self.config['leveling']['active']:
                 Color(244/255, 208/255, 63/255, 1)
+                PushMatrix()
+                Translate(self.x + origin_x * zoom, self.y + origin_y * zoom)
+                Rotate(angle=CNC.vars['rotation_angle'])
                 for x in Utils.xfrange(self.config['leveling']['xn_offset'], CNC.vars['xmax'] - CNC.vars['xmin'] - self.config['leveling']['xp_offset'], self.config['leveling']['x_points']):
                     for y in Utils.xfrange(self.config['leveling']['yn_offset'], CNC.vars['ymax'] - CNC.vars['ymin']-self.config['leveling']['yp_offset'], self.config['leveling']['y_points']):
-                        Ellipse(pos=(self.x + (origin_x + CNC.vars['xmin'] + x) * zoom - 5, self.y + (origin_y + CNC.vars['ymin'] + y) * zoom - 5), size=(10, 10))
-                        # print('x=%f, y=%f' % (x, y))
+                        Ellipse(pos=((CNC.vars['xmin'] + x) * zoom - 5, (CNC.vars['ymin'] + y) * zoom - 5), size=(10, 10))
+                PopMatrix()
 
 
     def on_draw(self, obj, value):
@@ -1148,10 +1229,14 @@ class LocalRV(DataRV):
     def __init__(self, **kwargs):
         super(LocalRV, self).__init__(**kwargs)
         self.register_event_type('on_select')
-
-        self.curr_dir = os.path.abspath('./gcodes')
-        if not os.path.exists(self.curr_dir):
-            self.curr_dir = os.path.join(os.path.dirname(__file__), 'gcodes')
+        if kivy_platform == 'android':
+            self.curr_dir = os.path.abspath('.carveracontroller/gcodes')
+            if not os.path.exists(self.curr_dir):
+                self.curr_dir = os.path.join(os.path.dirname(__file__), 'carveracontroller/gcodes')
+        else:
+            self.curr_dir = os.path.abspath('./gcodes')
+            if not os.path.exists(self.curr_dir):
+                self.curr_dir = os.path.join(os.path.dirname(__file__), 'gcodes')
         self.curr_dir_name = os.path.basename(os.path.normpath(self.curr_dir))
 
     # -----------------------------------------------------------------------
@@ -1434,6 +1519,7 @@ class Makera(RelativeLayout):
         'laser_switch':       [0.0, 0],
         'laser_slider':       [0.0, 0],
         'light_switch':       [0.0, 0],
+        'ext_control':        [0.0, 0],
         'tool_sensor_switch': [0.0, 0],
         'air_switch':         [0.0, 0],
         'wp_charge_switch'  : [0.0, 0],
@@ -1568,6 +1654,10 @@ class Makera(RelativeLayout):
         # status switch timer
         Clock.schedule_interval(self.switch_status, 8)
 
+        self.has_onscreen_keyboard = False
+        if sys.platform == "ios":
+            self.has_onscreen_keyboard = True
+
         #
         threading.Thread(target=self.monitorSerial).start()
 
@@ -1606,6 +1696,17 @@ class Makera(RelativeLayout):
     
     def open_fw_download(self):
         webbrowser.open(FW_DOWNLOAD_ADDRESS, new = 2)
+
+    def open_fw_upload(self):
+        self.file_popup.firmware_mode = True
+        if sys.platform == 'ios':
+            from . import ios_helpers
+            ios_helpers.pick_file()
+        else:
+            self.file_popup.popup_manager.transition.duration = 0
+            self.file_popup.popup_manager.current = 'local_page'
+            self.file_popup.open()
+            self.file_popup.local_rv.child_dir('')
     
     def send_bug_report(self):
         webbrowser.open('https://github.com/Carvera-Community/Carvera_Controller/issues')
@@ -1847,17 +1948,19 @@ class Makera(RelativeLayout):
             self.common_local_dir_list.append({'name': tr._('Desktop'), 'path': str(home_path.joinpath('Desktop')), 'icon': 'data/folder-desktop.png'})
 
         # android storage
-        if platform == 'android':
+        if kivy_platform == 'android':
+            print('Android storage permission check')
             try:
-                import android
-                from android.storage import primary_external_storage_path
-                from android.permissions import request_permissions, Permission
-                request_permissions([Permission.READ_EXTERNAL_STORAGE, Permission.WRITE_EXTERNAL_STORAGE])
+                # Request permissions first
+                request_android_permissions()
+                
+                # Add primary storage path
                 android_storage_path = primary_external_storage_path()
-                self.common_local_dir_list.append(
-                    {'name': tr._('Storage'), 'path': str(android_storage_path), 'icon': 'data/folder-home.png'})
-            except:
-                print('Get Android Storage Error!')
+                if android_storage_path and os.path.exists(android_storage_path):
+                    self.common_local_dir_list.append(
+                        {'name': tr._('Storage'), 'path': str(android_storage_path), 'icon': 'data/folder-home.png'})
+            except Exception as e:
+                print(f'Get Android Storage Error: {e}')
 
         # windows disks
         available_drives = ['%s:' % d for d in string.ascii_uppercase if os.path.exists('%s:' % d)]
@@ -1872,8 +1975,12 @@ class Makera(RelativeLayout):
                     folder = Config.get('carvera', 'local_folder_' + str(index + 1))
                     if folder:
                         self.recent_local_dir_list.append(folder)
-            if len(self.recent_local_dir_list) == 0:
-                self.update_recent_local_dir_list(str(os.path.abspath('./gcodes')))
+            if kivy_platform == 'android':
+                if len(self.recent_local_dir_list) == 0:
+                    self.update_recent_local_dir_list(str(os.path.abspath('carveracontroller/gcodes')))
+            else:
+                if len(self.recent_local_dir_list) == 0:
+                    self.update_recent_local_dir_list(str(os.path.abspath('./gcodes')))
 
     def update_recent_local_dir_list(self, new_dir):
         if new_dir in self.recent_local_dir_list:
@@ -2263,7 +2370,7 @@ class Makera(RelativeLayout):
         # For iOS we use the native file picker
         if sys.platform == 'ios':
             from . import ios_helpers
-            ios_helpers.pick_nc_file()
+            ios_helpers.pick_file()
             return
         self.file_popup.firmware_mode = False
         self.file_popup.popup_manager.transition.direction = 'left'
@@ -2666,36 +2773,46 @@ class Makera(RelativeLayout):
     # -----------------------------------------------------------------------
     def compress_file(self,input_filename):
         try:
-            # 如果上传的文件为固件，则直接返回原文件名不进行压缩
+            # If the uploaded file is a firmware file, return the original filename without compression.
             if input_filename.find('.bin') != -1:
                 return input_filename
-            # 打开输入文件和输出文件
-            output_filename = input_filename + '.lz'
+
+            # Check if the filename.lz is writeable
+            can_write_in_lz = os.access(input_filename + '.lz', os.W_OK)
+            if not can_write_in_lz:
+                print(f"Compression failed: Cannot write to '{input_filename}.lz', using temp dir")
+                # First copy the file to the temp dir
+                shutil.copy(input_filename, self.temp_dir)
+                input_filename = os.path.join(self.temp_dir, os.path.basename(input_filename))
+                # Then compress the file to the temp dir
+                output_filename = os.path.join(self.temp_dir, os.path.basename(input_filename) + '.lz')
+            else:
+                output_filename = input_filename + '.lz'
             sum = 0
             self.fileCompressionBlocks = 0
             self.decompercent = 0
             self.decompercentlast = 0
             with open(input_filename, 'rb') as f_in, open(output_filename, 'wb') as f_out:
                 while True:
-                    # 读取块数据
+                    # Read block data
                     block = f_in.read(BLOCK_SIZE)
                     if not block:
                         break
-                    # 计算sum和
+                    # Calculate the sum
                     for byte in block:
                         sum += byte
-                    # 压缩块数据
+                    # Compress the block data
                     compressed_block = quicklz.compress(block)
 
-                    # 计算压缩后数据库的大小
+                    # Calculate the size of the compressed data block
                     cmprs_size = len(compressed_block)
                     buffer_hdr = struct.pack('>I', cmprs_size)
-                    # 写入压缩后的块数据的长度到输出文件
+                    # Write the length of the compressed data block to the output file
                     f_out.write(buffer_hdr)
-                    # 写入压缩后的块数据到输出文件
+                    # Write the compressed data block to the output file
                     f_out.write(compressed_block)
                     self.fileCompressionBlocks += 1
-                # 写入校验和
+                # Write the checksum
                 sumdata = struct.pack('>H', sum & 0xffff)
                 f_out.write(sumdata)
 
@@ -2839,7 +2956,7 @@ class Makera(RelativeLayout):
             if not self.file_popup.firmware_mode:
                 self.update_recent_local_dir_list(os.path.dirname(self.uploading_file))
 
-            # 如果为压缩后的'.lz'文件则等待解压缩完成
+            # If it is a compressed ''.lz' file, wait for the decompression to complete.
             if self.uploading_file.endswith('.lz'):
                 self.log = logging.getLogger('File.Decompress')
                 self.decompstatus = True
@@ -2853,6 +2970,9 @@ class Makera(RelativeLayout):
                 callback(remotename[:-3], origin_path)
             else:
                 callback(remotename, local_path)
+        # For iOS we display the file list remotely only so we need to refresh it but on main thread
+        if upload_result and not self.file_popup.firmware_mode and not self.uploading_file.endswith('.lz'):
+            Clock.schedule_once(self.file_popup.remote_rv.current_dir, 0)
 
 
     # -----------------------------------------------------------------------
@@ -2961,6 +3081,8 @@ class Makera(RelativeLayout):
         Clock.schedule_once(partial(self.progressUpdate, value * 100.0 / self.fileCompressionBlocks, '', True), 0)
         if value == self.fileCompressionBlocks:
             Clock.schedule_once(self.progressFinish, 0)
+            # Refresh the remote dir since upload finished
+            Clock.schedule_once(self.file_popup.remote_rv.current_dir, 0)
             self.decompstatus = False
 
     # -----------------------------------------------------------------------
@@ -3132,6 +3254,8 @@ class Makera(RelativeLayout):
                     self.tool_data_view.main_text = tr._("Probe")
                 elif CNC.vars["tool"] == 8888:
                     self.tool_data_view.main_text = tr._("Laser")
+                elif CNC.vars["tool"] == 99990:
+                    self.tool_data_view.main_text = tr._("3DProb")
                 else:
                     self.tool_data_view.main_text = "{:.0f}".format(CNC.vars["tool"])
             self.tool_drop_down.status_wpvoltage.value = "{:.2f}v".format(CNC.vars["wpvoltage"])
@@ -3501,60 +3625,79 @@ class Makera(RelativeLayout):
                 return False
             with open(config_file, 'r') as fd:
                 data = json.loads(fd.read())
-                basic_config = []
-                advanced_config = []
-                restore_config = []
-                self.setting_type_list.clear()
-                for setting in data:
-                    if 'key' in setting and 'default' in setting:
-                        self.setting_default_list[setting['key']] = setting['default']
-                    if 'type' in setting:
-                        has_setting = False
-                        if setting['type'] != 'title':
-                            if 'key' in setting and 'section' in setting and setting['key'] in self.setting_list:
-                                has_setting = True
-                                self.config.setdefaults(setting['section'], {
-                                    setting['key']: Utils.from_config(setting['type'],
-                                                                      self.setting_list[setting['key']])})
-                                self.setting_type_list[setting['key']] = setting['type']
-                            elif 'default' in setting:
-                                has_setting = True
-                                self.config.setdefaults(setting['section'], {setting['key']: Utils.from_config(setting['type'], setting['default'])})
-                                self.setting_type_list[setting['key']] = setting['type']
-                                self.setting_change_list[setting['key']] = setting['default']
-                                self.controller.log.put(
-                                    (Controller.MSG_NORMAL, 'Can not load config, Key: {}'.format(setting['key'])))
-                            elif setting['key'].lower() != 'restore' and setting['key'].lower() != 'default' :
-                                self.controller.log.put((Controller.MSG_ERROR, 'Load config error, Key: {}'.format(setting['key'])))
-                                self.controller.close()
-                                self.updateStatus()
-                                return False
-                        else:
+
+            app = App.get_running_app()
+            if app.model == 'CA1':
+                # The Carvera Air generally uses the same default values as the original Carvera
+                # However if there are any differences we store them in a seperate config file
+            
+                ca1_config_diff_file = os.path.join(os.path.dirname(__file__), "config_ca1_diff.json")
+                with open(ca1_config_diff_file, 'r') as fd:
+                    ca1_diff_data = json.loads(fd.read())
+
+                for ca1_diff_setting in ca1_diff_data:
+                    for setting in data:
+                        if (ca1_diff_setting.get("key") == setting.get("key")) and (ca1_diff_setting.get("section") == setting.get("section")):
+                            setting.update(ca1_diff_setting)
+            
+            basic_config = []
+            advanced_config = []
+            restore_config = []
+            self.setting_type_list.clear()
+            for setting in data:
+                if 'key' in setting and 'default' in setting:
+                    self.setting_default_list[setting['key']] = setting['default']
+                if 'type' in setting:
+                    has_setting = False
+                    if setting['type'] != 'title':
+                        if 'key' in setting and 'section' in setting and setting['key'] in self.setting_list:
                             has_setting = True
-                        # construct json objects
-                        if has_setting:
-                            if 'section' in setting and setting['section'] == 'Basic':
-                                basic_config.append(setting)
-                            elif 'section' in setting and setting['section'] == 'Advanced':
-                                advanced_config.append(setting)
-                        elif 'section' in setting and setting['section'] == 'Restore':
                             self.config.setdefaults(setting['section'], {
-                                setting['key']: Utils.from_config(setting['type'], '')})
-                            restore_config.append(setting)
-                # clear title section
-                for basic in basic_config:
-                    if basic['type'] == 'title' and 'section' in basic:
-                        basic.pop('section')
-                    elif 'default' in basic:
-                        basic.pop('default')
-                for advanced in advanced_config:
-                    if advanced['type'] == 'title' and 'section' in advanced:
-                        advanced.pop('section')
-                    elif 'default' in advanced:
-                        advanced.pop('default')
-                self.config_popup.settings_panel.add_json_panel('Machine - Basic', self.config, data=json.dumps(basic_config))
-                self.config_popup.settings_panel.add_json_panel('Machine - Advanced', self.config, data=json.dumps(advanced_config))
-                self.config_popup.settings_panel.add_json_panel('Machine - Restore', self.config, data=json.dumps(restore_config))
+                                setting['key']: Utils.from_config(setting['type'],
+                                                                    self.setting_list[setting['key']])})
+                            self.setting_type_list[setting['key']] = setting['type']
+                        elif 'default' in setting:
+                            has_setting = True
+                            self.config.setdefaults(setting['section'], {setting['key']: Utils.from_config(setting['type'], setting['default'])})
+                            self.setting_type_list[setting['key']] = setting['type']
+                            self.setting_change_list[setting['key']] = setting['default']
+                            # This warning message doesn't make sense since settings values not in config.txt will just use the firmware default value.
+                            #
+                            # Until functionality is added to the firmware to output the complete settings values we should not display such messages
+                            #
+                            # self.controller.log.put(
+                            #     (Controller.MSG_NORMAL, 'Can not load config, Key: {}'.format(setting['key'])))
+                        elif setting['key'].lower() != 'restore' and setting['key'].lower() != 'default' :
+                            self.controller.log.put((Controller.MSG_ERROR, 'Load config error, Key: {}'.format(setting['key'])))
+                            self.controller.close()
+                            self.updateStatus()
+                            return False
+                    else:
+                        has_setting = True
+                    # construct json objects
+                    if has_setting:
+                        if 'section' in setting and setting['section'] == 'Basic':
+                            basic_config.append(setting)
+                        elif 'section' in setting and setting['section'] == 'Advanced':
+                            advanced_config.append(setting)
+                    elif 'section' in setting and setting['section'] == 'Restore':
+                        self.config.setdefaults(setting['section'], {
+                            setting['key']: Utils.from_config(setting['type'], '')})
+                        restore_config.append(setting)
+            # clear title section
+            for basic in basic_config:
+                if basic['type'] == 'title' and 'section' in basic:
+                    basic.pop('section')
+                elif 'default' in basic:
+                    basic.pop('default')
+            for advanced in advanced_config:
+                if advanced['type'] == 'title' and 'section' in advanced:
+                    advanced.pop('section')
+                elif 'default' in advanced:
+                    advanced.pop('default')
+            self.config_popup.settings_panel.add_json_panel('Machine - Basic', self.config, data=json.dumps(basic_config))
+            self.config_popup.settings_panel.add_json_panel('Machine - Advanced', self.config, data=json.dumps(advanced_config))
+            self.config_popup.settings_panel.add_json_panel('Machine - Restore', self.config, data=json.dumps(restore_config))
         return True
 
     # -----------------------------------------------------------------------
@@ -3982,28 +4125,14 @@ class MakeraApp(App):
         self.title = tr._('Carvera Controller Community') + ' v' + __version__
         self.icon = os.path.join(os.path.dirname(__file__), 'icon.png')
 
-        return Makera(ctl_version=__version__)
+        return Makera(ctl_version=__version__) 
+    
+    def on_start(self):
+        Window.update_viewport()
 
-def android_tweaks():
-    """Android specific app changes"""
-    try:
-        from jnius import autoclass
 
-        DisplayMetrics = autoclass('android.util.DisplayMetrics')
-        WindowManager = autoclass('android.view.WindowManager')
-        PythonActivity = autoclass('org.kivy.android.PythonActivity')
-
-        activity = PythonActivity.mActivity
-        metrics = DisplayMetrics()
-        activity.getWindowManager().getDefaultDisplay().getMetrics(metrics)
-
-        screen_width_density  = int(metrics.widthPixels  * 10 / 960) / 10
-        screen_height_density = int(metrics.heightPixels * 10 / 550) / 10
-
-        os.environ["KIVY_METRICS_DENSITY"] = str(min(screen_width_density, screen_height_density))
-
-    except ImportError:
-        print("Pyjnius Import Fail.")
+    def on_pause(self):
+        return True
 
 def load_app_configs():
     if Config.has_option('carvera', 'ui_density_override') and Config.get('carvera', 'ui_density_override') == "1":
@@ -4090,8 +4219,6 @@ def load_constants():
 
 
 def main():
-    if is_android():
-        android_tweaks()
 
     # load the global constants
     load_constants()

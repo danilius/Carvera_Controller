@@ -1,3 +1,23 @@
+[0.9.0]
+- Enhancement: Initial support for rotated WCS in visualizations
+- Enhancement: Controller config option to select what kind of keyboard to use, physical/virtual/both with options for different size virtual
+- Enhancement: Default values on the Set Origin screen uses the current origin offsets
+- Enhancement: Switch to File view after starting gcode playback
+- Enhancement: 3D visualisation for endmill now is transparent and conical to improve visability
+- Enhancement: Added Ext Control switch to centre control panel
+- Enhancement: Initial Android builds
+- Enhancement: Support for Carvera Air specific settings
+- Enhancement: Support for the Carvera Air beeper through controller settings
+- Change: Minimum Python version increased to 3.9
+- Change: Controller no longer warns about missing config key values in MDI because it's assumed that firmware defaults are used instead
+- Change: Better wording on the xyz probe screen about block thickness
+- Change: Add UI to select X/Y or X/Y/Z WCS zeroing during 3D probing of corners and boss
+- Change: 3D Probe is an option in the "Set" Tool menu. This sets the tool to number 99990
+- Fix: Compressed gcode now stored in temp directory if source directory isn't writable
+- Fix: Fix MDI window showing the keyboard for onscreen keyboard devices on iOS
+- Fix: Invisible jog control panel buttons clickable when panel disabled.
+- Fix: Movements around the A axis were incorrectly visualised as straight lines between points instead of arcs around the rotational axis
+
 [0.8.2]
 - Fix: Linux ARM64 appimage builds
 - Change: Minimum Linux X64 appimage build requires running a Linux distribution with Glibc 2.35 or above (eg. Ubuntu 22.04 or higher)

@@ -3,19 +3,20 @@ from __future__ import annotations
 
 import argparse
 import logging
+import re
+import shutil
 import subprocess
 import sys
 import os
 import platform
+import toml
 from glob import glob
 from pathlib import Path
 
 import PyInstaller.__main__
 import pyinstaller_versionfile
-from dunamai import Version
 from ruamel.yaml import YAML
 
-import patch_pyinstaller
 from update_translations import compile_mo
 
 logger = logging.getLogger(__name__)
@@ -98,10 +99,6 @@ def build_pyinstaller_args(
 def run_pyinstaller(build_args: list[str]) -> None:
     PyInstaller.__main__.run(build_args)
 
-def get_version_info() -> str:
-    version_str = Version.from_any_vcs().serialize()
-    logger.info(f"Version determined to be {version_str}")
-    return version_str
 
 def generate_versionfile(package_version: str, output_filename: str) -> Path:
     logger.info("Generate versionfile.txt.")
@@ -119,8 +116,9 @@ def generate_versionfile(package_version: str, output_filename: str) -> Path:
 
     return versionfile_path
 
-def run_appimage_builder()-> None:
-    revise_appimage_definition()
+
+def run_appimage_builder(package_version: str)-> None:
+    revise_appimage_definition(package_version)
     command = f"appimage-builder --recipe {ROOT_ASSETS_PATH}/AppImageBuilder.yml"
     result = subprocess.run(command, shell=True, capture_output=False, text=True)
     if result.returncode != 0:
@@ -136,7 +134,7 @@ def remove_shared_libraries(freeze_dir, *filename_patterns):
             os.remove(file_path)
 
 
-def revise_appimage_definition():
+def revise_appimage_definition(package_version: str):
     yaml = YAML()
     with open(f"{ROOT_ASSETS_PATH}/AppImageBuilder-template.yml") as file:
         appimage_def = yaml.load(file)
@@ -145,7 +143,7 @@ def revise_appimage_definition():
     appimage_def["AppImage"]["arch"] = platform.machine()
 
     # version
-    appimage_def["AppDir"]["app_info"]["version"] = get_version_info()
+    appimage_def["AppDir"]["app_info"]["version"] = package_version
 
     with open(f"{ROOT_ASSETS_PATH}/AppImageBuilder.yml", 'wb') as file:
         yaml.dump(appimage_def, file)
@@ -159,69 +157,304 @@ def fix_macos_version_string(version)-> None:
         logger.error(f"stderr: {result.stderr}")
         sys.exit(result.returncode)
 
+
+def codegen_version_string(package_version: str, project_path: str, root_path: str)-> None:
+    # Update the __version__.py file used by the project
+    with open(project_path.joinpath("__version__.py").resolve(), "w") as f:
+        f.write(f"__version__ = '{package_version}'\n")
+    
+    # Update the value of `version` in` pyproject.toml
+    pyproject_path = root_path.joinpath("pyproject.toml").resolve()
+    data = toml.load(pyproject_path)
+    if "tool" not in data or "poetry" not in data["tool"]:
+        raise ValueError("[tool.poetry] section not found in pyproject.toml")
+    data["tool"]["poetry"]["version"] = package_version
+    with open(pyproject_path, "w", encoding="utf-8") as f:
+        toml.dump(data, f)
+
+
+def backup_codegen_files(root_path, project_path):
+    backup_dir = Path('scripts/backup')
+    files_to_backup = [
+        Path(root_path, 'pyproject.toml'),
+        Path(project_path, '__version__.py'),
+        Path(root_path, 'buildozer.spec')
+    ]
+    backup_dir.mkdir(parents=True, exist_ok=True)
+    for file_path in files_to_backup:
+        if file_path.exists():
+            shutil.copy2(file_path, backup_dir / file_path.name)
+        else:
+            print(f"File not found: {file_path}")
+
+
+def restore_codegen_files(root_path, project_path):
+    backup_dir = Path('scripts/backup')
+    files_to_restore = [
+        { "source_name": 'pyproject.toml', "restore_path": root_path / 'pyproject.toml'} ,
+        { "source_name": '__version__.py', "restore_path": project_path / '__version__.py'},
+        { "source_name": 'buildozer.spec', "restore_path": root_path / 'buildozer.spec'}
+    ]
+    for file in files_to_restore:
+        source_path = Path(backup_dir / file["source_name"])
+        if source_path.exists():
+            shutil.copy2(source_path, file["restore_path"])
+            print(f"Restored {file['source_name']}")
+        else:
+            print(f"Backup not found: {file['source_name']}")
+
+
+def version_type(version_string):
+    if not re.match(r'^v?\d+\.\d+\.\d+$', version_string):
+        raise argparse.ArgumentTypeError("Must be in X.Y.Z format (e.g., 1.2.3 or v1.2.3)")
+    
+    # Remove 'v' prefix if present
+    version_string = version_string.lstrip('v')
+    
+    # Split version into parts
+    parts = version_string.split('.')
+    
+    # If first part is 4 digits, take last 2 digits
+    if len(parts[0]) == 4:
+        parts[0] = parts[0][-2:]
+    
+    return '.'.join(parts)
+
+
+def rename_release_file(os_name, package_version):
+    if os_name == "macos":
+        arch = platform.machine()
+        if arch == "arm64":
+            arch_name = "AppleSilicon"
+        else:
+            arch_name = "Intel"
+        file_name = f"carveracontroller-community-{package_version}-{arch_name}.dmg"
+        src = "./dist/carveracontroller-community.dmg"
+        dst = f"./dist/{file_name}"
+    elif os_name == "windows":
+        arch = platform.architecture()[0]
+        arch_name = "x64" if arch == "64bit" else "x86"
+        file_name = f"carveracontroller-community-{package_version}-windows-{arch_name}.exe"
+        src = "./dist/carveracontroller.exe"
+        dst = f"./dist/{file_name}"
+    elif os_name == "linux":
+        arch_name = platform.machine()
+        file_name = f"carveracontroller-community-{package_version}-{arch_name}.appimage"
+        src = "./dist/carveracontroller-community.AppImage"
+        dst = f"./dist/{file_name}"
+    elif os_name == "android":
+        arch_name = "armeabi-v7a"
+        file_name = f"carveracontroller-community-{package_version}-android-{arch_name}.apk"
+        src = f"./dist/carveracontrollercommunity-{package_version}-{arch_name}-debug.apk"
+        dst = f"./dist/{file_name}"
+    shutil.move(src, dst)
+
+
+def create_macos_dmg():
+    dmg_path = "./dist/carveracontroller-community.dmg"
+    app_src = "./dist/carveracontroller.app"
+    app_dst = "./dist/Carvera Controller Community.app"
+
+    if os.path.exists(dmg_path):
+        os.remove(dmg_path)
+
+    # Rename .app
+    if os.path.exists(app_src):
+        os.rename(app_src, app_dst)
+    else:
+        raise FileNotFoundError(f"Source app not found: {app_src}")
+
+    cmd = [
+        "create-dmg",
+        "--volname", "carvera-controller-community",
+        "--background", "packaging_assets/dmg_background.jpg",
+        "--volicon", "packaging_assets/icon-src.icns",
+        "--window-pos", "200", "200",
+        "--window-size", "640", "324",
+        "--icon", "Carvera Controller Community.app", "130", "130",
+        "--icon-size", "64",
+        "--hide-extension", "Carvera Controller Community.app",
+        "--app-drop-link", "510", "130",
+        "--format", "UDBZ",
+        "--no-internet-enable",
+        dmg_path,
+        app_dst
+    ]
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    if result.returncode != 0:
+        logger.error("Error creating DMG:", result.stderr)
+        raise RuntimeError("create-dmg failed")
+
+
+def update_buildozer_version(package_version: str) -> None:
+    """Update the version in buildozer.spec file."""
+    logger.info("Updating version in buildozer.spec")
+    buildozer_spec_path = ROOT_PATH.joinpath("buildozer.spec")
+    
+    with open(buildozer_spec_path, 'r') as file:
+        lines = file.readlines()
+    
+    for i, line in enumerate(lines):
+        if line.startswith('version = '):
+            lines[i] = f'version = {package_version}\n'
+            break
+    
+    with open(buildozer_spec_path, 'w') as file:
+        file.writelines(lines)
+
+
+def update_buildozer_automation() -> None:
+    """Update buildozer.spec for automation/CI environment."""
+    logger.info("Updating buildozer.spec for automation")
+    buildozer_spec_path = ROOT_PATH.joinpath("buildozer.spec")
+    
+    with open(buildozer_spec_path, 'r') as file:
+        lines = file.readlines()
+    
+    for i, line in enumerate(lines):
+        if line.startswith('# android.accept_sdk_license = '):
+            lines[i] = 'android.accept_sdk_license = True\n'
+            break
+    
+    with open(buildozer_spec_path, 'w') as file:
+        file.writelines(lines)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--os",
         metavar="os",
         required=True,
-        choices=["windows", "macos", "linux", "ios"],
+        choices=["windows", "macos", "linux", "ios", "pypi", "android"],
         type=str,
         default="linux",
-        help="Choices are: windows, macos, or linux. Default is linux."
+        help="Choices are: windows, macos, pypi, android or linux. Default is linux."
     )
 
     parser.add_argument('--no-appimage', dest='appimage', action='store_false')
+    
+    parser.add_argument(
+        '--automation',
+        action='store_true',
+        help='Enable automation mode for CI environments'
+    )
 
-    # temp workaround for https://github.com/kivy/kivy/issues/8653
-    patch_pyinstaller.main()
+    parser.add_argument(
+        '--debug',
+        action='store_true',
+        help='Enable debug mode with deploy, run and logcat for Android builds'
+    )
+
+    parser.add_argument(
+        "--version",
+        metavar="version",
+        required=True,
+        type=version_type,
+        help="Version string to use for build."
+    )
 
     args = parser.parse_args()
-    os = args.os
+    os_name = args.os
     appimage = args.appimage
-    package_version = get_version_info()
+    package_version = args.version
     output_filename = PACKAGE_NAME
     versionfile_path = None
+
+    logger.info(f"Version determined to be {package_version}")
+
+    logger.info("Backing up files that will be modified by codegen")
+    backup_codegen_files(ROOT_PATH, PROJECT_PATH)
+
+    logger.info("Revising files by codegen")
+    codegen_version_string(package_version, PROJECT_PATH, ROOT_PATH)
 
     # Compile translation files
     compile_mo()
 
-    if os == "windows":
+    ######### Non-PyInstaller builds #########
+    if os_name == "pypi":
+        logger.info("Performing pypi build via poetry")
+        result = subprocess.run("poetry build", shell=True, capture_output=True, text=True, check=True)
+
+    if os_name == "ios":
+        # For iOS we need some special handling as it is not supported by pyinstaller
+        # Execute the build_ios.sh script
+        command = f"{BUILD_PATH}/build_ios.sh {package_version}"
+        result = subprocess.run(command, shell=True, capture_output=True, text=True, check=True)
+        if result.stderr:
+            logger.error(f"Error from build_ios.sh: {result.stderr}")
+        logger.info(f"Stdout from build_ios.sh: {result.stdout}")
+
+    if os_name == "android":
+        # For Android we need some special handling as it is not supported by pyinstaller
+        # Update version in buildozer.spec
+        
+        update_buildozer_version(package_version)
+        
+        # Update buildozer.spec for automation if flag is set
+        if args.automation:
+            update_buildozer_automation()
+
+        if not os.path.exists(f"./main.py"):
+            logger.info("Copying main.py to root directory for android build")
+            shutil.copy2(f"{ROOT_ASSETS_PATH}/android/main.py", "./main.py")
+
+        # Then run the actual build
+        logger.info("Building Android APK...")
+        if args.debug:
+            build_command = "buildozer android debug deploy run logcat"
+        else:
+            build_command = "buildozer -v android debug"
+        result = subprocess.run(build_command, shell=True)
+        if result.returncode != 0:
+            logger.error("Error building Android APK")
+            sys.exit(result.returncode)
+
+        if os.path.exists(f"./main.py"):
+            logger.info("Removing main.py from root directory for android build")
+            os.remove(f"./main.py")
+
+    ######### Pre PyInstaller tweaks #########
+    if os_name == "windows":
+        # Windows needs a versionfile created for metadata in the binary artifact
         versionfile_path = generate_versionfile(
             package_version=package_version,
             output_filename=output_filename,
         )
 
-    # For iOS we need some special handling as it is not supported by pyinstaller
-    if os == "ios":
-        # Execute the build_ios.sh script
-        command = f"{BUILD_PATH}/build_ios.sh {package_version}"
-        result = subprocess.run(command, shell=True, capture_output=True, text=True, check=True)
-        print(result.stdout)
-        print(result.stderr)
-    else:
+    ######### Run PyInstaller for all os expcept those that don't use it #########
+    if os_name not in ("ios", "pypi", "android"):
         build_args = build_pyinstaller_args(
-            os=os,
+            os=os_name,
             output_filename=output_filename,
             versionfile_path=versionfile_path,
         )
         run_pyinstaller(build_args=build_args)
 
-    if os == "linux":
+    ######### Post PyInstaller tweaks #########
+    if os_name == "linux":
         # Need to remove some libs for opinionated backwards compatibility
         # https://github.com/pyinstaller/pyinstaller/issues/6993 
         frozen_dir = f"dist/{PACKAGE_NAME}/_internal"
         remove_shared_libraries(frozen_dir, 'libstdc++.so.*', 'libtinfo.so.*', 'libreadline.so.*', 'libdrm.so.*')
 
         if appimage:
-            run_appimage_builder()
+            run_appimage_builder(package_version)
     
-    if os == "macos":
+    if os_name == "macos":
         # Need to manually revise the version string due to
         # https://github.com/pyinstaller/pyinstaller/issues/6943
         import PyInstaller.utils.osx as osxutils
-        fix_macos_version_string(get_version_info())
+        fix_macos_version_string(package_version)
         osxutils.sign_binary(f"dist/{PACKAGE_NAME}.app", deep=True)
+        create_macos_dmg()
+    
+    logger.info("Renaming artifacts to have version number and platform in filename")
+    rename_release_file(os_name, package_version)
+
+    logger.info("Restoring files modified by codegen")
+    restore_codegen_files(ROOT_PATH, PROJECT_PATH)
 
 if __name__ == "__main__":
     main()

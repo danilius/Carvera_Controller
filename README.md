@@ -17,13 +17,15 @@ See the [CHANGELOG](CHANGELOG.md) and [screenshots](docs/screenshots/) for more 
 * **Laser Safety** prompt to **remind** operators to put on **safety glasses**
 * **Multiple developers** with their own **Carvera** machines _"drinking their own [software] champagne"_ daily and working to improve the machine's capabilities.
 * Various **Quality-of-life** improvements:
-   * **Controller config settings** (UI Density, screensaver disable, Allow MDI while machine running)
-   * Enclosure **light switch toggle** in the center control panel
+   * **Controller config settings** (UI Density, screensaver disable, Allow MDI while machine running, virtual keyboard)
+   * **Enclosure light** and **External Ouput** switch toggle in the center control panel
    * Machine **reconnect** functionality with stored last used **machine network address**
+   * **Set Origin** Screen pre-populated with **current** offset values
    * **Collet Clamp/Unclamp** buttons in Tool Changer menu for the original Carvera
    * Better file browser **upload-and-select** workflow
    * **Previous** file browsing location is **reopened** and **previously** used locations stored to **quick access list**
    * **Greater speed/feed** override scaling range from **10%** and up to **300%**
+   * **Improved** 3D gcode visualisations, including **correct rendering** of movements around the **A axis**
 
 
 ## Supported OS
@@ -36,6 +38,7 @@ The Controller software works on the following systems:
 - Linux using x64 CPUs running a Linux distribution with Glibc 2.35 or above (eg. Ubuntu 22.04 or higher)
 - Linux using aarch64 CPUs (eg Raspberyy Pi 3+) running a Linux distribution with Glibc 2.39 or above (eg. Ubuntu 24.04 or higher)
 - Apple iPad with iOS 17.6 or higher
+- Android devices with Android 11 or higher running ARM 32-bit processors (ARMv7a)
 - Other systems might be work via the Python Package, see below for more details.
 
 ## Installation
@@ -47,6 +50,13 @@ See the assets section of [latest release](https://github.com/carvera-community/
 - carveracontroller-community-\<version\>-AppleSilicon.dmg - MacOS with Apple CPU (M1 etc)
 - carveracontroller-community-\<version\>-x86_64.appimage - Linux AppImage for x64 systems
 - carveracontroller-community-\<version\>-aarch64.appimage - Linux AppImage for aarch64 systems
+- carveracontroller-community-\<version\>-android-armeabi-v7a.apk - Android installable package
+
+### Usage: Android
+
+When using the file browser in the Controller, the app will guide you to a permission page of android where you have to grant the app full access to your android devices files. Without this you will not see any files.
+
+Be aware that there is a known bug in one of the libraries used for graphics rendering, this can result in the screen stay black after starting the app. Until this is resolved in the upstream library we have implemented a workaround to try to prevent this from occuring. If you still encounter this issue, you then need to go to the homescreen and back to the app. Please give feedback via github issue if this occurs for you.
 
 ### Usage: Linux App Images
 
@@ -86,8 +96,9 @@ To contribute to this project or set up a local development environment, follow 
 - [Poetry](https://python-poetry.org/) is required for dependency management. Poetry simplifies packaging and simplifies the management of Python dependencies.
 - One of the python dependencies [QuickLZ](https://pypi.org/project/pyquicklz/) will be compiled by Poetry when installed. Ensure that you have a compiler that Poetry/Pip can use and the Pythong headers. On a debian based Linux system this can be accomplished with `sudo apt-get install python3-dev build essential`. On Windows installation of (just) the Visual C++ 14.x compiler is required, this can be accomplished with [MSBuild tools package](https://aka.ms/vs/17/release/vs_BuildTools.exe).
 - [Squashfs-tools](https://github.com/plougher/squashfs-tools) is required if building Linux AppImages. On Debian based systems it's provided by the package `squashfs-tools`. This is only required if packaging for linux.
-- [gettext](https://www.gnu.org/software/gettext/) is required for language file generation. [Gnuwin32](https://gnuwin32.sourceforge.net/packages/gettext.htm) project has a version for Windows
+- [gettext](https://www.gnu.org/software/gettext/) is required for language file generation. [gettext-iconv-windows](https://mlocati.github.io/articles/gettext-iconv-windows.html) project has a version with Windows packages.
 - For building iOS app, you need a working XCode installation as well as the build tool that can be installed with `brew install autoconf automake libtool pkg-config`
+- Building the Android app needs a Linux host. The prerequisites can be found here: [buildozer prerequisites](https://buildozer.readthedocs.io/en/latest/installation.html). A script to install them is provided in `scripts/install_android_prereqs.sh`. Be aware that buildozer downloads/installs multiple GB of Android development tooling.
 
 ### Installing Poetry
 
@@ -95,6 +106,12 @@ Follow the official installation instructions to install Poetry. The simplest me
 
 ```bash
 curl -sSL https://install.python-poetry.org | python3 -
+```
+
+or on Windows:
+
+```bash
+(Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content | py -
 ```
 
 Once installed, make sure Poetry is in your system's PATH so you can run it from any terminal window. Verify the installation by checking the version:
@@ -148,11 +165,13 @@ poetry run python -m carveracontroller
 The application is packaged using PyInstaller (except for iOS). This tool converts Python applications into a standalone executable, so it can be run on systems without requiring management of a installed Python interpreter or dependent libraries. An build helper script is configured with Poetry and can be run with:
 
 ```bash
-poetry run python scripts/build.py --os os [--no-appimage]
+poetry run python scripts/build.py --os os --version version [--no-appimage]
 ```
 
-The options for `os` are windows, macos, linux or ios. If selecting `linux`, an appimage is built by default unless --no-appimage is specified.
+The options for `os` are windows, macos, linux, pypi, ios or android. If selecting `linux`, an appimage is built by default unless --no-appimage is specified.
 For iOS, the project will be open in XCode and needs to be built from there to simplify the signing process.
+
+The value of `version` should be in the format of X.Y.Z e.g., 1.2.3 or v1.2.3.
 
 ### Setting up translations
 

@@ -17,13 +17,15 @@ See the [CHANGELOG](CHANGELOG.md) and [screenshots](docs/screenshots/) for more 
 * **Laser Safety** prompt to **remind** operators to put on **safety glasses**
 * **Multiple developers** with their own **Carvera** machines _"drinking their own [software] champagne"_ daily and working to improve the machine's capabilities.
 * Various **Quality-of-life** improvements:
-   * **Controller config settings** (UI Density, screensaver disable, Allow MDI while machine running)
-   * Enclosure **light switch toggle** in the center control panel
+   * **Controller config settings** (UI Density, screensaver disable, Allow MDI while machine running, virtual keyboard)
+   * **Enclosure light** and **External Ouput** switch toggle in the center control panel
    * Machine **reconnect** functionality with stored last used **machine network address**
+   * **Set Origin** Screen pre-populated with **current** offset values
    * **Collet Clamp/Unclamp** buttons in Tool Changer menu for the original Carvera
    * Better file browser **upload-and-select** workflow
    * **Previous** file browsing location is **reopened** and **previously** used locations stored to **quick access list**
    * **Greater speed/feed** override scaling range from **10%** and up to **300%**
+   * **Improved** 3D gcode visualisations, including **correct rendering** of movements around the **A axis**
 
 
 ## Supported OS
@@ -36,7 +38,7 @@ The Controller software works on the following systems:
 - Linux using x64 CPUs running a Linux distribution with Glibc 2.35 or above (eg. Ubuntu 22.04 or higher)
 - Linux using aarch64 CPUs (eg Raspberyy Pi 3+) running a Linux distribution with Glibc 2.39 or above (eg. Ubuntu 24.04 or higher)
 - Apple iPad with iOS 17.6 or higher
-- Android devices with Android 10 or higher
+- Android devices with Android 11 or higher running ARM 32-bit processors (ARMv7a)
 - Other systems might be work via the Python Package, see below for more details.
 
 ## Installation
@@ -49,6 +51,12 @@ See the assets section of [latest release](https://github.com/carvera-community/
 - carveracontroller-community-\<version\>-x86_64.appimage - Linux AppImage for x64 systems
 - carveracontroller-community-\<version\>-aarch64.appimage - Linux AppImage for aarch64 systems
 - carveracontroller-community-\<version\>-android-armeabi-v7a.apk - Android installable package
+
+### Usage: Android
+
+When using the file browser in the Controller, the app will guide you to a permission page of android where you have to grant the app full access to your android devices files. Without this you will not see any files.
+
+Be aware that there is a known bug in one of the libraries used for graphics rendering, this can result in the screen stay black after starting the app. Until this is resolved in the upstream library we have implemented a workaround to try to prevent this from occuring. If you still encounter this issue, you then need to go to the homescreen and back to the app. Please give feedback via github issue if this occurs for you.
 
 ### Usage: Linux App Images
 

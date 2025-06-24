@@ -153,6 +153,9 @@ jobs:
       uses: ./.github/actions/bootstrap-poetry
       with:
         os: linux
+    
+    - name: Install gettext
+      run: sudo apt-get install -y gettext
 
     - name: Build release
       run: poetry run python scripts/build.py --os pypi --version ${{ github.ref_name }}

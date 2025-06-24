@@ -1,3 +1,7 @@
+[0.9.1]
+- Fix: 3D Probe tool number missing a "9". Should be 999990 not 99990
+- Fix: Python package builds missing a dep
+
 [0.9.0]
 - Enhancement: Initial support for rotated WCS in visualizations
 - Enhancement: Controller config option to select what kind of keyboard to use, physical/virtual/both with options for different size virtual

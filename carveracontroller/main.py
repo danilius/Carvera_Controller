@@ -378,7 +378,9 @@ class OriginPopup(ModalView):
                 x = round(CNC.vars['wcox'] + laser_x - CNC.vars["anchor1_x"], 4)
                 y = round(CNC.vars['wcoy'] + laser_y - CNC.vars["anchor1_y"], 4)
         self.txt_x_offset.text = str(x)
+        Utils.bind_auto_select_to_text_input(self.txt_x_offset)
         self.txt_y_offset.text = str(y)
+        Utils.bind_auto_select_to_text_input(self.txt_y_offset)
 
     def selected_anchor(self):
         if self.cbx_anchor2.active:
@@ -739,10 +741,19 @@ class SetToolPopup(ModalView):
         self.coord_popup = coord_popup
         super(SetToolPopup, self).__init__(**kwargs)
 
+    def on_open(self):
+        super().on_open()
+        Utils.bind_auto_select_to_text_input(self.txt_offset)
+
+
 class ChangeToolPopup(ModalView):
     def __init__(self, coord_popup, **kwargs):
         self.coord_popup = coord_popup
         super(ChangeToolPopup, self).__init__(**kwargs)
+
+    def on_open(self):
+        super().on_open()
+        Utils.bind_auto_select_to_text_input(self.txt_offset)
 
 class MoveAPopup(ModalView):
     def __init__(self, coord_popup, **kwargs):

@@ -5,10 +5,17 @@ on:
       - "v*.*.*"
 jobs:
   build-windows-artifacts:
-    name: build-windows-x64
+    #uncomment below to disable this job for testing
+    #if: false
+    name: build-windows-${{ matrix.platform }}
     runs-on: windows-latest
     strategy:
       fail-fast: false
+      matrix:
+        platform: [win32]
+        include:
+          - platform: win32
+            arch: x64
     defaults:
       run:
         shell: bash
@@ -25,7 +32,7 @@ jobs:
       uses: ./.github/actions/bootstrap-poetry
       with:
         os: windows
-    
+
     - uses: git-for-windows/setup-git-for-windows-sdk@v1
       with:
         flavor: minimal
@@ -75,7 +82,7 @@ jobs:
       uses: ./.github/actions/bootstrap-poetry
       with:
         os: macos
-    
+
     - name: Install create-dmg
       run: brew install create-dmg
 
@@ -90,45 +97,47 @@ jobs:
         retention-days: 2
 
   build-linux-artifacts:
+    #uncomment below to disable this job for testing
+    #if: false
     name: build-linux-${{ matrix.platform }}
     runs-on: ${{ matrix.image }}
     strategy:
       fail-fast: false
       matrix:
-        platform: [ x64, aarch64 ]
+        platform: [x64,arm64]
         include:
           - platform: x64
             image: ubuntu-22.04
-          - platform: aarch64
-            image: ubuntu-24.04-arm
+          - platform: arm64
+            image: ubuntu-22.04-arm
     defaults:
       run:
         shell: bash
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Set up Python 3.12
-      uses: actions/setup-python@v5
-      with:
-        python-version: 3.12
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.12
 
-    - name: Install poetry and dependencies
-      uses: ./.github/actions/bootstrap-poetry
-      with:
-        os: linux
-    
-    - name: Install MTDev
-      run: sudo apt-get install -y mtdev-tools gettext
+      - name: Install poetry and dependencies
+        uses: ./.github/actions/bootstrap-poetry
+        with:
+          os: linux
 
-    - name: Build release
-      run: xvfb-run poetry run python scripts/build.py --os linux --version ${{ github.ref_name }}
+      - name: Install MTDev
+        run: sudo apt-get install -y mtdev-tools gettext
 
-    - name: Upload artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: linux-assets-${{ matrix.platform }}
-        path: ${{ github.workspace }}/dist/carveracontroller-community-*.appimage
-        retention-days: 2
+      - name: Build release
+        run: xvfb-run poetry run python scripts/build.py --os linux --version ${{ github.ref_name }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-assets-${{ matrix.platform }}
+          path: ${{ github.workspace }}/dist/carveracontroller-community-*.appimage
+          retention-days: 2
 
   build-pypi-artifacts:
     name: build-python
@@ -153,7 +162,7 @@ jobs:
       uses: ./.github/actions/bootstrap-poetry
       with:
         os: linux
-    
+
     - name: Install gettext
       run: sudo apt-get install -y gettext
 
@@ -165,9 +174,7 @@ jobs:
 
   build-android-artifacts:
     name: build-android-armeabi-v7a
-    runs-on: ubuntu-22.04
-    strategy:
-      fail-fast: false
+    runs-on: ubuntu-24.04
     defaults:
       run:
         shell: bash
@@ -183,10 +190,10 @@ jobs:
       uses: ./.github/actions/bootstrap-poetry
       with:
         os: linux
-    
+
     - name: Install MTDev
       run: sudo apt-get install -y mtdev-tools gettext
-    
+
     # Set up Java 17 required by Gradle
     - name: Setup Java 17 required by Gradle
       uses: actions/setup-java@v3
@@ -197,7 +204,7 @@ jobs:
     - name: Install prereqs
       run: |
         poetry run ./scripts/install_android_prereqs.sh
-        
+
     - name: Build release
       run: |
         DATE=$(date +'%Y.%m.%d')
@@ -206,9 +213,74 @@ jobs:
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: android-assets-${{ matrix.platform }}
+        name: android-assets
         path: ${{ github.workspace }}/dist/carveracontroller-community-*.apk
         retention-days: 2
+
+  build-docker-images:
+    #uncomment below to disable this job for testing
+    #if: false
+    name: build-docker-images
+    needs: [build-linux-artifacts]
+    runs-on: ${{ matrix.image }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: x64
+            image: ubuntu-24.04
+          - platform: arm64
+            image: ubuntu-24.04-arm
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download Linux AppImage artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-assets-${{ matrix.platform }}
+          path: ./artifacts/
+
+      - name: Copy AppImage to Docker build context
+        run: |
+          mkdir -p packaging_assets/Docker/artifacts/
+          cp ./artifacts/*.appimage packaging_assets/Docker/artifacts/
+
+        # Add support for more platforms with QEMU
+        # https://github.com/docker/setup-qemu-action
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.ACTIONS_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/carvera-controller-${{ matrix.platform }}
+          tags: |
+            type=ref,event=tag
+              type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: packaging_assets/Docker
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: linux/${{ matrix.platform == 'x64' && 'amd64' || matrix.platform }}
+
 
   publish-release:
     needs: [ build-windows-artifacts, build-macos-artifacts, build-linux-artifacts, build-android-artifacts ]

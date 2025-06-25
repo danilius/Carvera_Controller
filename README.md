@@ -49,7 +49,7 @@ See the assets section of [latest release](https://github.com/carvera-community/
 - carveracontroller-community-\<version\>-Intel.dmg - MacOS with Intel CPU
 - carveracontroller-community-\<version\>-AppleSilicon.dmg - MacOS with Apple CPU (M1 etc)
 - carveracontroller-community-\<version\>-x86_64.appimage - Linux AppImage for x64 systems
-- carveracontroller-community-\<version\>-aarch64.appimage - Linux AppImage for aarch64 systems
+- carveracontroller-community-\<version\>-arm664.appimage - Linux AppImage for aarch64/arm64 systems
 - carveracontroller-community-\<version\>-android-armeabi-v7a.apk - Android installable package
 
 ### Usage: Android
@@ -67,6 +67,28 @@ To use it, first make it executable (`chmod +x carveracontroller-community-<vers
 Then you will be able to run it.
 
 If you want a shortcut, consider using [AppImageLauncher](https://github.com/TheAssassin/AppImageLauncher).
+
+### Alternative Installation: Docker
+
+## Alternative Installation: Docker with noVNC
+
+Its also possible to run the controller under Docker, which is then access via a browser or VNC client. This enables you to run the controller on a remote machine and access it from your local machine, and thus overcome the single-network-connection at a time limitation.
+
+The docker image expects a volume `/config` which is used to store the configuration and log files.  If not provided, the application will run, but will not persist any configuration or log files.
+
+The docker image is available on [GitHub Container Registry](https://ghcr.io/carvera-community/carvera-controller) and can be pulled with the following command:
+
+``` bash
+docker pull ghcr.io/carvera-community/carvera-controller-<arch>:latest
+```
+Where `<arch>` is `x64` or `arm64` depending on your system architecture.  To run the docker image, use the following command:
+
+``` bash
+docker run -p 5900:5900 -p 8080:8080 -v /path/to/config:/config ghcr.io/carvera-community/carvera-controller-<arch>:latest
+```
+
+The application can then be accessed via a web browser at `http://<host>:8080` or via a VNC client at `<host>:5900`.  The VNC connection does not require a password.
+
 
 ## Alternative Installation: Python Package
 

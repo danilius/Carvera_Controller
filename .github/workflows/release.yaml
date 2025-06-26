@@ -52,7 +52,7 @@ jobs:
     - name: Build release
       shell: pwsh
       run: |
-        if (starts-with $env:GITHUB_REF, 'refs/tags/') {
+        if ($env:GITHUB_REF.StartsWith('refs/tags/')) {
           $version = $env:GITHUB_REF_NAME
         } else {
           $version = Get-Date -Format "yyyy.M.d"
@@ -206,7 +206,7 @@ jobs:
 
   build-android-artifacts:
     name: build-android-armeabi-v7a
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     defaults:
       run:
         shell: bash
@@ -295,7 +295,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.ACTIONS_TOKEN }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Extract metadata
         id: meta

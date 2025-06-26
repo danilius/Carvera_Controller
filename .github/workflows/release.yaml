@@ -304,7 +304,7 @@ jobs:
           images: ghcr.io/${{ github.repository_owner }}/carvera-controller-${{ matrix.platform }}
           tags: |
             type=ref,event=tag
-            type=raw,value=dev,enable={{branch=='develop'}}
+            type=raw,value=dev,enable=${{ github.ref == format('refs/heads/{0}', 'develop') }}
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push Docker image

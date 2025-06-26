@@ -331,9 +331,17 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           tag: dev
           assets: 'carveracontroller-community-*'
+          fail-if-no-assets: false
 
       - name: Download artifacts
         uses: actions/download-artifact@v4
+        with:  # Skip downloading docker images
+          pattern: |
+            windows-assets-*
+            macos-assets-*
+            linux-assets-*
+            android-assets
+            pypi-assets
 
       - name: Generate dev release notes (dev builds only)
         if: startsWith(github.ref, 'refs/heads/develop')

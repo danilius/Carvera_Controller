@@ -51,6 +51,7 @@ See the assets section of [latest release](https://github.com/carvera-community/
 - carveracontroller-community-\<version\>-x86_64.appimage - Linux AppImage for x64 systems
 - carveracontroller-community-\<version\>-arm664.appimage - Linux AppImage for aarch64/arm64 systems
 - carveracontroller-community-\<version\>-android-armeabi-v7a.apk - Android installable package
+- carvera_controller_community-\<version\>-py3-none-any.whl  - Python wheel package
 
 ### Usage: Android
 

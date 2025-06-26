@@ -1,3 +1,6 @@
+[unreleased]
+- Enhancement: Docker image package. This runs the controller and exposes it over a noVNC web browser, so the controller can be used from multiple locations concurrently.
+
 [0.9.1]
 - Fix: 3D Probe tool number missing a "9". Should be 999990 not 99990
 - Fix: Python package builds missing a dep

@@ -247,6 +247,10 @@ def rename_release_file(os_name, package_version):
         file_name = f"carveracontroller-community-{package_version}-android-{arch_name}.apk"
         src = f"./dist/carveracontrollercommunity-{package_version}-{arch_name}-debug.apk"
         dst = f"./dist/{file_name}"
+    else:
+        # For any other OS (and pypi build), don't attempt to rename
+        return
+    
     shutil.move(src, dst)
 
 

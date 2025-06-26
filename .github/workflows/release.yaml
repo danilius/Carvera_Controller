@@ -355,7 +355,7 @@ jobs:
             windows-assets-*/carveracontroller-community-*-windows-x64.exe
             macos-assets-*/carveracontroller-community-*.dmg
             linux-assets-*/carveracontroller-community-*.appimage
-            android-assets-*/carveracontroller-community-*.apk
-            pypi-assets-*/*.whl
+            android-assets/carveracontroller-community-*.apk
+            pypi-assets/*.whl
           tag_name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || 'dev' }}
           body_path: ${{ startsWith(github.ref, 'refs/tags/') && 'CHANGELOG.md' || 'dev-CHANGELOG.md' }} 

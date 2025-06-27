@@ -548,6 +548,24 @@ class Controller:
             CNC.vars["active_coord_system"] = int(d['G'][0])
         else:
             CNC.vars["active_coord_system"] = 0
+
+        if 'C' in d:
+            CNC.vars['MachineModel'] = int(d['C'][0])
+            CNC.vars['FuncSetting'] = int(d['C'][1])
+            CNC.vars['inch_mode'] = int(d['C'][2])
+            CNC.vars['absolute_mode'] = int(d['C'][3])
+        else:
+            CNC.vars['MachineModel'] = 1
+            CNC.vars['FuncSetting'] = 0
+            CNC.vars['inch_mode'] = 0
+            CNC.vars['absolute_mode'] = 0
+        if CNC.vars['inch_mode'] != 999:
+            if CNC.vars['inch_mode'] == 1:
+                CNC.UnitScale = 25.4
+            else:
+                CNC.UnitScale = 1
+        else:
+            CNC.UnitScale = 1
         CNC.vars["mx"] = float(d['MPos'][0])
         CNC.vars["my"] = float(d['MPos'][1])
         CNC.vars["mz"] = float(d['MPos'][2])
@@ -864,6 +882,10 @@ class Controller:
         if a is not None and abs(a) < 3600000.0: pos += "A" + str(round(a, 4))
         cmd += pos
 
+        self.sendGCode(cmd)
+    
+    def wcsClearRotation(self):
+        cmd = "G10L2R0P0"
         self.sendGCode(cmd)
 
     def feedHold(self, event=None):

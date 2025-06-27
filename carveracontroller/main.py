@@ -522,8 +522,9 @@ class CoordPopup(ModalView):
     change_tool_popup = ObjectProperty()
     MoveA_popup = ObjectProperty()
 
-    def __init__(self, config, **kwargs):
+    def __init__(self, config, controller, **kwargs):
         self.config = config
+        self.controller = controller
         self.origin_popup = OriginPopup(self)
         self.zprobe_popup = ZProbePopup(self)
         self.auto_level_popup = AutoLevelPopup(self)
@@ -553,6 +554,13 @@ class CoordPopup(ModalView):
 
         # Ensure the spinner is updated after initialization
         Clock.schedule_once(self.populate_spinner, 0)
+    
+    def on_open(self):
+        super().on_open()
+        app = App.get_running_app()
+        if app.has_4axis:
+            self.controller.wcsClearRotation()
+            Clock.schedule_once(self.cnc_workspace.draw, 1)
 
     def populate_spinner(self, dt):
         if "background_image_spinner" in self.ids:
@@ -967,6 +975,7 @@ class CNCWorkspace(Widget):
                 PushMatrix()
                 if app.has_4axis:
                     Translate(self.x, self.y)
+                    # a axis home enabled
                     if CNC.vars['FuncSetting'] & 1:
                         zprobe_x = CNC.vars['rotation_offset_x'] + CNC.vars['anchor_width'] - 7.0
                         zprobe_y = CNC.vars['rotation_offset_y'] + CNC.vars['anchor_width']
@@ -1584,7 +1593,7 @@ class Makera(RelativeLayout):
             }
         }
         self.update_coord_config()
-        self.coord_popup = CoordPopup(self.coord_config)
+        self.coord_popup = CoordPopup(self.coord_config, self.controller)
         self.xyz_probe_popup = XYZProbePopup()
         self.pairing_popup = PairingPopup()
         self.upgrade_popup = UpgradePopup()
@@ -1871,6 +1880,7 @@ class Makera(RelativeLayout):
                 origin_x += CNC.vars['mx']
                 origin_y += CNC.vars['my']
         else:
+            self.controller.wcsClearRotation()
             origin_x += CNC.vars['anchor1_x'] + CNC.vars['rotation_offset_x']
             origin_y += CNC.vars['anchor1_y'] + CNC.vars['rotation_offset_y']
 
@@ -3113,6 +3123,14 @@ class Makera(RelativeLayout):
             now = time.time()
             self.heartbeat_time = now
             app = App.get_running_app()
+            if app.model!= CNC.vars['MachineModel'] and CNC.vars['MachineModel']!= 999:
+                machinemodel = ''
+                if CNC.vars['MachineModel'] == 1:
+                    machinemodel = 'C1'
+                elif CNC.vars['MachineModel'] == 2:
+                    machinemodel = 'CA1'
+                if app.model!= machinemodel:
+                    Clock.schedule_once(partial(self.setUIForModel, machinemodel), 0)
             if app.state != CNC.vars["state"]:
                 app.state = CNC.vars["state"]
                 CNC.vars["color"] = STATECOLOR[app.state]

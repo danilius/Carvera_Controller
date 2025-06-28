@@ -954,7 +954,8 @@ class CNCWorkspace(Widget):
             Color(0, 0.8, 0, 1)
             PushMatrix()
             Translate(self.x + origin_x * zoom, self.y + origin_y * zoom)
-            Rotate(angle=CNC.vars['rotation_angle'])  # Use degrees directly
+            if not app.has_4axis: 
+                Rotate(angle=CNC.vars['rotation_angle'])  # Use degrees directly
             Line(width=(2 if self.config['margin']['active'] else 1), 
                  rectangle=(CNC.vars['xmin'] * zoom, CNC.vars['ymin'] * zoom,
                            (CNC.vars['xmax'] - CNC.vars['xmin']) * zoom, 
@@ -967,6 +968,7 @@ class CNCWorkspace(Widget):
                 PushMatrix()
                 if app.has_4axis:
                     Translate(self.x, self.y)
+                    # a axis home enabled
                     if CNC.vars['FuncSetting'] & 1:
                         zprobe_x = CNC.vars['rotation_offset_x'] + CNC.vars['anchor_width'] - 7.0
                         zprobe_y = CNC.vars['rotation_offset_y'] + CNC.vars['anchor_width']
@@ -975,9 +977,9 @@ class CNCWorkspace(Widget):
                         zprobe_y = CNC.vars['rotation_offset_y'] + CNC.vars['anchor_width']
                 else:
                     Translate(self.x + origin_x * zoom, self.y + origin_y * zoom)
+                    Rotate(angle=CNC.vars['rotation_angle'])
                     zprobe_x = self.config['zprobe']['x_offset'] + (0 if self.config['zprobe']['origin'] == 1 else CNC.vars['xmin'])
                     zprobe_y = self.config['zprobe']['y_offset'] + (0 if self.config['zprobe']['origin'] == 1 else CNC.vars['ymin'])
-                Rotate(angle=CNC.vars['rotation_angle'])
                 Ellipse(pos=(zprobe_x * zoom - 7.5, zprobe_y * zoom - 7.5), size=(15, 15))
                 PopMatrix()
 
@@ -986,7 +988,8 @@ class CNCWorkspace(Widget):
                 Color(244/255, 208/255, 63/255, 1)
                 PushMatrix()
                 Translate(self.x + origin_x * zoom, self.y + origin_y * zoom)
-                Rotate(angle=CNC.vars['rotation_angle'])
+                if not app.has_4axis:
+                    Rotate(angle=CNC.vars['rotation_angle'])
                 for x in Utils.xfrange(self.config['leveling']['xn_offset'], CNC.vars['xmax'] - CNC.vars['xmin'] - self.config['leveling']['xp_offset'], self.config['leveling']['x_points']):
                     for y in Utils.xfrange(self.config['leveling']['yn_offset'], CNC.vars['ymax'] - CNC.vars['ymin']-self.config['leveling']['yp_offset'], self.config['leveling']['y_points']):
                         Ellipse(pos=((CNC.vars['xmin'] + x) * zoom - 5, (CNC.vars['ymin'] + y) * zoom - 5), size=(10, 10))
@@ -1821,6 +1824,9 @@ class Makera(RelativeLayout):
     # -----------------------------------------------------------------------
     def apply(self, buffer = False):
         app = App.get_running_app()
+
+        if app.has_4axis:
+            self.controller.wcsClearRotation()
 
         goto_origin = False
         apply_margin = self.coord_config['margin']['active']

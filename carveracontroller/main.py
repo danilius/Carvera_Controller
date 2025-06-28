@@ -522,9 +522,8 @@ class CoordPopup(ModalView):
     change_tool_popup = ObjectProperty()
     MoveA_popup = ObjectProperty()
 
-    def __init__(self, config, controller, **kwargs):
+    def __init__(self, config, **kwargs):
         self.config = config
-        self.controller = controller
         self.origin_popup = OriginPopup(self)
         self.zprobe_popup = ZProbePopup(self)
         self.auto_level_popup = AutoLevelPopup(self)
@@ -554,13 +553,6 @@ class CoordPopup(ModalView):
 
         # Ensure the spinner is updated after initialization
         Clock.schedule_once(self.populate_spinner, 0)
-    
-    def on_open(self):
-        super().on_open()
-        app = App.get_running_app()
-        if app.has_4axis:
-            self.controller.wcsClearRotation()
-            Clock.schedule_once(self.cnc_workspace.draw, 1)
 
     def populate_spinner(self, dt):
         if "background_image_spinner" in self.ids:
@@ -962,7 +954,8 @@ class CNCWorkspace(Widget):
             Color(0, 0.8, 0, 1)
             PushMatrix()
             Translate(self.x + origin_x * zoom, self.y + origin_y * zoom)
-            Rotate(angle=CNC.vars['rotation_angle'])  # Use degrees directly
+            if not app.has_4axis: 
+                Rotate(angle=CNC.vars['rotation_angle'])  # Use degrees directly
             Line(width=(2 if self.config['margin']['active'] else 1), 
                  rectangle=(CNC.vars['xmin'] * zoom, CNC.vars['ymin'] * zoom,
                            (CNC.vars['xmax'] - CNC.vars['xmin']) * zoom, 
@@ -984,9 +977,9 @@ class CNCWorkspace(Widget):
                         zprobe_y = CNC.vars['rotation_offset_y'] + CNC.vars['anchor_width']
                 else:
                     Translate(self.x + origin_x * zoom, self.y + origin_y * zoom)
+                    Rotate(angle=CNC.vars['rotation_angle'])
                     zprobe_x = self.config['zprobe']['x_offset'] + (0 if self.config['zprobe']['origin'] == 1 else CNC.vars['xmin'])
                     zprobe_y = self.config['zprobe']['y_offset'] + (0 if self.config['zprobe']['origin'] == 1 else CNC.vars['ymin'])
-                Rotate(angle=CNC.vars['rotation_angle'])
                 Ellipse(pos=(zprobe_x * zoom - 7.5, zprobe_y * zoom - 7.5), size=(15, 15))
                 PopMatrix()
 
@@ -995,7 +988,8 @@ class CNCWorkspace(Widget):
                 Color(244/255, 208/255, 63/255, 1)
                 PushMatrix()
                 Translate(self.x + origin_x * zoom, self.y + origin_y * zoom)
-                Rotate(angle=CNC.vars['rotation_angle'])
+                if not app.has_4axis:
+                    Rotate(angle=CNC.vars['rotation_angle'])
                 for x in Utils.xfrange(self.config['leveling']['xn_offset'], CNC.vars['xmax'] - CNC.vars['xmin'] - self.config['leveling']['xp_offset'], self.config['leveling']['x_points']):
                     for y in Utils.xfrange(self.config['leveling']['yn_offset'], CNC.vars['ymax'] - CNC.vars['ymin']-self.config['leveling']['yp_offset'], self.config['leveling']['y_points']):
                         Ellipse(pos=((CNC.vars['xmin'] + x) * zoom - 5, (CNC.vars['ymin'] + y) * zoom - 5), size=(10, 10))
@@ -1593,7 +1587,7 @@ class Makera(RelativeLayout):
             }
         }
         self.update_coord_config()
-        self.coord_popup = CoordPopup(self.coord_config, self.controller)
+        self.coord_popup = CoordPopup(self.coord_config)
         self.xyz_probe_popup = XYZProbePopup()
         self.pairing_popup = PairingPopup()
         self.upgrade_popup = UpgradePopup()
@@ -1831,6 +1825,9 @@ class Makera(RelativeLayout):
     def apply(self, buffer = False):
         app = App.get_running_app()
 
+        if app.has_4axis:
+            self.controller.wcsClearRotation()
+
         goto_origin = False
         apply_margin = self.coord_config['margin']['active']
         apply_zprobe = self.coord_config['zprobe']['active']
@@ -1880,7 +1877,6 @@ class Makera(RelativeLayout):
                 origin_x += CNC.vars['mx']
                 origin_y += CNC.vars['my']
         else:
-            self.controller.wcsClearRotation()
             origin_x += CNC.vars['anchor1_x'] + CNC.vars['rotation_offset_x']
             origin_y += CNC.vars['anchor1_y'] + CNC.vars['rotation_offset_y']
 
@@ -3123,14 +3119,6 @@ class Makera(RelativeLayout):
             now = time.time()
             self.heartbeat_time = now
             app = App.get_running_app()
-            if app.model!= CNC.vars['MachineModel'] and CNC.vars['MachineModel']!= 999:
-                machinemodel = ''
-                if CNC.vars['MachineModel'] == 1:
-                    machinemodel = 'C1'
-                elif CNC.vars['MachineModel'] == 2:
-                    machinemodel = 'CA1'
-                if app.model!= machinemodel:
-                    Clock.schedule_once(partial(self.setUIForModel, machinemodel), 0)
             if app.state != CNC.vars["state"]:
                 app.state = CNC.vars["state"]
                 CNC.vars["color"] = STATECOLOR[app.state]

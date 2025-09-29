@@ -1,4 +1,4 @@
-<OutsideCornerSettings>:
+<ProbeTipSettings>:
     ScrollView:
         do_scroll_x: False
         size_hint: 1,1
@@ -10,14 +10,12 @@
             spacing:dp(3)
             padding:dp(1)
             halign:'right'
-            wcs_drop_content: wcs_drop_content.__self__  # hack to prevent gc from removing object per https://kivy.org/doc/stable/guide/lang.html#referencing-widgets
 
             ProbeSettingLabel:
                 label_text: 'X:'
-                halign: "right"
                 ToolTipTextInput:
                     id: XAxisDistance
-                    tooltip_txt: tr._('X distance to probe')
+                    tooltip_txt: tr._('Distance from center along X to move before probing back toward part')
                     tooltip_image: ''
                     multiline: False
                     halign:'right'
@@ -30,7 +28,7 @@
                 label_text: 'Y:'
                 ToolTipTextInput:
                     id: YAxisDistance
-                    tooltip_txt: tr._('Y distance to probe')
+                    tooltip_txt: tr._('Distance from center along Y to move before probing back toward part')
                     tooltip_image: ''
                     multiline: False
                     halign:'right'
@@ -38,23 +36,36 @@
                     input_filter: 'float'
                     text: root.get_setting('YAxisDistance')
                     on_text: root.setting_changed('YAxisDistance', self.text)
-
+            
             ProbeSettingLabel:
-                label_text: 'D Tip Dia:'
+                label_text: 'J:'
                 ToolTipTextInput:
-                    id: ProbeTipDiameter
-                    tooltip_txt: tr._('Effective Diameter of Probe Tip. Measure with M460')
-                    tooltip_image: 'addons/probing/data/icons_1024x768/general_parameters/probe_parameter_d.png'
-                    tooltip_image_size: 200,200
+                    id: ProbeClearance
+                    tooltip_txt: tr._('When Probing a boss, this is added to the X and Y values when moving outside the bore or boss. Defaults to 4mm')
+                    tooltip_image: ''
                     multiline: False
                     halign:'right'
                     input_type: 'number'
                     input_filter: 'float'
-                    text: root.get_setting('ProbeTipDiameter')
-                    on_text: root.setting_changed('ProbeTipDiameter', self.text)
+                    text: root.get_setting('ProbeClearance')
+                    on_text: root.setting_changed('ProbeClearance', self.text)
+            
+            ProbeSettingLabel:
+                label_text: 'E Probe Depth'
+                ToolTipTextInput:
+                    id: ProbeDepth
+                    tooltip_txt: tr._('How far below the start height to move down for probing the sides of the ProbeTip/block')
+                    tooltip_image: ''
+                    multiline: False
+                    halign:'right'
+                    input_type: 'number'
+                    input_filter: 'float'
+                    text: root.get_setting('ProbeDepth')
+                    on_text: root.setting_changed('ProbeDepth', self.text)
 
             ProbeSettingLabel:
                 label_text: 'H Pocket Depth:'
+                tooltip_txt: 'test'
                 ToolTipTextInput:
                     id: PocketProbeDepth
                     tooltip_txt: tr._('Distance to probe straight down before performing remainder of probing operations')
@@ -104,7 +115,7 @@
                     input_filter: 'float'
                     text: root.get_setting('RepeatOperationCount')
                     on_text: root.setting_changed('RepeatOperationCount', self.text)
-                    
+
             ProbeSettingLabel:
                 label_text: 'R Edge Retract:'
                 ToolTipTextInput:
@@ -132,74 +143,34 @@
                     on_text: root.setting_changed('BottomSurfaceRetract', self.text)
 
             ProbeSettingLabel:
-                label_text: 'Q Angle:'
+                label_text: 'Q ProbeTip:'
                 ToolTipTextInput:
-                    id: QAngle
                     tooltip_txt: tr._('Degrees to rotate the XY coordinate plane when probing.')
-                    tooltip_image: 'addons/probing/data/icons_1024x768/general_parameters/probe_parameter_q.png'
+                    tooltip_image: 'addons/probing/data/icons_1024x768/angle/probe_angle_arbitrary_negative.png'
                     tooltip_image_size: 200,200
                     multiline: False
                     halign:'right'
                     input_type: 'number'
                     input_filter: 'float'
-                    text: root.get_setting('QAngle')
-                    on_text: root.setting_changed('QAngle', self.text)
+                    text: root.get_setting('QProbeTip')
+                    on_text: root.setting_changed('QProbeTip', self.text)
 
             ProbeSettingLabel:
-                label_text: 'E Probe Depth'
-                ToolTipTextInput:
-                    id: ProbeDepth
-                    tooltip_txt: tr._('How far below the start height to move down for probing the sides of the part')
-                    tooltip_image: ''
-                    multiline: False
-                    halign:'right'
-                    input_type: 'number'
-                    input_filter: 'float'
-                    text: root.get_setting('ProbeDepth')
-                    on_text: root.setting_changed('ProbeDepth', self.text)
-
-            ProbeSettingLabel:
-                label_text: 'S Zero WCS Axis:'
-                hint_text: 'Zero X/Y/Z Position'
-
-                ToolTipButton:
+                label_text: 'S Save to Config:'
+                size_hint: 0,0
+                opacity: 0
+                hint_text: 'Currently not working'
+                ToolTipSwitch:
                     id: ZeroXYPosition
-                    # In the below get_setting() returns an int, so doing an inline mapping to the display text here
-                    text: ["Disabled", "X/Y", "X/Y/Z"][int(root.get_setting('ZeroXYPosition') or '0')]
-                    tooltip_txt: tr._('This switch will set your current WCS to the corner you are probing')
-                    on_parent: wcs_drop_content.dismiss()
-                    on_release: wcs_drop_content.open(self)
-                
-                    DropDown:
-                        id: wcs_drop_content
-                        on_select: ZeroXYPosition.text = f'{args[1]}'
-
-                        Button:
-                            id: wcs_btn1
-                            text: tr._('Disabled')
-                            size_hint_y: None
-                            height: '40dp'
-                            on_release:
-                                root.setting_changed('ZeroXYPosition', "0")
-                                wcs_drop_content.select(self.text)
-                        
-                        Button:
-                            id: wcs_btn2
-                            text: tr._('X/Y')
-                            size_hint_y: None
-                            height: '40dp'
-                            on_release:
-                                root.setting_changed('ZeroXYPosition', "1")
-                                wcs_drop_content.select(self.text)
-                        
-                        Button:
-                            id: wcs_btn3
-                            text: tr._('X/Y/Z')
-                            size_hint_y: None
-                            height: '40dp'
-                            on_release:
-                                root.setting_changed('ZeroXYPosition', "2")
-                                wcs_drop_content.select(self.text)     
+                    tooltip_txt: tr._('You must manually save the value to the config file for now')
+                    canvas.before:
+                        Color:
+                            rgba: 50/255, 50/255, 50/255, 1
+                        Rectangle:
+                            pos: self.pos
+                            size: self.size
+                    active: root.get_setting('ZeroXYPosition') == "1"
+                    on_active: root.setting_changed('ZeroXYPosition', "1" if self.active else "0")
 
             ProbeSettingLabel:
                 label_text: 'I Normally Closed:'

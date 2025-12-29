@@ -1,17 +1,4 @@
 [
-   {
-        "type": "title",
-        "title": "Vacuum",
-        "section": "Basic"
-   },
-    {
-        "type": "numeric",
-        "title": "Vacuum power",
-        "desc": "Default vacuum power when open (50 - 100)",
-        "section": "Basic",
-        "key": "switch.vacuum.default_on_value"
-    },
-	
     {
         "type": "title",
         "title": "Light",
@@ -81,6 +68,15 @@
     },
 
     {
+        "type": "bool",
+        "title": "Beeper on",
+        "desc": "Whether the beeper is enabled",
+        "section": "Basic",
+        "key": "switch.beep.enable",
+        "default": "true"
+    },
+
+    {
         "type": "title",
         "title": "Coordinates",
         "section": "Advanced"
@@ -112,27 +108,6 @@
         "desc": "Anchor2 Y Offset relative to anchor1",
         "section": "Advanced",
         "key": "coordinate.anchor2_offset_y"
-    },
-      {
-        "type": "numeric",
-        "title": "Tool Rack X Offset",
-        "desc": "Tool 6 X Offset relative to anchor1",
-        "section": "Advanced",
-        "key": "coordinate.toolrack_offset_x"
-    },
-    {
-        "type": "numeric",
-        "title": "Tool Rack Y Offset",
-        "desc": "Tool 6 Y Offset relative to anchor1",
-        "section": "Advanced",
-        "key": "coordinate.toolrack_offset_y"
-    },
-    {
-        "type": "numeric",
-        "title": "ATC Z",
-        "desc": "ATC Z axis machine coordinates",
-        "section": "Advanced",
-        "key": "coordinate.toolrack_z"
     },
      {
         "type": "numeric",
@@ -210,7 +185,7 @@
         "desc": "Enabled to precheck if gCode commands will exceed the travel limits",
         "section": "Advanced",
         "key": "soft_endstop.enable",
-        "default": "true"
+        "default": "false"
     },
     {
         "type": "numeric",
@@ -218,7 +193,7 @@
         "desc": "Minimum X axis coordinate",
         "section": "Advanced",
         "key": "soft_endstop.x_min",
-        "default": "-371.0"
+        "default": "-302.0"
     },
     {
         "type": "numeric",
@@ -226,7 +201,7 @@
         "desc": "Minimum Y axis coordinate",
         "section": "Advanced",
         "key": "soft_endstop.y_min",
-        "default": "-250.0"
+        "default": "-212.0"
     },
     {
         "type": "numeric",
@@ -234,7 +209,7 @@
         "desc": "Minimum Z axis coordinate",
         "section": "Advanced",
         "key": "soft_endstop.z_min",
-        "default": "-135.0"
+        "default": "-121.0"
     },
     {
         "type": "numeric",
@@ -242,7 +217,7 @@
         "desc": "Changes the number of microsteps between degrees of rotation. Useful if you change the A axis gearing.",
         "section": "Advanced",
         "key": "delta_steps_per_mm",
-        "default": "26.666667"
+        "default": "888.888889"
     },
     {
         "type": "title",
@@ -289,14 +264,8 @@
         "title": "Max Rotation Speed",
         "desc": "Max rotation speed rate for A axis (degree/min)",
         "section": "Advanced",
-        "key": "delta_max_rate"
-    },																
-    {
-        "type": "numeric",
-        "title": "ATC Max Speed",
-        "desc": "Max feed rate for auto tool changer (mm/min)",
-        "section": "Advanced",
-        "key": "epsilon_max_rate"
+        "key": "delta_max_rate",
+        "default": "2400"
     },																
     {
         "type": "numeric",
@@ -311,15 +280,15 @@
         "desc": "Acceleration for rotation axis (degree/second/second)",
         "section": "Advanced",
         "key": "delta_acceleration"
-    },																
+    },
     {
-        "type": "numeric",
-        "title": "ATC Acceleration",
-        "desc": "Acceleration for auto tool changer (mm/second/second)",
+        "type": "bool",
+        "title": "Skip move to path origin on playback start",
+        "desc": "When true, the start of gcode playback will only move to SafeZ position then start running the file instead of first moving to the path origin",
+        "default": "false",
         "section": "Advanced",
-        "key": "epsilon_acceleration"
-    },	
-	
+        "key": "atc.skip_path_origin"
+    },
     {
         "type": "title",
         "title": "WIFI",
@@ -332,103 +301,6 @@
         "section": "Advanced",
         "key": "wifi.machine_name"
     },		
-	
-    {
-        "type": "title",
-        "title": "ATC Motion",
-        "section": "Advanced"
-    },	
-    {
-        "type": "numeric",
-        "title": "Homing Retract",
-        "desc": "Retract distance after homing (mm)",
-        "section": "Advanced",
-        "key": "atc.homing_retract_mm"
-    },															
-    {
-        "type": "numeric",
-        "title": "Action Distance",
-        "desc": "Action distance when drop tool (mm)",
-        "section": "Advanced",
-        "key": "atc.action_mm"
-    },
-   {
-        "type": "numeric",
-        "title": "Detect speed",
-        "desc": "Tool detect speed (mm / second)",
-        "section": "Advanced",
-        "key": "atc.detector.detect_rate_mm_s"
-    },
-   {
-        "type": "numeric",
-        "title": "Detect Distance",
-        "desc": "Tool detect back and forth distance (mm)",
-        "section": "Advanced",
-        "key": "atc.detector.detect_travel_mm"
-    },
-    {
-        "type": "numeric",
-        "title": "Safe Z",
-        "desc": "Safety Z height when clamping tool",
-        "section": "Advanced",
-        "key": "atc.safe_z_mm"
-    },															
-    {
-        "type": "numeric",
-        "title": "Safe Z Empty",
-        "desc": "Safety Z height when not clamping tool",
-        "section": "Advanced",
-        "key": "atc.safe_z_empty_mm"
-    },	
-    {
-        "type": "numeric",
-        "title": "Safe Z Offset",
-        "desc": "Z offset when slowing down ATC speed",
-        "section": "Advanced",
-        "key": "atc.safe_z_offset_mm"
-    },			
-    {
-        "type": "numeric",
-        "title": "Fast ATC Speed",
-        "desc": "Z axis fast speed When doing ATC",
-        "section": "Advanced",
-        "key": "atc.fast_z_rate_mm_m"
-    },		
-    {
-        "type": "numeric",
-        "title": "Slow ATC Speed",
-        "desc": "Z axis slow speed when doing ATC",
-        "section": "Advanced",
-        "key": "atc.slow_z_rate_mm_m"
-    },	
-    {
-        "type": "numeric",
-        "title": "Margin Scan Speed",
-        "desc": "X and Y speed when scaning margin",
-        "section": "Advanced",
-        "key": "atc.margin_rate_mm_m"
-    },		
-    {
-        "type": "numeric",
-        "title": "Probe Fast Speed",
-        "desc": "Z axis fast speed when doing calibrate",
-        "section": "Advanced",
-        "key": "atc.probe.fast_rate_mm_m"
-    },			
-    {
-        "type": "numeric",
-        "title": "Probe Slow Speed",
-        "desc": "Z axis slow speed when doing calibrate",
-        "section": "Advanced",
-        "key": "atc.probe.slow_rate_mm_m"
-    },			
-    {
-        "type": "numeric",
-        "title": "Probe Retract",
-        "desc": "Retract distance when hitting probe",
-        "section": "Advanced",
-        "key": "atc.probe.retract_mm"
-    },
 		
     {
         "type": "title",
@@ -581,26 +453,7 @@
         "section": "Advanced",
         "key": "temperature_control.spindle.max_temp"
     },
-
-    {
-        "type": "title",
-        "title": "Wireless Probe",
-        "section": "Advanced"
-    },
-    {
-        "type": "numeric",
-        "title": "Charge Start Voltage",
-        "desc": "Wireless probe charge start voltage",
-        "section": "Advanced",
-        "key": "wp.min_voltage"
-    },
-    {
-        "type": "numeric",
-        "title": "Charge Cut-Off Voltage",
-        "desc": "Wireless probe charge cut-off voltage",
-        "section": "Advanced",
-        "key": "wp.max_voltage"
-    },
+    
 
     {
         "type": "string",

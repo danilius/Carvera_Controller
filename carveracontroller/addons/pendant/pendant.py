@@ -99,6 +99,28 @@ class Pendant:
         except Exception as e:
             logger.error(f"Failed to run macro {macro_id}: {e}")
 
+    def notify_tool_action(self, action: str, tool: int, message: str) -> None:
+        """
+        Notify pendant about a tool change action.
+        Override in subclasses to implement specific behavior (e.g., CYD pendant).
+        Default no-op implementation for pendants that don't support tool notifications.
+        
+        :param action: "clamp" or "unclamp"
+        :param tool: Tool number
+        :param message: Original firmware message
+        """
+        pass
+
+    def forward_mdi_line(self, line: str, level: int) -> None:
+        """
+        Forward an MDI line to the pendant. Default no-op.
+        Subclasses may use this to inspect or relay messages externally.
+
+        :param line: The MDI line text
+        :param level: Message level (Controller.MSG_NORMAL/MSG_ERROR)
+        """
+        pass
+
 
 class NonePendant(Pendant):
     def __init__(self, *args, **kwargs) -> None:
@@ -111,6 +133,13 @@ try:
 except Exception as e:
     logger.warning(f"WHB04 pendant not supported: {e}")
     WHB04_SUPPORTED = False
+
+try:
+    from .cyd import CYD
+    CYD_SUPPORTED = True
+except Exception as e:
+    logger.warning(f"CYD pendant not supported: {e}")
+    CYD_SUPPORTED = False
 
 if WHB04_SUPPORTED:
     class WHB04(Pendant):
@@ -315,6 +344,9 @@ SUPPORTED_PENDANTS = {
 
 if WHB04_SUPPORTED:
     SUPPORTED_PENDANTS["WHB04"] = WHB04
+
+if CYD_SUPPORTED:
+    SUPPORTED_PENDANTS["CYD"] = CYD
 
 
 class SettingPendantSelector(SettingItem):

@@ -3618,6 +3618,14 @@ class Makera(RelativeLayout):
                     if 'WP PAIR SUCCESS' in line:
                         self.pairing_popup.pairing_success = True
 
+                    # Forward all MDI lines to the pendant (non-blocking); pendant filters as needed
+                    if self.pendant is not None:
+                        try:
+                            # Pass along message type for optional filtering
+                            self.pendant.forward_mdi_line(line, msg)
+                        except Exception:
+                            pass
+
                     if msg == Controller.MSG_NORMAL:
                         logger.info(f"MDI Received: {line}")
                         self.manual_rv.data.append({'text': line, 'color': (103/255, 150/255, 186/255, 1)})
@@ -5554,9 +5562,15 @@ class Makera(RelativeLayout):
 
     def is_jogging_enabled(self):
         app = App.get_running_app()
+
+        # The playing flag can remain true after a completed/aborted job while
+        # the machine has already returned to Idle. Trust the live machine state
+        # here so Manual Move and CYD jogging are not disabled by stale progress.
+        if app.state == 'Idle':
+            return not self._is_popup_open()
         
         # Allow jogging when machine is running if the setting is enabled
-        if app.state == 'Run' and self.allow_jogging_while_machine_running == '1':
+        if app.state == 'Run' and (app.cyd_jogging or self.allow_jogging_while_machine_running == '1'):
             return not self._is_popup_open()
         return \
             not app.playing and \
@@ -5621,9 +5635,11 @@ class Makera(RelativeLayout):
             get_spindle, set_spindle,
             min_limit = 10, max_limit = 300, step = 10)
 
+        pendant_jog_gate = self.is_jogging_enabled if type_name == "CYD" else self.is_pendant_jogging_enabled
+
         self.pendant = pendant_type(self.controller, self.cnc,
                                 feed_override, spindle_override,
-                                self.is_pendant_jogging_enabled,
+                                pendant_jog_gate,
                                 self.handle_pendat_run_pause_resume,
                                 self.handle_pendant_probe_z,
                                 self.handle_pendant_open_probing_popup,
@@ -6278,6 +6294,7 @@ class Makera(RelativeLayout):
 class MakeraApp(App):
     state = StringProperty(NOT_CONNECTED)
     playing = BooleanProperty(False)
+    cyd_jogging = BooleanProperty(False)
     has_4axis = BooleanProperty(False)
     has_atc = BooleanProperty(False)
     lasering = BooleanProperty(False)

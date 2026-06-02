@@ -8,6 +8,22 @@
         "default": "None"
     },
     {
+        "type": "string",
+        "title": "CYD Pendant Host",
+        "desc": "Hostname or IP address of the CYD pendant (ESP32).",
+        "section": "carvera",
+        "key": "cyd_pendant_host",
+        "default": ""
+    },
+    {
+        "type": "numeric",
+        "title": "CYD Pendant Port",
+        "desc": "TCP port for CYD pendant connection.",
+        "section": "carvera",
+        "key": "cyd_pendant_port",
+        "default": 9876
+    },
+    {
         "type": "bool",
         "title": "Jogging Via Pendant Is Default",
         "desc": "This defines if the pendant jogging is automatically active on the jog screen",

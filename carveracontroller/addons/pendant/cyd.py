@@ -1,3 +1,5 @@
+import json
+import re
 import time
 from typing import Callable
 
@@ -52,6 +54,7 @@ class CYD:
 
         self._last_sent = {"x": 0.0, "y": 0.0, "z": 0.0}
         self._last_machine_snapshot = None
+        self._last_macro_snapshot = None
 
         # Poll at 5 Hz; send position changes + machine state changes.
         self._poll_ev = Clock.schedule_interval(self._poll_positions, 0.2)
@@ -116,6 +119,7 @@ class CYD:
 
     def _poll_positions(self, *_args) -> None:
         self._poll_machine_state()
+        self._poll_macros()
 
         try:
             mx = self._round3(self._cnc.vars.get("mx", 0.0))
@@ -170,6 +174,17 @@ class CYD:
             return "running"
         return s or "unknown"
 
+    def _tool_label(self, tool: int) -> str:
+        if tool == 0:
+            return "Probe"
+        if tool == 8888:
+            return "Laser"
+        if 999990 <= tool <= 999999:
+            return "3D Probe"
+        if tool > 0:
+            return f"T{tool}"
+        return "No Tool"
+
     def _jog_session_active(self) -> bool:
         return time.monotonic() < self._jog_session_until
 
@@ -185,14 +200,18 @@ class CYD:
         playedlines = int(self._cnc.vars.get("playedlines", -1))
         playing = playedlines > 0
         jog_allowed = self._cyd_jog_allowed()
+        tool = int(self._cnc.vars.get("tool", -1))
+        target_tool = int(self._cnc.vars.get("target_tool", -1))
         return {
             "state": state,
             "activity": self._derive_activity(state, atc_state, playing),
             "jog_allowed": jog_allowed,
             "atc_state": atc_state,
             "playing": playing,
-            "tool": int(self._cnc.vars.get("tool", -1)),
-            "target_tool": int(self._cnc.vars.get("target_tool", -1)),
+            "tool": tool,
+            "tool_label": self._tool_label(tool),
+            "target_tool": target_tool,
+            "target_tool_label": self._tool_label(target_tool),
         }
 
     def _send_machine_state(self, force: bool = False, response_to: str = "") -> None:
@@ -211,6 +230,90 @@ class CYD:
         except Exception:
             pass
 
+    def _macro_list(self) -> list:
+        macros = []
+        for idx in range(1, 11):
+            macro_key = f"pendant_macro_{idx}"
+            try:
+                macro_value = KivyConfig.get("carvera", macro_key)
+            except Exception:
+                macro_value = ""
+
+            if not macro_value:
+                continue
+
+            try:
+                macro_data = json.loads(macro_value)
+            except Exception:
+                continue
+
+            name = str(macro_data.get("name", "")).strip()
+            gcode = str(macro_data.get("gcode", "")).strip()
+            if not name or not gcode:
+                continue
+
+            if name.lower() == f"macro {idx}".lower():
+                continue
+
+            macros.append({"id": idx, "name": name[:24]})
+        return macros
+
+    def _send_macro_list(self, force: bool = False) -> None:
+        macros = self._macro_list()
+        if not force and macros == self._last_macro_snapshot:
+            return
+        self._client.send_json({"type": "macro_list", "macros": macros, "ts": int(time.time())})
+        self._last_macro_snapshot = macros
+
+    def _poll_macros(self) -> None:
+        try:
+            self._send_macro_list(force=False)
+        except Exception:
+            pass
+
+    def _send_macro_result(self, ok: bool, reason: str = "", macro_id: int = -1) -> None:
+        try:
+            self._client.send_json({
+                "type": "macro_result",
+                "ok": ok,
+                "reason": reason,
+                "id": macro_id,
+                "ts": int(time.time()),
+            })
+        except Exception:
+            pass
+
+    def _handle_macro_request(self, msg: dict) -> None:
+        action = str(msg.get("action", "")).lower()
+        if action != "run":
+            self._send_macro_result(False, "unsupported_action")
+            return
+
+        try:
+            macro_id = int(msg.get("id", 0))
+        except Exception:
+            self._send_macro_result(False, "invalid_id")
+            return
+
+        macros = {macro["id"]: macro for macro in self._macro_list()}
+        if macro_id not in macros:
+            self._send_macro_result(False, "not_named", macro_id)
+            return
+
+        macro_key = f"pendant_macro_{macro_id}"
+        try:
+            macro_data = json.loads(KivyConfig.get("carvera", macro_key))
+            lines = macro_data.get("gcode", "").splitlines()
+            for line in lines:
+                line = line.strip()
+                if line:
+                    self._controller.executeCommand(line)
+            logger.info(f"CYD: Ran macro {macro_id}: {macros[macro_id]['name']}")
+            self._send_macro_result(True, macro_id=macro_id)
+        except Exception as e:
+            logger.error(f"CYD: Failed to run macro {macro_id}: {e}")
+            self._send_macro_result(False, f"error:{e}", macro_id)
+
     def forward_mdi_line(self, line: str, level: int) -> None:
         pass
 
@@ -227,6 +330,95 @@ class CYD:
             })
         except Exception:
             pass
+
+    def _send_gcode_result(self, ok: bool, reason: str = "", command: str = "") -> None:
+        try:
+            self._client.send_json({
+                "type": "gcode_result",
+                "ok": ok,
+                "reason": reason,
+                "command": command,
+            })
+        except Exception:
+            pass
+
+    def _send_tool_result(self, ok: bool, reason: str = "", action: str = "", tool: int = -1) -> None:
+        try:
+            self._client.send_json({
+                "type": "tool_result",
+                "ok": ok,
+                "reason": reason,
+                "action": action,
+                "tool": tool,
+            })
+        except Exception:
+            pass
+
+    def _tool_change_allowed(self) -> bool:
+        state = str(self._cnc.vars.get("state", "")).lower()
+        atc_state = int(self._cnc.vars.get("atc_state", 0))
+        playedlines = int(self._cnc.vars.get("playedlines", -1))
+        return self._derive_activity(state, atc_state, playedlines > 0) == "idle"
+
+    def _handle_tool_request(self, msg: dict) -> None:
+        action = str(msg.get("action", "")).lower()
+
+        if not self._tool_change_allowed():
+            state = str(self._cnc.vars.get("state", "")).lower()
+            atc_state = int(self._cnc.vars.get("atc_state", 0))
+            playedlines = int(self._cnc.vars.get("playedlines", -1))
+            activity = self._derive_activity(state, atc_state, playedlines > 0)
+            logger.warning(f"CYD: Rejected tool action {action!r}; activity={activity}, state={state}, atc_state={atc_state}, playedlines={playedlines}")
+            self._send_tool_result(False, f"not_idle:{activity}", action)
+            return
+
+        try:
+            if action == "drop":
+                logger.info("CYD: Dropping current tool")
+                self._controller.dropToolCommand()
+                self._send_tool_result(True, action=action)
+                return
+
+            if action == "change":
+                tool = int(msg.get("tool", -999999))
+                if tool not in (0, 999990, 1, 2, 3, 4, 5, 6):
+                    self._send_tool_result(False, "unsupported_tool", action, tool)
+                    return
+                logger.info(f"CYD: Changing tool to {tool}")
+                self._controller.changeToolCommand(tool)
+                self._send_tool_result(True, action=action, tool=tool)
+                return
+
+            self._send_tool_result(False, "unsupported_action", action)
+        except Exception as e:
+            logger.error(f"CYD: Failed to execute tool action: {e}")
+            self._send_tool_result(False, f"error:{e}", action)
+
+    def _handle_gcode_request(self, msg: dict) -> None:
+        line = str(msg.get("line", "")).strip()
+        if not line:
+            self._send_gcode_result(False, "empty_line")
+            return
+
+        # Allowlist: only M466 (single-axis probe) for now.
+        if not re.match(r'^M46[126]\b', line, re.IGNORECASE):
+            logger.warning(f"CYD: Rejected gcode not on allowlist: {line!r}")
+            self._send_gcode_result(False, "not_allowed")
+            return
+
+        state = str(self._cnc.vars.get("state", "")).lower()
+        if state not in ("idle", ""):
+            logger.warning(f"CYD: Rejected gcode because machine not idle: {state}")
+            self._send_gcode_result(False, f"machine_not_idle:{state}")
+            return
+
+        logger.info(f"CYD: Executing gcode: {line!r}")
+        try:
+            self._controller.executeCommand(line)
+            self._send_gcode_result(True, command=line)
+        except Exception as e:
+            logger.error(f"CYD: Failed to execute gcode: {e}")
+            self._send_gcode_result(False, f"error:{e}")
 
     def _handle_jog_request(self, msg: dict) -> None:
         self._mark_cyd_jogging(hold_s=1.2)
@@ -331,12 +523,28 @@ class CYD:
                 self._send_machine_state(force=True, response_to=msg_type)
                 return
 
+            if msg_type in ("macro_query", "get_macros"):
+                self._send_macro_list(force=True)
+                return
+
             if msg_type == "jog":
                 self._handle_jog_request(msg)
                 return
 
             if msg_type == "jog_cont":
                 self._handle_continuous_jog_request(msg)
+                return
+
+            if msg_type == "tool":
+                self._handle_tool_request(msg)
+                return
+
+            if msg_type == "gcode":
+                self._handle_gcode_request(msg)
+                return
+
+            if msg_type == "macro":
+                self._handle_macro_request(msg)
                 return
 
             if msg_type == "ping":

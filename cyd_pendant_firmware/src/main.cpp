@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
 #include <ArduinoOTA.h>
+#include <Preferences.h>
 #include <WiFi.h>
 #include <lvgl.h>
 #include <TFT_eSPI.h>
@@ -35,6 +36,14 @@ constexpr size_t JOG_STEP_COUNT = 4;
 #define PENDANT_REAL_JOG_ENABLE 0
 #endif
 
+#ifndef PENDANT_REAL_PROBE_ENABLE
+#define PENDANT_REAL_PROBE_ENABLE 0
+#endif
+
+#ifndef PENDANT_REAL_ATC_ENABLE
+#define PENDANT_REAL_ATC_ENABLE 0
+#endif
+
 #ifndef TOUCH_CLK
 #define TOUCH_CLK 25
 #endif
@@ -55,18 +64,24 @@ TFT_eSPI tft = TFT_eSPI();
 WiFiServer pendantServer(PENDANT_TCP_PORT);
 WiFiClient controllerClient;
 HardwareSerial rpSerial(2);
+Preferences preferences;
 
 lv_disp_draw_buf_t drawBuf;
 lv_color_t drawPixels[SCREEN_WIDTH * DRAW_BUF_LINES];
+lv_obj_t* headerBar = nullptr;
 lv_obj_t* lblStatus = nullptr;
-lv_obj_t* lblPos = nullptr;
-lv_obj_t* lblJogState = nullptr;
-lv_obj_t* lblMpgState = nullptr;
-lv_obj_t* lblPendingJog = nullptr;
 lv_obj_t* lblHint = nullptr;
 lv_obj_t* lblJogButton = nullptr;
-lv_obj_t* lblAxisButton = nullptr;
 lv_obj_t* lblStepButton = nullptr;
+lv_obj_t* lblModeButton = nullptr;
+lv_obj_t* lblAxisX = nullptr;
+lv_obj_t* lblAxisY = nullptr;
+lv_obj_t* lblAxisZ = nullptr;
+lv_obj_t* lblMenuButton = nullptr;
+lv_obj_t* lblProbeValue1 = nullptr;
+lv_obj_t* lblProbeValue2 = nullptr;
+lv_obj_t* lblProbeValue3 = nullptr;
+lv_obj_t* lblEditValue = nullptr;
 
 String rxLine;
 String rpRxLine;
@@ -74,12 +89,47 @@ float mx = 0.0f;
 float my = 0.0f;
 float mz = 0.0f;
 
+enum class UiPage {
+  Home,
+  MainMenu,
+  AtcMenu,
+  MacroMenu,
+  ProbeMenu,
+  ProbeSingle,
+  ProbeBore,
+  ProbeBoss,
+  ProbeEdit,
+};
+
+enum class ProbeField {
+  SingleDistance,
+  BoreX,
+  BoreY,
+  BossX,
+  BossY,
+  BossDepth,
+};
+
+enum class ButtonStyle {
+  Normal,
+  Back,
+  Save,
+};
+
+UiPage currentPage = UiPage::Home;
+UiPage editReturnPage = UiPage::ProbeSingle;
+ProbeField editField = ProbeField::SingleDistance;
+float singleProbeDistance = 10.0f;
+float boreProbeX = 10.0f;
+float boreProbeY = 10.0f;
+float bossProbeX = 10.0f;
+float bossProbeY = 10.0f;
+float bossProbeDepth = 2.0f;
+
 #if PENDANT_RP_LINK_TX_ENABLE
 uint32_t rpPingSeq = 0;
 uint32_t lastRpPingMs = 0;
 #endif
-int32_t mpgPosition = 0;
-int32_t mpgLastDelta = 0;
 bool continuousJogActive = false;
 int32_t continuousJogDirection = 0;
 uint32_t lastMpgDetentMs = 0;
@@ -88,6 +138,7 @@ uint32_t mpgBurstStartMs = 0;
 uint16_t mpgBurstDetents = 0;
 int32_t mpgBurstDirection = 0;
 bool jogEnabled = false;
+bool jogHybridMode = true;
 const char* jogAxis = "X";
 const float JOG_STEPS[JOG_STEP_COUNT] = {0.001f, 0.010f, 0.100f, 1.000f};
 size_t jogStepIndex = 1;
@@ -96,7 +147,26 @@ const uint32_t CONTINUOUS_JOG_TIMEOUT_MS = 250;
 const uint32_t CONTINUOUS_PROMOTE_WINDOW_MS = 1000;
 const uint16_t CONTINUOUS_PROMOTE_DETENTS = 10;
 const uint32_t CONTINUOUS_DEMOTE_DETENT_GAP_MS = 250;
+constexpr uint16_t BOTTOM_BUTTON_Y = 196;
+constexpr uint16_t BOTTOM_BUTTON_H = 40;
+constexpr uint16_t BOTTOM_BUTTON_W = 100;
+constexpr uint16_t BOTTOM_BUTTON_GAP = 5;
+constexpr uint16_t BOTTOM_BUTTON_FIRST_X = 5;
+constexpr uint16_t AXIS_TILE_X = 10;
+constexpr uint16_t AXIS_TILE_Y = 48;
+constexpr uint16_t AXIS_TILE_W = 140;
+constexpr uint16_t AXIS_TILE_H = 40;
+constexpr uint16_t AXIS_TILE_GAP = 8;
+constexpr uint32_t BACK_LONG_PRESS_MS = 900;
 uint32_t lastTouchReportMs = 0;
+bool editSwipeTracking = false;
+uint16_t editSwipeStartX = 0;
+uint16_t editSwipeLastX = 0;
+bool backPressTracking = false;
+bool backLongPressHandled = false;
+bool touchCapturedUntilRelease = false;
+uint32_t backPressStartMs = 0;
+UiPage backPressPage = UiPage::Home;
 bool touchCalibrating = false;
 bool touchCalibrated = true;
 bool touchSwapXY = true;
@@ -110,8 +180,18 @@ uint32_t lastTouchButtonMs = 0;
 bool wasControllerConnected = false;
 bool controllerJogAllowed = false;
 String controllerState = "unknown";
+String controllerActivity = "idle";
+String toolLabel = "No Tool";
+String targetToolLabel = "No Tool";
+const uint8_t MAX_MACROS = 10;
+const uint8_t MAX_VISIBLE_MACROS = 8;
+uint8_t macroCount = 0;
+int macroIds[MAX_MACROS] = {0};
+String macroNames[MAX_MACROS];
 
 bool sendJson(const JsonDocument& doc);
+void sendGcodeCommand(const String& line);
+void renderPage();
 
 void setLabelText(lv_obj_t* label, const String& text) {
   if (label) {
@@ -119,27 +199,188 @@ void setLabelText(lv_obj_t* label, const String& text) {
   }
 }
 
+String probeValueText(const char* label, float value) {
+  return String(label) + " " + String(value, 1);
+}
+
+float& probeFieldValue(ProbeField field) {
+  switch (field) {
+    case ProbeField::SingleDistance:
+      return singleProbeDistance;
+    case ProbeField::BoreX:
+      return boreProbeX;
+    case ProbeField::BoreY:
+      return boreProbeY;
+    case ProbeField::BossX:
+      return bossProbeX;
+    case ProbeField::BossY:
+      return bossProbeY;
+    case ProbeField::BossDepth:
+      return bossProbeDepth;
+  }
+  return singleProbeDistance;
+}
+
+const char* probeFieldKey(ProbeField field) {
+  switch (field) {
+    case ProbeField::SingleDistance:
+      return "single_d";
+    case ProbeField::BoreX:
+      return "bore_x";
+    case ProbeField::BoreY:
+      return "bore_y";
+    case ProbeField::BossX:
+      return "boss_x";
+    case ProbeField::BossY:
+      return "boss_y";
+    case ProbeField::BossDepth:
+      return "boss_e";
+  }
+  return "single_d";
+}
+
+String probeFieldLabel(ProbeField field) {
+  switch (field) {
+    case ProbeField::SingleDistance:
+      return "Distance";
+    case ProbeField::BoreX:
+      return "Bore X";
+    case ProbeField::BoreY:
+      return "Bore Y";
+    case ProbeField::BossX:
+      return "Boss X";
+    case ProbeField::BossY:
+      return "Boss Y";
+    case ProbeField::BossDepth:
+      return "Depth";
+  }
+  return "Distance";
+}
+
+void loadProbeSettings() {
+  preferences.begin("probe", false);
+  singleProbeDistance = preferences.getFloat(probeFieldKey(ProbeField::SingleDistance), singleProbeDistance);
+  boreProbeX = preferences.getFloat(probeFieldKey(ProbeField::BoreX), boreProbeX);
+  boreProbeY = preferences.getFloat(probeFieldKey(ProbeField::BoreY), boreProbeY);
+  bossProbeX = preferences.getFloat(probeFieldKey(ProbeField::BossX), bossProbeX);
+  bossProbeY = preferences.getFloat(probeFieldKey(ProbeField::BossY), bossProbeY);
+  bossProbeDepth = preferences.getFloat(probeFieldKey(ProbeField::BossDepth), bossProbeDepth);
+}
+
+void saveProbeField(ProbeField field) {
+  preferences.putFloat(probeFieldKey(field), probeFieldValue(field));
+}
+
+String localToolLabel(int32_t tool) {
+  if (tool == 0) {
+    return "Probe";
+  }
+  if (tool == 8888) {
+    return "Laser";
+  }
+  if (tool >= 999990 && tool <= 999999) {
+    return "3D Probe";
+  }
+  if (tool > 0) {
+    return "T" + String(tool);
+  }
+  return "No Tool";
+}
+
+String activityLabel(const String& activity) {
+  if (activity == "idle") {
+    return "";
+  }
+  if (activity == "running_gcode" || activity == "running") {
+    return "RUNNING";
+  }
+  if (activity == "changing_tool") {
+    return "TOOL";
+  }
+  if (activity == "probing") {
+    return "PROBING";
+  }
+  if (activity == "leveling") {
+    return "LEVELING";
+  }
+  if (activity == "alarm") {
+    return "ALARM";
+  }
+  if (activity == "paused") {
+    return "PAUSED";
+  }
+  if (activity == "holding") {
+    return "HOLD";
+  }
+  if (activity == "waiting") {
+    return "WAIT";
+  }
+  return activity;
+}
+
+void refreshTopBar() {
+  if (!lblStatus) {
+    return;
+  }
+
+  String text;
+  uint32_t color = 0x0066AA;
+  if (!wasControllerConnected) {
+    text = "DISCONNECTED";
+    color = 0x4A4A4A;
+  } else {
+    text = toolLabel;
+    const String activity = activityLabel(controllerActivity);
+    if (activity.length() > 0) {
+      text += "   ";
+      text += activity;
+      color = controllerActivity == "alarm" ? 0xAA2222 : 0x9A6A00;
+    }
+    if (controllerActivity == "changing_tool" && targetToolLabel.length() > 0) {
+      text = toolLabel + " -> " + targetToolLabel;
+    }
+  }
+
+  if (headerBar) {
+    lv_obj_set_style_bg_color(headerBar, lv_color_hex(color), 0);
+  }
+  setLabelText(lblStatus, text);
+}
+
 void refreshPositionLabel() {
-  String msg = "X:" + String(mx, 3) + "  Y:" + String(my, 3) + "  Z:" + String(mz, 3);
-  setLabelText(lblPos, msg);
+  setLabelText(lblAxisX, "X     " + String(mx, 3));
+  setLabelText(lblAxisY, "Y     " + String(my, 3));
+  setLabelText(lblAxisZ, "Z     " + String(mz, 3));
 }
 
 String jogStepText() {
   return String(JOG_STEPS[jogStepIndex], 3);
 }
 
-String jogStateText() {
-  String msg = "Jog: ";
-  if (!wasControllerConnected) {
-    msg += "DISCONNECTED";
-  } else {
-    msg += jogEnabled ? "ON" : "OFF";
+lv_color_t axisColor(char axis) {
+  switch (axis) {
+    case 'X':
+      return lv_color_hex(0xFF4D4D);
+    case 'Y':
+      return lv_color_hex(0x45D16F);
+    case 'Z':
+      return lv_color_hex(0x4DA3FF);
+    default:
+      return lv_color_white();
   }
-  msg += "   Axis: ";
-  msg += jogAxis;
-  msg += "   Step: ";
-  msg += jogStepText();
-  return msg;
+}
+
+lv_color_t axisSelectedBg(char axis) {
+  switch (axis) {
+    case 'X':
+      return lv_color_hex(0x5A1E1E);
+    case 'Y':
+      return lv_color_hex(0x1E4A2C);
+    case 'Z':
+      return lv_color_hex(0x1E365A);
+    default:
+      return lv_color_hex(0x1C2730);
+  }
 }
 
 void styleBottomButton(lv_obj_t* label, bool enabled) {
@@ -157,19 +398,38 @@ void styleBottomButton(lv_obj_t* label, bool enabled) {
   lv_obj_set_style_text_color(label, enabled ? lv_color_white() : lv_color_hex(0xAAAAAA), 0);
 }
 
-void refreshJogUi() {
-  setLabelText(lblJogState, jogStateText());
-  setLabelText(lblJogButton, jogEnabled ? "Jog ON" : "Jog OFF");
-  setLabelText(lblAxisButton, "Axis " + String(jogAxis));
-  setLabelText(lblStepButton, "Step " + jogStepText());
-  styleBottomButton(lblJogButton, wasControllerConnected);
-  styleBottomButton(lblAxisButton, wasControllerConnected);
-  styleBottomButton(lblStepButton, wasControllerConnected);
+void styleAxisTile(lv_obj_t* label, char axis) {
+  if (!label) {
+    return;
+  }
+
+  lv_obj_t* tile = lv_obj_get_parent(label);
+  if (!tile) {
+    return;
+  }
+
+  const bool selected = String(jogAxis) == String(axis);
+  const bool active = jogEnabled && wasControllerConnected;
+  lv_obj_set_style_bg_color(tile, selected && active ? axisSelectedBg(axis) : lv_color_hex(0x17212A), 0);
+  lv_obj_set_style_border_color(tile, selected && active ? axisColor(axis) : lv_color_hex(0x46515C), 0);
+  lv_obj_set_style_border_width(tile, selected ? 3 : 1, 0);
+  lv_obj_set_style_text_color(label, active ? axisColor(axis) : lv_color_hex(0x888888), 0);
 }
 
-void refreshMpgUi() {
-  setLabelText(lblMpgState, "MPG: " + String(mpgPosition) + "   Delta: " + String(mpgLastDelta));
-  setLabelText(lblPendingJog, "Pending: no motion");
+void refreshAxisTiles() {
+  styleAxisTile(lblAxisX, 'X');
+  styleAxisTile(lblAxisY, 'Y');
+  styleAxisTile(lblAxisZ, 'Z');
+}
+
+void refreshJogUi() {
+  setLabelText(lblJogButton, jogEnabled ? "Jog ON" : "Jog OFF");
+  setLabelText(lblStepButton, jogStepText());
+  setLabelText(lblModeButton, jogHybridMode ? "Hybrid" : "Step");
+  styleBottomButton(lblJogButton, wasControllerConnected);
+  styleBottomButton(lblStepButton, wasControllerConnected);
+  styleBottomButton(lblModeButton, wasControllerConnected);
+  refreshAxisTiles();
 }
 
 bool isJogAmountAllowed(const String& axis, float amount) {
@@ -219,19 +479,10 @@ bool sendJogDelta(int32_t delta) {
       return false;
     }
 
-    String msg = "SENT JOG ";
-    msg += jogAxis;
-    msg += " ";
-    if (roundedAmount > 0.0f) {
-      msg += "+";
-    }
-    msg += String(roundedAmount, 3);
-    setLabelText(lblHint, msg);
     return true;
   }
 
   String blocked = "Jog blocked: max 1.000";
-  Serial.println(blocked);
   setLabelText(lblHint, blocked);
   return false;
 #else
@@ -243,10 +494,74 @@ bool sendJogDelta(int32_t delta) {
   }
   msg += String(amount, 3);
 
-  Serial.println(msg);
   setLabelText(lblHint, msg);
   return true;
 #endif
+}
+
+void sendGcodeCommand(const String& line) {
+#if PENDANT_REAL_PROBE_ENABLE
+  StaticJsonDocument<128> doc;
+  doc["type"] = "gcode";
+  doc["line"] = line;
+  if (!sendJson(doc)) {
+    setLabelText(lblHint, "Probe not sent: disconnected");
+  }
+#else
+  setLabelText(lblHint, "DRY PROBE: " + line);
+#endif
+}
+
+void sendToolChangeCommand(int32_t tool) {
+#if PENDANT_REAL_ATC_ENABLE
+  setLabelText(lblStatus, "Request " + localToolLabel(tool));
+  StaticJsonDocument<128> doc;
+  doc["type"] = "tool";
+  doc["action"] = "change";
+  doc["tool"] = tool;
+  if (!sendJson(doc)) {
+    setLabelText(lblHint, "Tool command not sent");
+  }
+#else
+  setLabelText(lblHint, "DRY TOOL: " + localToolLabel(tool));
+#endif
+}
+
+void sendToolDropCommand() {
+#if PENDANT_REAL_ATC_ENABLE
+  setLabelText(lblStatus, "Request Drop");
+  StaticJsonDocument<96> doc;
+  doc["type"] = "tool";
+  doc["action"] = "drop";
+  if (!sendJson(doc)) {
+    setLabelText(lblHint, "Drop command not sent");
+  }
+#else
+  setLabelText(lblHint, "DRY TOOL: Drop");
+#endif
+}
+
+void requestMacroList() {
+  StaticJsonDocument<64> doc;
+  doc["type"] = "macro_query";
+  if (!sendJson(doc)) {
+    setLabelText(lblHint, "Macros not available: disconnected");
+  }
+}
+
+void sendMacroRunCommand(uint8_t index) {
+  if (index >= macroCount) {
+    return;
+  }
+
+  setLabelText(lblHint, "Run macro: " + macroNames[index]);
+  StaticJsonDocument<96> doc;
+  doc["type"] = "macro";
+  doc["action"] = "run";
+  doc["id"] = macroIds[index];
+  if (!sendJson(doc)) {
+    setLabelText(lblHint, "Macro not sent: disconnected");
+  }
 }
 
 uint16_t continuousJogFeed() {
@@ -280,16 +595,6 @@ bool sendContinuousJogCommand(const char* action, int32_t direction = 0) {
     return false;
   }
 
-  String msg = "CONT JOG ";
-  msg += action;
-  if (direction != 0) {
-    msg += " ";
-    msg += jogAxis;
-    msg += applyAxisDirection(direction) > 0 ? "+" : "-";
-    msg += " F";
-    msg += String(continuousJogFeed());
-  }
-  setLabelText(lblHint, msg);
   return true;
 #else
   return false;
@@ -309,8 +614,9 @@ void stopContinuousJog(const char* reason) {
   continuousJogActive = false;
   continuousJogDirection = 0;
   resetMpgBurst();
-  refreshMpgUi();
-  setLabelText(lblHint, String("Continuous jog stopped: ") + reason);
+  if (strcmp(reason, "timeout") == 0 || strcmp(reason, "jog off") == 0 || strcmp(reason, "disconnect") == 0) {
+    setLabelText(lblHint, "Jog stopped");
+  }
 }
 
 void startOrRefreshContinuousJog(int32_t delta) {
@@ -362,7 +668,6 @@ void setJogEnabled(bool enabled) {
   if (!jogEnabled) {
     stopContinuousJog("jog off");
     resetMpgBurst();
-    refreshMpgUi();
   }
   refreshJogUi();
 #if PENDANT_REAL_JOG_ENABLE
@@ -394,7 +699,6 @@ void setJogAxis(char axis) {
   }
 
   refreshJogUi();
-  setLabelText(lblHint, "Axis set to " + String(jogAxis));
 }
 
 void setJogStepIndex(long index) {
@@ -410,18 +714,40 @@ void setJogStepIndex(long index) {
   setLabelText(lblHint, "Step set to " + jogStepText());
 }
 
-void cycleJogAxis() {
-  if (String(jogAxis) == "X") {
-    setJogAxis('Y');
-  } else if (String(jogAxis) == "Y") {
-    setJogAxis('Z');
-  } else {
-    setJogAxis('X');
-  }
-}
-
 void cycleJogStep() {
   setJogStepIndex(static_cast<long>((jogStepIndex + 1) % JOG_STEP_COUNT));
+}
+
+void adjustJogStep(int32_t direction) {
+  if (direction == 0) {
+    return;
+  }
+
+  long next = static_cast<long>(jogStepIndex) + (direction > 0 ? 1 : -1);
+  if (next < 0) {
+    next = 0;
+  } else if (next >= static_cast<long>(JOG_STEP_COUNT)) {
+    next = static_cast<long>(JOG_STEP_COUNT) - 1;
+  }
+
+  setJogStepIndex(next);
+}
+
+void setJogHybridMode(bool enabled) {
+  if (jogHybridMode == enabled) {
+    refreshJogUi();
+    return;
+  }
+
+  stopContinuousJog("mode change");
+  resetMpgBurst();
+  jogHybridMode = enabled;
+  refreshJogUi();
+  setLabelText(lblHint, jogHybridMode ? "Jog mode: Hybrid" : "Jog mode: Step only");
+}
+
+void toggleJogMode() {
+  setJogHybridMode(!jogHybridMode);
 }
 
 void resetTouchCalibration() {
@@ -438,7 +764,6 @@ void startTouchCalibration() {
   resetTouchCalibration();
   touchCalibrating = true;
   setLabelText(lblHint, "Touch screen corners, then type cal done");
-  Serial.println("Touch calibration started. Touch the screen corners and edges, then type: cal done");
 }
 
 void finishTouchCalibration() {
@@ -447,19 +772,10 @@ void finishTouchCalibration() {
   if ((touchMaxX - touchMinX) < 100 || (touchMaxY - touchMinY) < 100) {
     touchCalibrated = false;
     setLabelText(lblHint, "Touch calibration range too small");
-    Serial.println("Touch calibration failed: range too small");
     return;
   }
 
   touchCalibrated = true;
-  Serial.print("Touch calibration: x=");
-  Serial.print(touchMinX);
-  Serial.print("..");
-  Serial.print(touchMaxX);
-  Serial.print(" y=");
-  Serial.print(touchMinY);
-  Serial.print("..");
-  Serial.println(touchMaxY);
   setLabelText(lblHint, "Touch calibrated");
 }
 
@@ -506,42 +822,438 @@ void mapTouchToScreen(uint16_t rawX, uint16_t rawY, uint16_t& screenX, uint16_t&
   }
 }
 
-bool handleTouchButton(uint16_t screenX, uint16_t screenY) {
-  constexpr uint16_t buttonY = 196;
-  constexpr uint16_t buttonH = 40;
-  constexpr uint16_t buttonW = 100;
-  constexpr uint16_t buttonGap = 5;
-  constexpr uint16_t firstX = 5;
+bool inRect(uint16_t x, uint16_t y, uint16_t rx, uint16_t ry, uint16_t rw, uint16_t rh) {
+  return x >= rx && x < rx + rw && y >= ry && y < ry + rh;
+}
 
-  if (screenY < buttonY || screenY >= buttonY + buttonH) {
+bool backButtonRect(UiPage page, uint16_t& x, uint16_t& y, uint16_t& w, uint16_t& h) {
+  w = 145;
+  h = 40;
+  switch (page) {
+    case UiPage::MainMenu:
+      x = 85;
+      y = 184;
+      w = 150;
+      return true;
+    case UiPage::AtcMenu:
+      x = 165;
+      y = 192;
+      return true;
+    case UiPage::MacroMenu:
+      x = 10;
+      y = 198;
+      w = 300;
+      h = 30;
+      return true;
+    case UiPage::ProbeMenu:
+      x = 165;
+      y = 104;
+      return true;
+    case UiPage::ProbeSingle:
+      x = 165;
+      y = 192;
+      return true;
+    case UiPage::ProbeBore:
+      x = 165;
+      y = 120;
+      return true;
+    case UiPage::ProbeBoss:
+      x = 165;
+      y = 104;
+      return true;
+    case UiPage::ProbeEdit:
+      x = 165;
+      y = 170;
+      return true;
+    default:
+      return false;
+  }
+}
+
+UiPage shortBackTarget(UiPage page) {
+  switch (page) {
+    case UiPage::MainMenu:
+      return UiPage::Home;
+    case UiPage::AtcMenu:
+    case UiPage::MacroMenu:
+      return UiPage::MainMenu;
+    case UiPage::ProbeMenu:
+    case UiPage::ProbeSingle:
+    case UiPage::ProbeBore:
+    case UiPage::ProbeBoss:
+      return page == UiPage::ProbeMenu ? UiPage::MainMenu : UiPage::ProbeMenu;
+    case UiPage::ProbeEdit:
+      return editReturnPage;
+    default:
+      return UiPage::Home;
+  }
+}
+
+bool isLongBackUseful(UiPage page) {
+  return page != UiPage::Home && page != UiPage::MainMenu;
+}
+
+void openPage(UiPage page) {
+  if (currentPage == UiPage::Home && page != UiPage::Home) {
+    stopContinuousJog("page change");
+    resetMpgBurst();
+  }
+  editSwipeTracking = false;
+  backPressTracking = false;
+  backLongPressHandled = false;
+  currentPage = page;
+  renderPage();
+  if (page == UiPage::MacroMenu) {
+    requestMacroList();
+  }
+}
+
+void openProbeEditor(ProbeField field, UiPage returnPage) {
+  editField = field;
+  editReturnPage = returnPage;
+  openPage(UiPage::ProbeEdit);
+}
+
+void adjustProbeEditValue(float delta) {
+  float& value = probeFieldValue(editField);
+  value += delta;
+  if (value < 0.1f) {
+    value = 0.1f;
+  }
+  value = roundf(value * 10.0f) / 10.0f;
+  setLabelText(lblEditValue, probeFieldLabel(editField) + " " + String(value, 1));
+}
+
+bool handleBackButtonHold(uint16_t screenX, uint16_t screenY) {
+  uint16_t x = 0;
+  uint16_t y = 0;
+  uint16_t w = 0;
+  uint16_t h = 0;
+  if (!backButtonRect(currentPage, x, y, w, h) || !inRect(screenX, screenY, x, y, w, h)) {
+    backPressTracking = false;
     return false;
   }
 
+  const uint32_t now = millis();
+  if (!backPressTracking || backPressPage != currentPage) {
+    backPressTracking = true;
+    backLongPressHandled = false;
+    backPressStartMs = now;
+    backPressPage = currentPage;
+    return true;
+  }
+
+  if (!backLongPressHandled && isLongBackUseful(backPressPage) && now - backPressStartMs >= BACK_LONG_PRESS_MS) {
+    backLongPressHandled = true;
+    touchCapturedUntilRelease = true;
+    openPage(UiPage::Home);
+    return true;
+  }
+
+  return true;
+}
+
+void releaseBackButtonHold() {
+  if (!backPressTracking) {
+    return;
+  }
+
+  const UiPage page = backPressPage;
+  const bool longHandled = backLongPressHandled;
+  backPressTracking = false;
+  backLongPressHandled = false;
+
+  if (!longHandled) {
+    openPage(shortBackTarget(page));
+  }
+}
+
+bool handleProbeEditSwipe(uint16_t screenX, uint16_t screenY) {
+  if (currentPage != UiPage::ProbeEdit) {
+    editSwipeTracking = false;
+    return false;
+  }
+
+  if (!inRect(screenX, screenY, 70, 48, 180, 42)) {
+    editSwipeTracking = false;
+    return false;
+  }
+
+  if (!editSwipeTracking) {
+    editSwipeTracking = true;
+    editSwipeStartX = screenX;
+    editSwipeLastX = screenX;
+    return true;
+  }
+
+  const int16_t delta = static_cast<int16_t>(screenX) - static_cast<int16_t>(editSwipeLastX);
+  if (delta >= 24) {
+    adjustProbeEditValue(1.0f);
+    editSwipeLastX = screenX;
+    return true;
+  }
+  if (delta <= -24) {
+    adjustProbeEditValue(-1.0f);
+    editSwipeLastX = screenX;
+    return true;
+  }
+
+  if (abs(static_cast<int16_t>(screenX) - static_cast<int16_t>(editSwipeStartX)) > 8) {
+    return true;
+  }
+  return false;
+}
+
+bool handleTouchButton(uint16_t screenX, uint16_t screenY) {
   const uint32_t now = millis();
   if (now - lastTouchButtonMs < TOUCH_BUTTON_DEBOUNCE_MS) {
     return true;
   }
   lastTouchButtonMs = now;
 
+  if (currentPage == UiPage::MainMenu) {
+    if (inRect(screenX, screenY, 85, 40, 150, 40)) {
+      openPage(UiPage::ProbeMenu);
+      return true;
+    }
+    if (inRect(screenX, screenY, 85, 88, 150, 40)) {
+      openPage(UiPage::AtcMenu);
+      return true;
+    }
+    if (inRect(screenX, screenY, 85, 136, 150, 40)) {
+      openPage(UiPage::MacroMenu);
+      return true;
+    }
+    if (inRect(screenX, screenY, 85, 184, 150, 40)) {
+      openPage(UiPage::Home);
+      return true;
+    }
+    return false;
+  }
+
+  if (currentPage == UiPage::MacroMenu) {
+    const uint8_t visibleMacros = min(macroCount, MAX_VISIBLE_MACROS);
+    for (uint8_t i = 0; i < visibleMacros; ++i) {
+      const uint8_t col = i % 2;
+      const uint8_t row = i / 2;
+      const uint16_t x = col == 0 ? 10 : 165;
+      const uint16_t y = 38 + row * 40;
+      if (inRect(screenX, screenY, x, y, 145, 38)) {
+        sendMacroRunCommand(i);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  if (currentPage == UiPage::AtcMenu) {
+    if (inRect(screenX, screenY, 10, 40, 145, 32)) {
+      sendToolChangeCommand(1);
+      return true;
+    }
+    if (inRect(screenX, screenY, 165, 40, 145, 32)) {
+      sendToolChangeCommand(2);
+      return true;
+    }
+    if (inRect(screenX, screenY, 10, 78, 145, 32)) {
+      sendToolChangeCommand(3);
+      return true;
+    }
+    if (inRect(screenX, screenY, 165, 78, 145, 32)) {
+      sendToolChangeCommand(4);
+      return true;
+    }
+    if (inRect(screenX, screenY, 10, 116, 145, 32)) {
+      sendToolChangeCommand(5);
+      return true;
+    }
+    if (inRect(screenX, screenY, 165, 116, 145, 32)) {
+      sendToolChangeCommand(6);
+      return true;
+    }
+    if (inRect(screenX, screenY, 10, 154, 145, 32)) {
+      sendToolChangeCommand(0);
+      return true;
+    }
+    if (inRect(screenX, screenY, 165, 154, 145, 32)) {
+      sendToolChangeCommand(999990);
+      return true;
+    }
+    if (inRect(screenX, screenY, 10, 192, 145, 32)) {
+      sendToolDropCommand();
+      return true;
+    }
+    return false;
+  }
+
+  if (currentPage == UiPage::ProbeMenu) {
+    if (inRect(screenX, screenY, 10, 48, 145, 40)) {
+      openPage(UiPage::ProbeSingle);
+      return true;
+    }
+    if (inRect(screenX, screenY, 165, 48, 145, 40)) {
+      openPage(UiPage::ProbeBore);
+      return true;
+    }
+    if (inRect(screenX, screenY, 10, 104, 145, 40)) {
+      openPage(UiPage::ProbeBoss);
+      return true;
+    }
+    if (inRect(screenX, screenY, 165, 104, 145, 40)) {
+      openPage(UiPage::MainMenu);
+      return true;
+    }
+    return false;
+  }
+
+  if (currentPage == UiPage::ProbeSingle) {
+    if (inRect(screenX, screenY, 10, 48, 145, 40)) {
+      openProbeEditor(ProbeField::SingleDistance, UiPage::ProbeSingle);
+      return true;
+    }
+    if (inRect(screenX, screenY, 10, 96, 145, 40)) {
+      sendGcodeCommand("M466 X-" + String(singleProbeDistance, 1) + " S1");
+      return true;
+    }
+    if (inRect(screenX, screenY, 165, 96, 145, 40)) {
+      sendGcodeCommand("M466 X" + String(singleProbeDistance, 1) + " S1");
+      return true;
+    }
+    if (inRect(screenX, screenY, 10, 144, 145, 40)) {
+      sendGcodeCommand("M466 Y" + String(singleProbeDistance, 1) + " S1");
+      return true;
+    }
+    if (inRect(screenX, screenY, 165, 144, 145, 40)) {
+      sendGcodeCommand("M466 Y-" + String(singleProbeDistance, 1) + " S1");
+      return true;
+    }
+    if (inRect(screenX, screenY, 10, 192, 145, 40)) {
+      sendGcodeCommand("M466 Z-" + String(singleProbeDistance, 1) + " S2");
+      return true;
+    }
+    return false;
+  }
+
+  if (currentPage == UiPage::ProbeBore) {
+    if (inRect(screenX, screenY, 10, 56, 145, 40)) {
+      openProbeEditor(ProbeField::BoreX, UiPage::ProbeBore);
+      return true;
+    }
+    if (inRect(screenX, screenY, 165, 56, 145, 40)) {
+      openProbeEditor(ProbeField::BoreY, UiPage::ProbeBore);
+      return true;
+    }
+    if (inRect(screenX, screenY, 165, 120, 145, 40)) {
+      openPage(UiPage::ProbeMenu);
+      return true;
+    }
+    return false;
+  }
+
+  if (currentPage == UiPage::ProbeBoss) {
+    if (inRect(screenX, screenY, 10, 48, 145, 40)) {
+      openProbeEditor(ProbeField::BossX, UiPage::ProbeBoss);
+      return true;
+    }
+    if (inRect(screenX, screenY, 165, 48, 145, 40)) {
+      openProbeEditor(ProbeField::BossY, UiPage::ProbeBoss);
+      return true;
+    }
+    if (inRect(screenX, screenY, 10, 104, 145, 40)) {
+      openProbeEditor(ProbeField::BossDepth, UiPage::ProbeBoss);
+      return true;
+    }
+    if (inRect(screenX, screenY, 165, 104, 145, 40)) {
+      openPage(UiPage::ProbeMenu);
+      return true;
+    }
+    if (inRect(screenX, screenY, 10, 160, 300, 40)) {
+      sendGcodeCommand("M462 X" + String(bossProbeX, 1) + " Y" + String(bossProbeY, 1) + " E" + String(bossProbeDepth, 1) + " S1");
+      return true;
+    }
+    return false;
+  }
+
+  if (currentPage == UiPage::ProbeEdit) {
+    if (inRect(screenX, screenY, 10, 106, 70, 40)) {
+      adjustProbeEditValue(-1.0f);
+      return true;
+    }
+    if (inRect(screenX, screenY, 88, 106, 70, 40)) {
+      adjustProbeEditValue(-0.1f);
+      return true;
+    }
+    if (inRect(screenX, screenY, 166, 106, 70, 40)) {
+      adjustProbeEditValue(0.1f);
+      return true;
+    }
+    if (inRect(screenX, screenY, 244, 106, 66, 40)) {
+      adjustProbeEditValue(1.0f);
+      return true;
+    }
+    if (inRect(screenX, screenY, 10, 170, 145, 40)) {
+      saveProbeField(editField);
+      openPage(editReturnPage);
+      return true;
+    }
+    if (inRect(screenX, screenY, 165, 170, 145, 40)) {
+      openPage(editReturnPage);
+      return true;
+    }
+    return false;
+  }
+
+  if (currentPage != UiPage::Home) {
+    return false;
+  }
+
+  if (screenX >= AXIS_TILE_X && screenX < AXIS_TILE_X + AXIS_TILE_W) {
+    const uint16_t axisY = AXIS_TILE_Y;
+    if (screenY >= axisY && screenY < axisY + AXIS_TILE_H) {
+      setJogAxis('X');
+      return true;
+    }
+
+    const uint16_t yTileY = axisY + AXIS_TILE_H + AXIS_TILE_GAP;
+    if (screenY >= yTileY && screenY < yTileY + AXIS_TILE_H) {
+      setJogAxis('Y');
+      return true;
+    }
+
+    const uint16_t zTileY = yTileY + AXIS_TILE_H + AXIS_TILE_GAP;
+    if (screenY >= zTileY && screenY < zTileY + AXIS_TILE_H) {
+      setJogAxis('Z');
+      return true;
+    }
+  }
+
+  if (screenY < BOTTOM_BUTTON_Y || screenY >= BOTTOM_BUTTON_Y + BOTTOM_BUTTON_H) {
+    if (inRect(screenX, screenY, 225, 48, 85, 40)) {
+      openPage(UiPage::MainMenu);
+      return true;
+    }
+    return false;
+  }
+
   if (!wasControllerConnected) {
     setLabelText(lblHint, "Controller disconnected");
     return true;
   }
 
-  if (screenX >= firstX && screenX < firstX + buttonW) {
+  if (screenX >= BOTTOM_BUTTON_FIRST_X && screenX < BOTTOM_BUTTON_FIRST_X + BOTTOM_BUTTON_W) {
     setJogEnabled(!jogEnabled);
     return true;
   }
 
-  const uint16_t axisX = firstX + buttonW + buttonGap;
-  if (screenX >= axisX && screenX < axisX + buttonW) {
-    cycleJogAxis();
+  const uint16_t stepX = BOTTOM_BUTTON_FIRST_X + BOTTOM_BUTTON_W + BOTTOM_BUTTON_GAP;
+  if (screenX >= stepX && screenX < stepX + BOTTOM_BUTTON_W) {
+    cycleJogStep();
     return true;
   }
 
-  const uint16_t stepX = axisX + buttonW + buttonGap;
-  if (screenX >= stepX && screenX < stepX + buttonW) {
-    cycleJogStep();
+  const uint16_t modeX = stepX + BOTTOM_BUTTON_W + BOTTOM_BUTTON_GAP;
+  if (screenX >= modeX && screenX < modeX + BOTTOM_BUTTON_W) {
+    toggleJogMode();
     return true;
   }
 
@@ -550,7 +1262,7 @@ bool handleTouchButton(uint16_t screenX, uint16_t screenY) {
 
 void updateConnectionUi(bool connected) {
   if (connected) {
-    setLabelText(lblStatus, "Controller connected");
+    refreshTopBar();
     refreshJogUi();
     setLabelText(lblHint, "Ready");
   } else {
@@ -558,9 +1270,9 @@ void updateConnectionUi(bool connected) {
     controllerJogAllowed = false;
     jogEnabled = false;
     controllerState = "disconnected";
-    setLabelText(lblStatus, "Controller is disconnected");
+    controllerActivity = "disconnected";
+    refreshTopBar();
     refreshJogUi();
-    refreshMpgUi();
     setLabelText(lblHint, "Ready");
   }
 }
@@ -593,8 +1305,8 @@ void styleLabel(lv_obj_t* label) {
 
 lv_obj_t* createBottomButton(uint16_t x, const char* text) {
   lv_obj_t* button = lv_obj_create(lv_scr_act());
-  lv_obj_set_size(button, 100, 40);
-  lv_obj_align(button, LV_ALIGN_TOP_LEFT, x, 196);
+  lv_obj_set_size(button, BOTTOM_BUTTON_W, BOTTOM_BUTTON_H);
+  lv_obj_align(button, LV_ALIGN_TOP_LEFT, x, BOTTOM_BUTTON_Y);
   lv_obj_clear_flag(button, LV_OBJ_FLAG_SCROLLABLE);
   lv_obj_set_scrollbar_mode(button, LV_SCROLLBAR_MODE_OFF);
   lv_obj_set_style_bg_color(button, lv_color_hex(0x1E5A7A), 0);
@@ -605,12 +1317,253 @@ lv_obj_t* createBottomButton(uint16_t x, const char* text) {
 
   lv_obj_t* label = lv_label_create(button);
   styleLabel(label);
-  lv_obj_set_width(label, 92);
+  lv_obj_set_width(label, BOTTOM_BUTTON_W - 8);
   lv_label_set_long_mode(label, LV_LABEL_LONG_CLIP);
   lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, 0);
   lv_label_set_text(label, text);
   lv_obj_center(label);
   return label;
+}
+
+lv_color_t buttonBgColor(ButtonStyle style, bool enabled) {
+  if (!enabled) {
+    return lv_color_hex(0x333333);
+  }
+  switch (style) {
+    case ButtonStyle::Back:
+      return lv_color_hex(0x8A6A00);
+    case ButtonStyle::Save:
+      return lv_color_hex(0x1F7A3A);
+    case ButtonStyle::Normal:
+    default:
+      return lv_color_hex(0x1E5A7A);
+  }
+}
+
+lv_color_t buttonBorderColor(ButtonStyle style, bool enabled) {
+  if (!enabled) {
+    return lv_color_hex(0x666666);
+  }
+  switch (style) {
+    case ButtonStyle::Back:
+      return lv_color_hex(0xFFD34D);
+    case ButtonStyle::Save:
+      return lv_color_hex(0x67D98D);
+    case ButtonStyle::Normal:
+    default:
+      return lv_color_hex(0x68BCE0);
+  }
+}
+
+lv_obj_t* createButton(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const char* text, bool enabled = true, ButtonStyle buttonStyle = ButtonStyle::Normal) {
+  lv_obj_t* button = lv_obj_create(lv_scr_act());
+  lv_obj_set_size(button, w, h);
+  lv_obj_align(button, LV_ALIGN_TOP_LEFT, x, y);
+  lv_obj_clear_flag(button, LV_OBJ_FLAG_SCROLLABLE);
+  lv_obj_set_scrollbar_mode(button, LV_SCROLLBAR_MODE_OFF);
+  lv_obj_set_style_bg_color(button, buttonBgColor(buttonStyle, enabled), 0);
+  lv_obj_set_style_bg_opa(button, LV_OPA_COVER, 0);
+  lv_obj_set_style_border_color(button, buttonBorderColor(buttonStyle, enabled), 0);
+  lv_obj_set_style_border_width(button, 1, 0);
+  lv_obj_set_style_radius(button, 6, 0);
+
+  lv_obj_t* label = lv_label_create(button);
+  styleLabel(label);
+  lv_obj_set_width(label, w - 8);
+  lv_label_set_long_mode(label, LV_LABEL_LONG_CLIP);
+  lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, 0);
+  lv_obj_set_style_text_color(label, enabled ? lv_color_white() : lv_color_hex(0x999999), 0);
+  lv_label_set_text(label, text);
+  lv_obj_center(label);
+  return label;
+}
+
+lv_obj_t* createAxisTile(uint16_t y, char axis) {
+  lv_obj_t* tile = lv_obj_create(lv_scr_act());
+  lv_obj_set_size(tile, AXIS_TILE_W, AXIS_TILE_H);
+  lv_obj_align(tile, LV_ALIGN_TOP_LEFT, AXIS_TILE_X, y);
+  lv_obj_clear_flag(tile, LV_OBJ_FLAG_SCROLLABLE);
+  lv_obj_set_scrollbar_mode(tile, LV_SCROLLBAR_MODE_OFF);
+  lv_obj_set_style_bg_opa(tile, LV_OPA_COVER, 0);
+  lv_obj_set_style_radius(tile, 6, 0);
+
+  lv_obj_t* label = lv_label_create(tile);
+  lv_obj_set_style_text_font(label, &lv_font_montserrat_14, 0);
+  lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_LEFT, 0);
+  lv_obj_set_width(label, AXIS_TILE_W - 16);
+  lv_label_set_long_mode(label, LV_LABEL_LONG_CLIP);
+  char text[2] = {axis, '\0'};
+  lv_label_set_text(label, text);
+  lv_obj_center(label);
+  return label;
+}
+
+void createHeader() {
+  headerBar = lv_obj_create(lv_scr_act());
+  lv_obj_set_size(headerBar, SCREEN_WIDTH, 32);
+  lv_obj_align(headerBar, LV_ALIGN_TOP_LEFT, 0, 0);
+  lv_obj_set_style_bg_color(headerBar, lv_color_hex(0x0066AA), 0);
+  lv_obj_set_style_bg_opa(headerBar, LV_OPA_COVER, 0);
+  lv_obj_set_style_border_width(headerBar, 0, 0);
+  lv_obj_set_style_radius(headerBar, 0, 0);
+
+  lblStatus = lv_label_create(lv_scr_act());
+  styleLabel(lblStatus);
+  lv_obj_align(lblStatus, LV_ALIGN_TOP_LEFT, 10, 6);
+  lv_label_set_long_mode(lblStatus, LV_LABEL_LONG_WRAP);
+  lv_obj_set_width(lblStatus, 300);
+}
+
+void renderHomePage() {
+  lblAxisX = createAxisTile(AXIS_TILE_Y, 'X');
+  lblAxisY = createAxisTile(AXIS_TILE_Y + AXIS_TILE_H + AXIS_TILE_GAP, 'Y');
+  lblAxisZ = createAxisTile(AXIS_TILE_Y + (AXIS_TILE_H + AXIS_TILE_GAP) * 2, 'Z');
+  lblMenuButton = createButton(225, 48, 85, 40, "Menu");
+
+  lblJogButton = createBottomButton(BOTTOM_BUTTON_FIRST_X, "Jog OFF");
+  lblStepButton = createBottomButton(BOTTOM_BUTTON_FIRST_X + (BOTTOM_BUTTON_W + BOTTOM_BUTTON_GAP), "0.010");
+  lblModeButton = createBottomButton(BOTTOM_BUTTON_FIRST_X + (BOTTOM_BUTTON_W + BOTTOM_BUTTON_GAP) * 2, "Hybrid");
+
+  refreshPositionLabel();
+  refreshJogUi();
+}
+
+void renderMainMenuPage() {
+  createButton(85, 40, 150, 40, "Probing");
+  createButton(85, 88, 150, 40, "ATC");
+  createButton(85, 136, 150, 40, "Macros");
+  createButton(85, 184, 150, 40, "Back", true, ButtonStyle::Back);
+}
+
+void renderAtcMenuPage() {
+  createButton(10, 40, 145, 32, "T1");
+  createButton(165, 40, 145, 32, "T2");
+  createButton(10, 78, 145, 32, "T3");
+  createButton(165, 78, 145, 32, "T4");
+  createButton(10, 116, 145, 32, "T5");
+  createButton(165, 116, 145, 32, "T6");
+  createButton(10, 154, 145, 32, "Probe");
+  createButton(165, 154, 145, 32, "3D Probe");
+  createButton(10, 192, 145, 32, "Drop");
+  createButton(165, 192, 145, 32, "Back", true, ButtonStyle::Back);
+}
+
+void renderMacroMenuPage() {
+  if (macroCount == 0) {
+    createButton(45, 84, 230, 44, "No named macros", false);
+  } else {
+    const uint8_t visibleMacros = min(macroCount, MAX_VISIBLE_MACROS);
+    for (uint8_t i = 0; i < visibleMacros; ++i) {
+      const uint8_t col = i % 2;
+      const uint8_t row = i / 2;
+      const uint16_t x = col == 0 ? 10 : 165;
+      const uint16_t y = 38 + row * 40;
+      createButton(x, y, 145, 38, macroNames[i].c_str());
+    }
+    if (macroCount > MAX_VISIBLE_MACROS) {
+      createButton(10, 198, 145, 30, "More later", false);
+      createButton(165, 198, 145, 30, "Back", true, ButtonStyle::Back);
+      return;
+    }
+  }
+  createButton(10, 198, 300, 30, "Back", true, ButtonStyle::Back);
+}
+
+void renderProbeMenuPage() {
+  createButton(10, 48, 145, 40, "Single Axis");
+  createButton(165, 48, 145, 40, "Bore");
+  createButton(10, 104, 145, 40, "Boss");
+  createButton(165, 104, 145, 40, "Back", true, ButtonStyle::Back);
+}
+
+void renderSingleProbePage() {
+  lblProbeValue1 = createButton(10, 48, 145, 40, probeValueText("Dist", singleProbeDistance).c_str());
+  createButton(10, 96, 145, 40, "X Left");
+  createButton(165, 96, 145, 40, "X Right");
+  createButton(10, 144, 145, 40, "Y Forward");
+  createButton(165, 144, 145, 40, "Y Back");
+  createButton(10, 192, 145, 40, "Z Down");
+  createButton(165, 192, 145, 40, "Back", true, ButtonStyle::Back);
+}
+
+void renderBoreProbePage() {
+  lblProbeValue1 = createButton(10, 56, 145, 40, probeValueText("X", boreProbeX).c_str());
+  lblProbeValue2 = createButton(165, 56, 145, 40, probeValueText("Y", boreProbeY).c_str());
+  createButton(10, 120, 145, 40, "Run later", false);
+  createButton(165, 120, 145, 40, "Back", true, ButtonStyle::Back);
+}
+
+void renderBossProbePage() {
+  lblProbeValue1 = createButton(10, 48, 145, 40, probeValueText("X", bossProbeX).c_str());
+  lblProbeValue2 = createButton(165, 48, 145, 40, probeValueText("Y", bossProbeY).c_str());
+  lblProbeValue3 = createButton(10, 104, 145, 40, probeValueText("Depth", bossProbeDepth).c_str());
+  createButton(165, 104, 145, 40, "Back", true, ButtonStyle::Back);
+  createButton(10, 160, 300, 40, "Run");
+}
+
+void renderEditProbePage() {
+  String valueText = probeFieldLabel(editField) + " " + String(probeFieldValue(editField), 1);
+  lblEditValue = createButton(70, 48, 180, 42, valueText.c_str());
+  createButton(10, 106, 70, 40, "-1");
+  createButton(88, 106, 70, 40, "-0.1");
+  createButton(166, 106, 70, 40, "+0.1");
+  createButton(244, 106, 66, 40, "+1");
+  createButton(10, 170, 145, 40, "Save", true, ButtonStyle::Save);
+  createButton(165, 170, 145, 40, "Back", true, ButtonStyle::Back);
+}
+
+void renderPage() {
+  lv_obj_clean(lv_scr_act());
+  headerBar = nullptr;
+  lblStatus = nullptr;
+  lblHint = nullptr;
+  lblJogButton = nullptr;
+  lblStepButton = nullptr;
+  lblModeButton = nullptr;
+  lblAxisX = nullptr;
+  lblAxisY = nullptr;
+  lblAxisZ = nullptr;
+  lblMenuButton = nullptr;
+  lblProbeValue1 = nullptr;
+  lblProbeValue2 = nullptr;
+  lblProbeValue3 = nullptr;
+  lblEditValue = nullptr;
+
+  lv_obj_set_style_bg_color(lv_scr_act(), lv_color_hex(0x101820), 0);
+  lv_obj_set_style_bg_opa(lv_scr_act(), LV_OPA_COVER, 0);
+  createHeader();
+
+  switch (currentPage) {
+    case UiPage::Home:
+      renderHomePage();
+      break;
+    case UiPage::MainMenu:
+      renderMainMenuPage();
+      break;
+    case UiPage::AtcMenu:
+      renderAtcMenuPage();
+      break;
+    case UiPage::MacroMenu:
+      renderMacroMenuPage();
+      break;
+    case UiPage::ProbeMenu:
+      renderProbeMenuPage();
+      break;
+    case UiPage::ProbeSingle:
+      renderSingleProbePage();
+      break;
+    case UiPage::ProbeBore:
+      renderBoreProbePage();
+      break;
+    case UiPage::ProbeBoss:
+      renderBossProbePage();
+      break;
+    case UiPage::ProbeEdit:
+      renderEditProbePage();
+      break;
+  }
+
+  refreshTopBar();
 }
 
 bool sendJson(const JsonDocument& doc) {
@@ -626,7 +1579,7 @@ bool sendJson(const JsonDocument& doc) {
 }
 
 void handleIncomingJson(const String& line) {
-  StaticJsonDocument<512> doc;
+  StaticJsonDocument<2048> doc;
   const DeserializationError err = deserializeJson(doc, line);
   if (err) {
     return;
@@ -643,25 +1596,84 @@ void handleIncomingJson(const String& line) {
 
   if (type == "machine_state") {
     controllerState = String(doc["state"] | "unknown");
+    controllerActivity = String(doc["activity"] | "unknown");
+    toolLabel = String(doc["tool_label"] | "");
+    targetToolLabel = String(doc["target_tool_label"] | "");
+    if (toolLabel.length() == 0) {
+      toolLabel = localToolLabel(doc["tool"] | -1);
+    }
+    if (targetToolLabel.length() == 0) {
+      targetToolLabel = localToolLabel(doc["target_tool"] | -1);
+    }
     const bool nextJogAllowed = doc["jog_allowed"] | false;
     if (controllerJogAllowed != nextJogAllowed) {
       controllerJogAllowed = nextJogAllowed;
       refreshJogUi();
     }
 
-    setLabelText(lblStatus, "Controller connected: " + controllerState);
+    refreshTopBar();
     return;
   }
 
   if (type == "jog_result") {
     const bool ok = doc["ok"] | false;
-    const String command = String(doc["command"] | "");
     const String reason = String(doc["reason"] | "");
-    if (ok) {
-      setLabelText(lblHint, "Controller accepted " + command);
-    } else {
+    if (!ok) {
       setLabelText(lblHint, "Jog rejected: " + reason);
     }
+    return;
+  }
+
+  if (type == "gcode_result") {
+    const bool ok = doc["ok"] | false;
+    const String reason = String(doc["reason"] | "");
+    if (!ok) {
+      setLabelText(lblHint, "Probe rejected: " + reason);
+    } else {
+      setLabelText(lblHint, "Probe running...");
+    }
+    return;
+  }
+
+  if (type == "tool_result") {
+    const bool ok = doc["ok"] | false;
+    const String reason = String(doc["reason"] | "");
+    if (!ok) {
+      setLabelText(lblStatus, "Tool rejected");
+      setLabelText(lblHint, "Tool rejected: " + reason);
+    } else {
+      setLabelText(lblStatus, "Tool command sent");
+      setLabelText(lblHint, "Tool command sent");
+    }
+    return;
+  }
+
+  if (type == "macro_list") {
+    macroCount = 0;
+    JsonArray macros = doc["macros"].as<JsonArray>();
+    for (JsonObject macro : macros) {
+      if (macroCount >= MAX_MACROS) {
+        break;
+      }
+      const int id = macro["id"] | 0;
+      const String name = String(macro["name"] | "");
+      if (id <= 0 || name.length() == 0) {
+        continue;
+      }
+      macroIds[macroCount] = id;
+      macroNames[macroCount] = name;
+      ++macroCount;
+    }
+    if (currentPage == UiPage::MacroMenu) {
+      renderPage();
+    }
+    return;
+  }
+
+  if (type == "macro_result") {
+    const bool ok = doc["ok"] | false;
+    const String reason = String(doc["reason"] | "");
+    setLabelText(lblHint, ok ? "Macro sent" : "Macro rejected: " + reason);
     return;
   }
 
@@ -740,7 +1752,18 @@ void processTouchTest() {
   const bool touched = readRawTouch(rawX, rawY);
   const uint32_t now = millis();
 
-  if (!touched || now - lastTouchReportMs < 150) {
+  if (!touched) {
+    touchCapturedUntilRelease = false;
+    releaseBackButtonHold();
+    editSwipeTracking = false;
+    return;
+  }
+
+  if (touchCapturedUntilRelease) {
+    return;
+  }
+
+  if (now - lastTouchReportMs < 150) {
     return;
   }
 
@@ -748,18 +1771,6 @@ void processTouchTest() {
 
   if (touchCalibrating) {
     updateTouchCalibration(rawX, rawY);
-    Serial.print("Touch cal raw: x=");
-    Serial.print(rawX);
-    Serial.print(" y=");
-    Serial.print(rawY);
-    Serial.print(" range x=");
-    Serial.print(touchMinX);
-    Serial.print("..");
-    Serial.print(touchMaxX);
-    Serial.print(" y=");
-    Serial.print(touchMinY);
-    Serial.print("..");
-    Serial.println(touchMaxY);
     setLabelText(lblHint, "Cal raw x:" + String(rawX) + " y:" + String(rawY));
     return;
   }
@@ -768,28 +1779,19 @@ void processTouchTest() {
     uint16_t screenX = 0;
     uint16_t screenY = 0;
     mapTouchToScreen(rawX, rawY, screenX, screenY);
+    if (handleBackButtonHold(screenX, screenY)) {
+      return;
+    }
+    if (handleProbeEditSwipe(screenX, screenY)) {
+      return;
+    }
     const bool handledByButton = handleTouchButton(screenX, screenY);
-    Serial.print("Touch: raw x=");
-    Serial.print(rawX);
-    Serial.print(" y=");
-    Serial.print(rawY);
-    Serial.print(" screen x=");
-    Serial.print(screenX);
-    Serial.print(" y=");
-    Serial.println(screenY);
     if (handledByButton) {
       return;
     }
-    setLabelText(lblHint, "Touch x:" + String(screenX) + " y:" + String(screenY));
     return;
   }
 
-  Serial.print("Touch raw: x=");
-  Serial.print(rawX);
-  Serial.print(" y=");
-  Serial.println(rawY);
-
-  setLabelText(lblHint, "Touch raw x:" + String(rawX) + " y:" + String(rawY));
 #endif
 }
 
@@ -798,7 +1800,6 @@ void connectWiFi() {
   WiFi.setHostname(DEVICE_HOSTNAME);
   WiFi.begin(WIFI_SSID, WIFI_PASS);
 
-  Serial.println("Connecting to WiFi...");
   setLabelText(lblStatus, "Connecting to WiFi...");
   uint32_t startMs = millis();
   while (WiFi.status() != WL_CONNECTED) {
@@ -807,7 +1808,6 @@ void connectWiFi() {
     delay(250);
     if (millis() - startMs > 30000) {
       startMs = millis();
-      Serial.println("WiFi retry...");
       setLabelText(lblStatus, "WiFi retry...");
       WiFi.disconnect();
       WiFi.begin(WIFI_SSID, WIFI_PASS);
@@ -828,21 +1828,16 @@ void initOta() {
 void initRpUart() {
 #if PENDANT_RP_LINK_ENABLE
   rpSerial.begin(RP_UART_BAUD, SERIAL_8N1, PIN_RP_UART_RX, PIN_RP_UART_TX);
-  Serial.print("RP input link enabled. RX GPIO");
-  Serial.print(PIN_RP_UART_RX);
-  Serial.print(", TX GPIO");
-  Serial.print(PIN_RP_UART_TX);
-  Serial.print(", baud ");
-  Serial.println(RP_UART_BAUD);
-  setLabelText(lblHint, "RP input link: waiting...");
 #endif
 }
 
 void handleMpgEvent(int32_t position, int32_t delta) {
-  mpgPosition = position;
-  mpgLastDelta = delta;
+  (void)position;
+  if (currentPage != UiPage::Home) {
+    return;
+  }
+
   refreshJogUi();
-  refreshMpgUi();
 
   if (!jogEnabled || delta == 0) {
     return;
@@ -866,7 +1861,7 @@ void handleMpgEvent(int32_t position, int32_t delta) {
   }
 
   mpgBurstDetents += abs(delta);
-  if (jogStepIndex < 3 && (continuousJogActive || mpgBurstDetents >= CONTINUOUS_PROMOTE_DETENTS)) {
+  if (jogHybridMode && jogStepIndex < 3 && (continuousJogActive || mpgBurstDetents >= CONTINUOUS_PROMOTE_DETENTS)) {
     startOrRefreshContinuousJog(delta);
     return;
   }
@@ -877,6 +1872,10 @@ void handleMpgEvent(int32_t position, int32_t delta) {
 }
 
 void handleMpgStartEvent(int32_t direction) {
+  if (currentPage != UiPage::Home) {
+    return;
+  }
+
   if (direction == 0) {
     return;
   }
@@ -894,13 +1893,28 @@ void handleMpgStartEvent(int32_t direction) {
 void handleMpgStopEvent() {
   stopContinuousJog("mpg stop");
   resetMpgBurst();
-  setLabelText(lblHint, "MPG stopped");
 }
 
 bool handleRpEvent(const String& line) {
   long position = 0;
   long delta = 0;
   long direction = 0;
+
+  if (sscanf(line.c_str(), "ENC_TICK %ld", &delta) == 1) {
+    if (currentPage == UiPage::ProbeEdit) {
+      adjustProbeEditValue(static_cast<float>(delta));
+    } else if (currentPage == UiPage::Home) {
+      adjustJogStep(static_cast<int32_t>(delta));
+    }
+    return true;
+  }
+
+  if (line == "ENC_PRESS") {
+    if (currentPage == UiPage::Home) {
+      toggleJogMode();
+    }
+    return true;
+  }
 
   if (sscanf(line.c_str(), "MPG_START %ld", &direction) == 1) {
     handleMpgStartEvent(static_cast<int32_t>(direction));
@@ -922,14 +1936,9 @@ bool handleRpEvent(const String& line) {
 
 void handleRpLine(const String& line) {
 #if PENDANT_RP_LINK_ENABLE
-  Serial.print("RP UART RX: ");
-  Serial.println(line);
-
   if (handleRpEvent(line)) {
     return;
   }
-
-  setLabelText(lblHint, "RP: " + line);
 #else
   (void)line;
 #endif
@@ -943,8 +1952,6 @@ void processRpLink() {
     lastRpPingMs = now;
     rpSerial.print("CYD PING ");
     rpSerial.println(++rpPingSeq);
-    Serial.print("RP UART TX: CYD PING ");
-    Serial.println(rpPingSeq);
   }
 #endif
 
@@ -1013,14 +2020,12 @@ void connectWiFiForDisplayTest() {
   WiFi.setHostname(DEVICE_HOSTNAME);
   WiFi.begin(WIFI_SSID, WIFI_PASS);
 
-  Serial.println("Connecting to WiFi...");
   drawDisplaySmokeTest("Connecting WiFi...");
   uint32_t startMs = millis();
   while (WiFi.status() != WL_CONNECTED) {
     delay(250);
     if (millis() - startMs > 30000) {
       startMs = millis();
-      Serial.println("WiFi retry...");
       drawDisplaySmokeTest("WiFi retry...");
       WiFi.disconnect();
       WiFi.begin(WIFI_SSID, WIFI_PASS);
@@ -1051,58 +2056,9 @@ void initLvglUi() {
   lv_obj_set_style_bg_color(lv_scr_act(), lv_color_hex(0x101820), 0);
   lv_obj_set_style_bg_opa(lv_scr_act(), LV_OPA_COVER, 0);
 
-  lv_obj_t* header = lv_obj_create(lv_scr_act());
-  lv_obj_set_size(header, SCREEN_WIDTH, 32);
-  lv_obj_align(header, LV_ALIGN_TOP_LEFT, 0, 0);
-  lv_obj_set_style_bg_color(header, lv_color_hex(0x0066AA), 0);
-  lv_obj_set_style_bg_opa(header, LV_OPA_COVER, 0);
-  lv_obj_set_style_border_width(header, 0, 0);
-  lv_obj_set_style_radius(header, 0, 0);
-
-  lblStatus = lv_label_create(lv_scr_act());
-  styleLabel(lblStatus);
-  lv_obj_align(lblStatus, LV_ALIGN_TOP_LEFT, 10, 6);
-  lv_label_set_long_mode(lblStatus, LV_LABEL_LONG_WRAP);
-  lv_obj_set_width(lblStatus, 300);
-
-  lblPos = lv_label_create(lv_scr_act());
-  styleLabel(lblPos);
-  lv_obj_align(lblPos, LV_ALIGN_TOP_LEFT, 10, 48);
-  lv_obj_set_width(lblPos, 300);
-
-  lblJogState = lv_label_create(lv_scr_act());
-  styleLabel(lblJogState);
-  lv_obj_align(lblJogState, LV_ALIGN_TOP_LEFT, 10, 84);
-  lv_label_set_long_mode(lblJogState, LV_LABEL_LONG_CLIP);
-  lv_obj_set_width(lblJogState, 300);
-
-  lblMpgState = lv_label_create(lv_scr_act());
-  styleLabel(lblMpgState);
-  lv_obj_align(lblMpgState, LV_ALIGN_TOP_LEFT, 10, 112);
-  lv_label_set_long_mode(lblMpgState, LV_LABEL_LONG_CLIP);
-  lv_obj_set_width(lblMpgState, 300);
-
-  lblPendingJog = lv_label_create(lv_scr_act());
-  styleLabel(lblPendingJog);
-  lv_obj_align(lblPendingJog, LV_ALIGN_TOP_LEFT, 10, 140);
-  lv_label_set_long_mode(lblPendingJog, LV_LABEL_LONG_CLIP);
-  lv_obj_set_width(lblPendingJog, 300);
-
-  lblHint = lv_label_create(lv_scr_act());
-  styleLabel(lblHint);
-  lv_obj_align(lblHint, LV_ALIGN_TOP_LEFT, 10, 168);
-  lv_label_set_long_mode(lblHint, LV_LABEL_LONG_WRAP);
-  lv_obj_set_width(lblHint, 300);
-
-  lblJogButton = createBottomButton(5, "Jog OFF");
-  lblAxisButton = createBottomButton(110, "Axis X");
-  lblStepButton = createBottomButton(215, "Step 0.010");
-
+  currentPage = UiPage::Home;
+  renderPage();
   setLabelText(lblStatus, "Booting...");
-  refreshPositionLabel();
-  refreshJogUi();
-  refreshMpgUi();
-  setLabelText(lblHint, "Ready");
   runLvglFor(100);
 }
 
@@ -1141,6 +2097,7 @@ void setup() {
   return;
 #endif
 
+  loadProbeSettings();
   initLvglUi();
   initRpUart();
   connectWiFi();

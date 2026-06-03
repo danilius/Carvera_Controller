@@ -1,40 +1,48 @@
 # CYD Pendant Firmware (PlatformIO)
 
-This is a standalone CYD firmware scaffold that pairs with the controller CYD pendant class.
+This branch is for the CYD touchscreen pendant work for the Carvera controller. It contains the controller-side bridge plus the firmware for the pendant hardware.
+
+The pendant is split into two small firmware projects:
+
+- `cyd_pendant_firmware`: ESP32/CYD firmware for the touchscreen UI, WiFi, OTA updates, and TCP link to the controller.
+- `rp2040_mpg_firmware`: RP2040 firmware for reading the MPG wheel and UI encoder, then sending simple UART messages to the CYD.
+
+The normal controller application remains in the parent repository; the CYD bridge lets it receive jog, probing, ATC, and macro requests from the pendant.
 
 ## Current scope
 
-- WiFi STA with hardcoded credentials
+- WiFi STA with local secrets in `include/AppSecrets.h`
 - OTA updates via `espota`
-- LVGL status screen (no touch)
-- TCP server on port `9876` for controller connection
-- Newline-delimited JSON protocol
-- Button-driven actions:
-  - `tool_action_confirm` for firmware-triggered manual tool change
-  - `tool_action_request` for manual clamp/unclamp when machine is not running
+- LVGL touchscreen UI for jogging, probing, ATC, and macros
+- TCP server on port `9876` for the controller connection
+- UART input link from the RP2040 MPG/input board
+- Newline-delimited JSON protocol between the controller and CYD
 
 ## Setup
 
-1. Update `include/AppConfig.h`:
+1. Copy `include/AppSecrets.example.h` to `include/AppSecrets.h`, then set:
    - `WIFI_SSID`
    - `WIFI_PASS`
-   - button GPIO pins
-2. Adjust `upload_port` in `platformio.ini` to the CYD IP.
-3. Build and upload:
+2. Update `include/AppConfig.h` for device settings such as button GPIO pins.
+3. Adjust `upload_port` in `platformio.ini` to the CYD IP.
+4. Build and upload:
    - USB first: `pio run -e cyd_esp32 -t upload`
    - OTA next: `pio run -e cyd_esp32 -t upload --upload-port <CYD_IP>`
 
-## JSON messages
+## Protocol overview
 
 Controller -> CYD:
-- `{"type":"pos","x":...,"y":...,"z":...}`
-- `{"type":"mdi","level":"normal|error","message":"..."}`
-- `{"type":"tool_action_required","action":"clamp|unclamp","tool":N,"message":"..."}`
-- `{"type":"tool_action_result","action":"clamp|unclamp","ok":true|false,"reason":"..."}`
+- Position updates: `pos`
+- Machine/tool state: `machine_state`
+- Command results: `jog_result`, `gcode_result`, `tool_result`, `macro_result`
+- Available named macros: `macro_list`
 
 CYD -> Controller:
-- `{"type":"tool_action_confirm","action":"clamp|unclamp"}`
-- `{"type":"tool_action_request","action":"clamp|unclamp"}`
+- Jog requests: `jog`, `jog_cont`
+- Probing G-code requests: `gcode`
+- ATC requests: `tool`
+- Macro requests: `macro`
+- Status queries: `machine_state_query`, `macro_query`
 
 ## Notes
 

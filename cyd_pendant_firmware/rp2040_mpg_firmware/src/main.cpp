@@ -6,10 +6,18 @@ constexpr uint8_t ENC_A_PIN = 2;
 constexpr uint8_t ENC_B_PIN = 3;
 constexpr uint8_t CYD_UART_TX_PIN = 4;  // RP GP4 transmits to CYD RX.
 constexpr uint8_t CYD_UART_RX_PIN = 5;  // RP GP5 receives from CYD TX.
+constexpr uint8_t UI_ENC_S1_PIN = 6;
+constexpr uint8_t UI_ENC_S2_PIN = 7;
+constexpr uint8_t UI_ENC_KEY_PIN = 8;
 constexpr uint32_t CYD_UART_BAUD = 115200;
 constexpr int32_t MPG_NUMBER_MOD = 100;
 constexpr uint32_t ENCODER_SERVICE_SPIN_MS = 2;
 constexpr uint32_t MPG_STOP_TIMEOUT_MS = 120;
+constexpr uint32_t UI_ENC_KEY_DEBOUNCE_MS = 60;
+
+#ifndef RP_HEARTBEAT_SERIAL
+#define RP_HEARTBEAT_SERIAL 0
+#endif
 
 #ifndef RP_CYD_UART_ENABLE
 #define RP_CYD_UART_ENABLE 0
@@ -53,6 +61,11 @@ volatile uint8_t lastState = 0;
 volatile int32_t detentCount = 0;
 volatile int8_t detentRemainder = 0;
 volatile int8_t lastDetentDelta = 0;
+uint8_t uiEncoderLastState = 0;
+int8_t uiEncoderRemainder = 0;
+bool uiEncoderKeyLast = true;
+bool uiEncoderKeyStable = true;
+uint32_t uiEncoderKeyChangedMs = 0;
 
 #if RP_CYD_UART_ENABLE
 arduino::UART* cydLink = nullptr;
@@ -183,12 +196,19 @@ void setup() {
 
   pinMode(ENC_A_PIN, INPUT_PULLUP);
   pinMode(ENC_B_PIN, INPUT_PULLUP);
+  pinMode(UI_ENC_S1_PIN, INPUT_PULLUP);
+  pinMode(UI_ENC_S2_PIN, INPUT_PULLUP);
+  pinMode(UI_ENC_KEY_PIN, INPUT_PULLUP);
 
   lastState = ((uint8_t)digitalRead(ENC_A_PIN) << 1) | (uint8_t)digitalRead(ENC_B_PIN);
+  uiEncoderLastState = ((uint8_t)digitalRead(UI_ENC_S1_PIN) << 1) | (uint8_t)digitalRead(UI_ENC_S2_PIN);
+  uiEncoderKeyLast = digitalRead(UI_ENC_KEY_PIN) == HIGH;
+  uiEncoderKeyStable = uiEncoderKeyLast;
   initPioEncoder();
 
   Serial.println("\nRP2040 MPG test running");
   Serial.println("Pins: A=GPIO2, B=GPIO3 (INPUT_PULLUP)");
+  Serial.println("UI encoder: S1=GPIO6, S2=GPIO7, Key=GPIO8");
   Serial.println("Mode: PIO capture + quadrature decode");
   Serial.println("Type: r + Enter to reset counters");
 #if RP_CYD_UART_ENABLE
@@ -232,6 +252,59 @@ void sendMpgStop() {
   sendCydLine("MPG_STOP");
 }
 
+void sendUiEncoderTick(int32_t delta) {
+  String msg = "ENC_TICK ";
+  msg += String(delta);
+  sendCydLine(msg);
+}
+
+void sendUiEncoderPress() {
+  sendCydLine("ENC_PRESS");
+}
+
+void serviceUiEncoder() {
+  uint8_t s1 = (uint8_t)digitalRead(UI_ENC_S1_PIN);
+  uint8_t s2 = (uint8_t)digitalRead(UI_ENC_S2_PIN);
+  uint8_t newState = (uint8_t)((s1 << 1) | s2);
+  if (newState == uiEncoderLastState) {
+    return;
+  }
+
+  uint8_t idx = (uint8_t)((uiEncoderLastState << 2) | newState);
+  int8_t quadDelta = QUAD_TABLE[idx];
+  uiEncoderLastState = newState;
+
+  if (quadDelta == 0) {
+    return;
+  }
+
+  uiEncoderRemainder += quadDelta;
+  if (uiEncoderRemainder >= 4) {
+    uiEncoderRemainder = 0;
+    sendUiEncoderTick(1);
+  } else if (uiEncoderRemainder <= -4) {
+    uiEncoderRemainder = 0;
+    sendUiEncoderTick(-1);
+  }
+}
+
+void serviceUiEncoderKey() {
+  const bool keyNow = digitalRead(UI_ENC_KEY_PIN) == HIGH;
+  const uint32_t now = millis();
+
+  if (keyNow != uiEncoderKeyLast) {
+    uiEncoderKeyLast = keyNow;
+    uiEncoderKeyChangedMs = now;
+  }
+
+  if (keyNow != uiEncoderKeyStable && now - uiEncoderKeyChangedMs >= UI_ENC_KEY_DEBOUNCE_MS) {
+    uiEncoderKeyStable = keyNow;
+    if (!uiEncoderKeyStable) {
+      sendUiEncoderPress();
+    }
+  }
+}
+
 void processCydLinkRx() {
 #if RP_CYD_UART_ENABLE && RP_CYD_UART_RX_ENABLE
   if (!cydLink) {
@@ -269,10 +342,16 @@ void loop() {
   static uint32_t lastDetentMs = 0;
 
   servicePioEncoder();
+  serviceUiEncoder();
+  serviceUiEncoderKey();
   processSerialCommands(lastReportedEdges, lastReportedDetent);
   servicePioEncoder();
+  serviceUiEncoder();
+  serviceUiEncoderKey();
   processCydLinkRx();
   servicePioEncoder();
+  serviceUiEncoder();
+  serviceUiEncoderKey();
 
   uint32_t edgesSnapshot;
   int32_t rawPositionSnapshot;
@@ -283,6 +362,7 @@ void loop() {
   detentSnapshot = detentCount;
   interrupts();
 
+#if RP_HEARTBEAT_SERIAL
   if (millis() - lastHeartbeatMs >= 2000) {
     lastHeartbeatMs = millis();
     Serial.print("RP alive | Edges: ");
@@ -292,6 +372,9 @@ void loop() {
     Serial.print(" | Detents: ");
     Serial.println(detentSnapshot);
   }
+#else
+  (void)lastHeartbeatMs;
+#endif
 
   if (detentSnapshot != lastReportedDetent) {
     const uint32_t now = millis();

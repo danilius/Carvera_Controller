@@ -1,8 +1,13 @@
 #pragma once
 
-// WiFi credentials (hardcoded for now).
-static const char* WIFI_SSID = "REMOVED_WIFI_SSID";
-static const char* WIFI_PASS = "REMOVED_WIFI_PASS";
+// WiFi credentials live in AppSecrets.h, which is intentionally ignored by Git.
+// Copy AppSecrets.example.h to AppSecrets.h and edit it for your local network.
+#if __has_include("AppSecrets.h")
+#include "AppSecrets.h"
+#else
+static const char* WIFI_SSID = "CHANGE_ME";
+static const char* WIFI_PASS = "CHANGE_ME";
+#endif
 
 // Device identity.
 static const char* DEVICE_HOSTNAME = "cyd-pendant";

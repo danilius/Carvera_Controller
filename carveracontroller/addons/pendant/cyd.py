@@ -27,7 +27,10 @@ class CYD:
                  update_ui_on_jog_stop: Callable[[], None] = None) -> None:
         self._controller = controller
         self._cnc = cnc
+        self._feed_override = feed_override
+        self._spindle_override = spindle_override
         self._is_jogging_enabled = is_jogging_enabled
+        self._handle_run_pause_resume = handle_run_pause_resume
         self._report_connection = report_connection
         self._report_disconnection = report_disconnection
         self._jog_session_until = 0.0
@@ -47,7 +50,7 @@ class CYD:
                 return 9876
 
         self._client = tcp_client.TCPClient(get_host, get_port, callback_executor=self.executor)
-        self._client.on_connect = lambda _: self._report_connection()
+        self._client.on_connect = self._handle_connect
         self._client.on_disconnect = self._handle_disconnect
         self._client.on_message = self._handle_incoming
         self._client.start()
@@ -112,15 +115,20 @@ class CYD:
         self._clear_jog_ev = None
         self._set_cyd_jogging(False)
 
+    def _handle_connect(self, _client: tcp_client.TCPClient) -> None:
+        self._report_connection()
+        self._last_machine_snapshot = None
+        self._last_macro_snapshot = None
+        self._send_machine_state(force=True)
+        self._send_macro_list(force=True)
+        self._send_position(force=True)
+
     def _handle_disconnect(self, _client: tcp_client.TCPClient) -> None:
         self._stop_continuous_jog(force=True)
         self._clear_cyd_jogging()
         self._report_disconnection()
 
-    def _poll_positions(self, *_args) -> None:
-        self._poll_machine_state()
-        self._poll_macros()
-
+    def _send_position(self, force: bool = False) -> None:
         try:
             mx = self._round3(self._cnc.vars.get("mx", 0.0))
             my = self._round3(self._cnc.vars.get("my", 0.0))
@@ -133,7 +141,7 @@ class CYD:
             my != self._last_sent.get("y") or
             mz != self._last_sent.get("z")
         )
-        if not changed:
+        if not force and not changed:
             return
 
         self._last_sent.update({"x": mx, "y": my, "z": mz})
@@ -145,6 +153,11 @@ class CYD:
             "y": my,
             "z": mz,
         })
+
+    def _poll_positions(self, *_args) -> None:
+        self._poll_machine_state()
+        self._poll_macros()
+        self._send_position(force=False)
 
     def _derive_activity(self, state: str, atc_state: int, playing: bool) -> str:
         s = str(state).lower()
@@ -198,7 +211,15 @@ class CYD:
         state = str(self._cnc.vars.get("state", "N/A"))
         atc_state = int(self._cnc.vars.get("atc_state", 0))
         playedlines = int(self._cnc.vars.get("playedlines", -1))
-        playing = playedlines > 0
+        app = App.get_running_app()
+        app_playing = bool(getattr(app, "playing", False)) if app is not None else False
+        try:
+            machine_playing = int(self._cnc.vars.get("is_playing", 0)) == 1
+        except Exception:
+            machine_playing = False
+        playing = app_playing or machine_playing
+        program_running = playing and state == "Run"
+        program_paused = playing and state in ("Pause", "Hold")
         jog_allowed = self._cyd_jog_allowed()
         tool = int(self._cnc.vars.get("tool", -1))
         target_tool = int(self._cnc.vars.get("target_tool", -1))
@@ -208,6 +229,12 @@ class CYD:
             "jog_allowed": jog_allowed,
             "atc_state": atc_state,
             "playing": playing,
+            "program_running": program_running,
+            "program_paused": program_paused,
+            "feed_override": round(float(self._feed_override.get_value())),
+            "spindle_override": round(float(self._spindle_override.get_value())),
+            "air_on": bool(int(self._cnc.vars.get("sw_air", 0))),
+            "playedpercent": round(float(self._cnc.vars.get("playedpercent", 0.0)), 1),
             "tool": tool,
             "tool_label": self._tool_label(tool),
             "target_tool": target_tool,
@@ -282,6 +309,76 @@ class CYD:
             })
         except Exception:
             pass
+
+    def _send_runtime_result(self, ok: bool, reason: str = "", action: str = "") -> None:
+        try:
+            self._client.send_json({
+                "type": "runtime_result",
+                "ok": ok,
+                "reason": reason,
+                "action": action,
+                "ts": int(time.time()),
+            })
+        except Exception:
+            pass
+
+    def _handle_runtime_request(self, msg: dict) -> None:
+        action = str(msg.get("action", "")).lower()
+        try:
+            if action == "override":
+                target = str(msg.get("target", "")).lower()
+                delta = float(msg.get("delta", 0))
+                reset = bool(msg.get("reset", False))
+                override = self._feed_override if target == "feed" else self._spindle_override if target == "spindle" else None
+                if override is None:
+                    self._send_runtime_result(False, "bad_override_target", action)
+                    return
+                if reset:
+                    override.set_value(100)
+                elif delta > 0:
+                    override.on_increase()
+                elif delta < 0:
+                    override.on_decrease()
+                self._send_runtime_result(True, action=action)
+                self._send_machine_state(force=True)
+                return
+
+            if action == "air":
+                if "on" in msg:
+                    next_state = bool(msg.get("on"))
+                else:
+                    next_state = not bool(int(self._cnc.vars.get("sw_air", 0)))
+                state = str(self._cnc.vars.get("state", "")).lower()
+                if state == "run":
+                    self._controller.executeCommand("buffer M7" if next_state else "buffer M9")
+                else:
+                    self._controller.setAirSwitch(next_state)
+                self._send_runtime_result(True, action=action)
+                self._send_machine_state(force=True)
+                return
+
+            if action == "pause_resume":
+                self._handle_run_pause_resume()
+                self._send_runtime_result(True, action=action)
+                self._send_machine_state(force=True)
+                return
+
+            if action == "stop":
+                self._controller.abortCommand()
+                self._send_runtime_result(True, action=action)
+                self._send_machine_state(force=True)
+                return
+
+            if action == "probe_cancel":
+                self._controller.abortCommand()
+                self._send_runtime_result(True, action=action)
+                self._send_machine_state(force=True)
+                return
+
+            self._send_runtime_result(False, "unsupported_action", action)
+        except Exception as e:
+            logger.error(f"CYD: Failed runtime action {action!r}: {e}")
+            self._send_runtime_result(False, f"error:{e}", action)
 
     def _handle_macro_request(self, msg: dict) -> None:
         action = str(msg.get("action", "")).lower()
@@ -379,6 +476,18 @@ class CYD:
                 self._send_tool_result(True, action=action)
                 return
 
+            if action == "clamp":
+                logger.info("CYD: Clamping tool")
+                self._controller.clampToolCommand()
+                self._send_tool_result(True, action=action)
+                return
+
+            if action == "unclamp":
+                logger.info("CYD: Unclamping tool")
+                self._controller.unclampToolCommand()
+                self._send_tool_result(True, action=action)
+                return
+
             if action == "change":
                 tool = int(msg.get("tool", -999999))
                 if tool not in (0, 999990, 1, 2, 3, 4, 5, 6):
@@ -400,7 +509,7 @@ class CYD:
             self._send_gcode_result(False, "empty_line")
             return
 
-        # Allowlist: only M466 (single-axis probe) for now.
+        # Allowlist: pendant probing commands only.
         if not re.match(r'^M46[126]\b', line, re.IGNORECASE):
             logger.warning(f"CYD: Rejected gcode not on allowlist: {line!r}")
             self._send_gcode_result(False, "not_allowed")
@@ -545,6 +654,10 @@ class CYD:
 
             if msg_type == "macro":
                 self._handle_macro_request(msg)
+                return
+
+            if msg_type == "runtime":
+                self._handle_runtime_request(msg)
                 return
 
             if msg_type == "ping":

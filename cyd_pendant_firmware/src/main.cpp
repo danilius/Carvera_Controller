@@ -82,6 +82,10 @@ lv_obj_t* lblProbeValue1 = nullptr;
 lv_obj_t* lblProbeValue2 = nullptr;
 lv_obj_t* lblProbeValue3 = nullptr;
 lv_obj_t* lblEditValue = nullptr;
+lv_obj_t* lblRuntimeFeed = nullptr;
+lv_obj_t* lblRuntimeSpindle = nullptr;
+lv_obj_t* lblRuntimePause = nullptr;
+lv_obj_t* lblRuntimeAir = nullptr;
 
 String rxLine;
 String rpRxLine;
@@ -91,6 +95,7 @@ float mz = 0.0f;
 
 enum class UiPage {
   Home,
+  RuntimeHome,
   MainMenu,
   AtcMenu,
   MacroMenu,
@@ -99,6 +104,7 @@ enum class UiPage {
   ProbeBore,
   ProbeBoss,
   ProbeEdit,
+  ProbeRunning,
 };
 
 enum class ProbeField {
@@ -114,10 +120,21 @@ enum class ButtonStyle {
   Normal,
   Back,
   Save,
+  RuntimeNormal,
+  RuntimeSelected,
+  Warning,
+  Danger,
+  AirOn,
+};
+
+enum class RuntimeTarget {
+  Feed,
+  Spindle,
 };
 
 UiPage currentPage = UiPage::Home;
 UiPage editReturnPage = UiPage::ProbeSingle;
+UiPage probeReturnPage = UiPage::ProbeMenu;
 ProbeField editField = ProbeField::SingleDistance;
 float singleProbeDistance = 10.0f;
 float boreProbeX = 10.0f;
@@ -137,6 +154,8 @@ uint32_t jogMessageSeq = 0;
 uint32_t mpgBurstStartMs = 0;
 uint16_t mpgBurstDetents = 0;
 int32_t mpgBurstDirection = 0;
+int32_t pendingStepJogDetents = 0;
+uint32_t lastStepJogSendMs = 0;
 bool jogEnabled = false;
 bool jogHybridMode = true;
 const char* jogAxis = "X";
@@ -147,6 +166,8 @@ const uint32_t CONTINUOUS_JOG_TIMEOUT_MS = 250;
 const uint32_t CONTINUOUS_PROMOTE_WINDOW_MS = 1000;
 const uint16_t CONTINUOUS_PROMOTE_DETENTS = 10;
 const uint32_t CONTINUOUS_DEMOTE_DETENT_GAP_MS = 250;
+const uint32_t STEP_JOG_COALESCE_MS = 60;
+const int32_t STEP_JOG_MAX_PENDING_DETENTS = 20;
 constexpr uint16_t BOTTOM_BUTTON_Y = 196;
 constexpr uint16_t BOTTOM_BUTTON_H = 40;
 constexpr uint16_t BOTTOM_BUTTON_W = 100;
@@ -165,6 +186,11 @@ uint16_t editSwipeLastX = 0;
 bool backPressTracking = false;
 bool backLongPressHandled = false;
 bool touchCapturedUntilRelease = false;
+bool runtimeStopTracking = false;
+bool runtimeStopSent = false;
+uint32_t runtimeStopStartMs = 0;
+bool probeCommandActive = false;
+bool probeMotionSeen = false;
 uint32_t backPressStartMs = 0;
 UiPage backPressPage = UiPage::Home;
 bool touchCalibrating = false;
@@ -183,6 +209,13 @@ String controllerState = "unknown";
 String controllerActivity = "idle";
 String toolLabel = "No Tool";
 String targetToolLabel = "No Tool";
+bool programRunning = false;
+bool programPaused = false;
+int feedOverridePct = 100;
+int spindleOverridePct = 100;
+bool airOn = false;
+float playedPercent = 0.0f;
+RuntimeTarget runtimeTarget = RuntimeTarget::Feed;
 const uint8_t MAX_MACROS = 10;
 const uint8_t MAX_VISIBLE_MACROS = 8;
 uint8_t macroCount = 0;
@@ -190,7 +223,9 @@ int macroIds[MAX_MACROS] = {0};
 String macroNames[MAX_MACROS];
 
 bool sendJson(const JsonDocument& doc);
+bool runtimeActive();
 void sendGcodeCommand(const String& line);
+void openPage(UiPage page);
 void renderPage();
 
 void setLabelText(lv_obj_t* label, const String& text) {
@@ -336,6 +371,15 @@ void refreshTopBar() {
       text += activity;
       color = controllerActivity == "alarm" ? 0xAA2222 : 0x9A6A00;
     }
+    if (runtimeActive()) {
+      text = toolLabel + (programPaused ? "   PAUSED" : "   RUN");
+      if (playedPercent > 0.0f) {
+        text += "   ";
+        text += String(playedPercent, 0);
+        text += "%";
+      }
+      color = programPaused ? 0xB87800 : 0x0066AA;
+    }
     if (controllerActivity == "changing_tool" && targetToolLabel.length() > 0) {
       text = toolLabel + " -> " + targetToolLabel;
     }
@@ -455,6 +499,8 @@ void resetMpgBurst() {
   mpgBurstStartMs = 0;
   mpgBurstDetents = 0;
   mpgBurstDirection = 0;
+  pendingStepJogDetents = 0;
+  lastStepJogSendMs = 0;
 }
 
 bool sendJogDelta(int32_t delta) {
@@ -499,17 +545,83 @@ bool sendJogDelta(int32_t delta) {
 #endif
 }
 
+void queueStepJogDelta(int32_t delta) {
+  if (delta == 0) {
+    return;
+  }
+
+  pendingStepJogDetents += delta;
+  if (pendingStepJogDetents > STEP_JOG_MAX_PENDING_DETENTS) {
+    pendingStepJogDetents = STEP_JOG_MAX_PENDING_DETENTS;
+  } else if (pendingStepJogDetents < -STEP_JOG_MAX_PENDING_DETENTS) {
+    pendingStepJogDetents = -STEP_JOG_MAX_PENDING_DETENTS;
+  }
+}
+
+void servicePendingStepJog(bool force = false) {
+  if (pendingStepJogDetents == 0) {
+    return;
+  }
+
+  if (!jogEnabled || !controllerJogAllowed || !wasControllerConnected || currentPage != UiPage::Home) {
+    pendingStepJogDetents = 0;
+    return;
+  }
+
+  const uint32_t now = millis();
+  if (!force && lastStepJogSendMs != 0 && now - lastStepJogSendMs < STEP_JOG_COALESCE_MS) {
+    return;
+  }
+
+  int32_t maxDetentsPerCommand = static_cast<int32_t>(floorf(MAX_JOG_COMMAND_MM / JOG_STEPS[jogStepIndex]));
+  if (maxDetentsPerCommand < 1) {
+    maxDetentsPerCommand = 1;
+  }
+  int32_t detentsToSend = pendingStepJogDetents;
+  if (detentsToSend > maxDetentsPerCommand) {
+    detentsToSend = maxDetentsPerCommand;
+  } else if (detentsToSend < -maxDetentsPerCommand) {
+    detentsToSend = -maxDetentsPerCommand;
+  }
+
+  if (sendJogDelta(detentsToSend)) {
+    pendingStepJogDetents -= detentsToSend;
+    lastStepJogSendMs = now;
+  } else {
+    pendingStepJogDetents = 0;
+    setLabelText(lblHint, "Step jog not sent: controller busy");
+  }
+}
+
 void sendGcodeCommand(const String& line) {
 #if PENDANT_REAL_PROBE_ENABLE
+  probeReturnPage = currentPage;
+  probeCommandActive = true;
+  probeMotionSeen = false;
   StaticJsonDocument<128> doc;
   doc["type"] = "gcode";
   doc["line"] = line;
   if (!sendJson(doc)) {
+    probeCommandActive = false;
     setLabelText(lblHint, "Probe not sent: disconnected");
+  } else {
+    openPage(UiPage::ProbeRunning);
   }
 #else
   setLabelText(lblHint, "DRY PROBE: " + line);
 #endif
+}
+
+void sendProbeCancelCommand() {
+  StaticJsonDocument<96> doc;
+  doc["type"] = "runtime";
+  doc["action"] = "probe_cancel";
+  if (!sendJson(doc)) {
+    setLabelText(lblHint, "Cancel not sent");
+  } else {
+    probeMotionSeen = true;
+    setLabelText(lblHint, "Cancel sent");
+  }
 }
 
 void sendToolChangeCommand(int32_t tool) {
@@ -541,6 +653,20 @@ void sendToolDropCommand() {
 #endif
 }
 
+void sendToolClampCommand(bool clamp) {
+#if PENDANT_REAL_ATC_ENABLE
+  setLabelText(lblStatus, clamp ? "Request Clamp" : "Request Unclamp");
+  StaticJsonDocument<96> doc;
+  doc["type"] = "tool";
+  doc["action"] = clamp ? "clamp" : "unclamp";
+  if (!sendJson(doc)) {
+    setLabelText(lblHint, clamp ? "Clamp command not sent" : "Unclamp command not sent");
+  }
+#else
+  setLabelText(lblHint, clamp ? "DRY TOOL: Clamp" : "DRY TOOL: Unclamp");
+#endif
+}
+
 void requestMacroList() {
   StaticJsonDocument<64> doc;
   doc["type"] = "macro_query";
@@ -562,6 +688,64 @@ void sendMacroRunCommand(uint8_t index) {
   if (!sendJson(doc)) {
     setLabelText(lblHint, "Macro not sent: disconnected");
   }
+}
+
+bool runtimeActive() {
+  return programRunning || programPaused;
+}
+
+void sendRuntimeCommand(const String& action) {
+  StaticJsonDocument<128> doc;
+  doc["type"] = "runtime";
+  doc["action"] = action;
+  if (!sendJson(doc)) {
+    setLabelText(lblHint, "Runtime command not sent");
+  }
+}
+
+void sendRuntimeOverride(int delta, bool reset = false) {
+  StaticJsonDocument<160> doc;
+  doc["type"] = "runtime";
+  doc["action"] = "override";
+  doc["target"] = runtimeTarget == RuntimeTarget::Feed ? "feed" : "spindle";
+  doc["delta"] = delta;
+  doc["reset"] = reset;
+  if (!sendJson(doc)) {
+    setLabelText(lblHint, "Override not sent");
+  }
+}
+
+void sendRuntimeAirToggle() {
+  StaticJsonDocument<96> doc;
+  doc["type"] = "runtime";
+  doc["action"] = "air";
+  doc["on"] = !airOn;
+  if (!sendJson(doc)) {
+    setLabelText(lblHint, "Air command not sent");
+  }
+}
+
+String runtimeFeedText() {
+  return "Feed " + String(feedOverridePct) + "%";
+}
+
+String runtimeSpindleText() {
+  return "Spindle " + String(spindleOverridePct) + "%";
+}
+
+String runtimePauseText() {
+  return programPaused ? "Resume" : "Pause";
+}
+
+String runtimeAirText() {
+  return airOn ? "Air ON" : "Air OFF";
+}
+
+void refreshRuntimeUi() {
+  setLabelText(lblRuntimeFeed, runtimeFeedText());
+  setLabelText(lblRuntimeSpindle, runtimeSpindleText());
+  setLabelText(lblRuntimePause, runtimePauseText());
+  setLabelText(lblRuntimeAir, runtimeAirText());
 }
 
 uint16_t continuousJogFeed() {
@@ -855,7 +1039,7 @@ bool backButtonRect(UiPage page, uint16_t& x, uint16_t& y, uint16_t& w, uint16_t
       return true;
     case UiPage::ProbeBore:
       x = 165;
-      y = 120;
+      y = 104;
       return true;
     case UiPage::ProbeBoss:
       x = 165;
@@ -865,6 +1049,8 @@ bool backButtonRect(UiPage page, uint16_t& x, uint16_t& y, uint16_t& w, uint16_t
       x = 165;
       y = 170;
       return true;
+    case UiPage::ProbeRunning:
+      return false;
     default:
       return false;
   }
@@ -894,13 +1080,15 @@ bool isLongBackUseful(UiPage page) {
 }
 
 void openPage(UiPage page) {
-  if (currentPage == UiPage::Home && page != UiPage::Home) {
+  if ((currentPage == UiPage::Home || currentPage == UiPage::RuntimeHome) && page != UiPage::Home && page != UiPage::RuntimeHome) {
     stopContinuousJog("page change");
     resetMpgBurst();
   }
   editSwipeTracking = false;
   backPressTracking = false;
   backLongPressHandled = false;
+  runtimeStopTracking = false;
+  runtimeStopSent = false;
   currentPage = page;
   renderPage();
   if (page == UiPage::MacroMenu) {
@@ -968,6 +1156,38 @@ void releaseBackButtonHold() {
   }
 }
 
+bool handleRuntimeStopHold(uint16_t screenX, uint16_t screenY) {
+  if (currentPage != UiPage::RuntimeHome || !inRect(screenX, screenY, 10, 160, 145, 46)) {
+    runtimeStopTracking = false;
+    runtimeStopSent = false;
+    return false;
+  }
+
+  const uint32_t now = millis();
+  if (!runtimeStopTracking) {
+    runtimeStopTracking = true;
+    runtimeStopSent = false;
+    runtimeStopStartMs = now;
+    setLabelText(lblHint, "Hold to stop");
+    return true;
+  }
+
+  if (!runtimeStopSent && now - runtimeStopStartMs >= BACK_LONG_PRESS_MS) {
+    runtimeStopSent = true;
+    touchCapturedUntilRelease = true;
+    sendRuntimeCommand("stop");
+    setLabelText(lblHint, "Stop sent");
+    return true;
+  }
+
+  return true;
+}
+
+void releaseRuntimeStopHold() {
+  runtimeStopTracking = false;
+  runtimeStopSent = false;
+}
+
 bool handleProbeEditSwipe(uint16_t screenX, uint16_t screenY) {
   if (currentPage != UiPage::ProbeEdit) {
     editSwipeTracking = false;
@@ -1011,6 +1231,36 @@ bool handleTouchButton(uint16_t screenX, uint16_t screenY) {
   }
   lastTouchButtonMs = now;
 
+  if (currentPage == UiPage::RuntimeHome) {
+    if (inRect(screenX, screenY, 10, 48, 145, 54)) {
+      runtimeTarget = RuntimeTarget::Feed;
+      renderPage();
+      return true;
+    }
+    if (inRect(screenX, screenY, 165, 48, 145, 54)) {
+      runtimeTarget = RuntimeTarget::Spindle;
+      renderPage();
+      return true;
+    }
+    if (inRect(screenX, screenY, 10, 112, 145, 40)) {
+      sendRuntimeCommand("pause_resume");
+      return true;
+    }
+    if (inRect(screenX, screenY, 165, 112, 145, 40)) {
+      sendRuntimeAirToggle();
+      return true;
+    }
+    return false;
+  }
+
+  if (currentPage == UiPage::ProbeRunning) {
+    if (inRect(screenX, screenY, 85, 122, 150, 54)) {
+      sendProbeCancelCommand();
+      return true;
+    }
+    return false;
+  }
+
   if (currentPage == UiPage::MainMenu) {
     if (inRect(screenX, screenY, 85, 40, 150, 40)) {
       openPage(UiPage::ProbeMenu);
@@ -1047,40 +1297,48 @@ bool handleTouchButton(uint16_t screenX, uint16_t screenY) {
   }
 
   if (currentPage == UiPage::AtcMenu) {
-    if (inRect(screenX, screenY, 10, 40, 145, 32)) {
+    if (inRect(screenX, screenY, 10, 40, 93, 32)) {
       sendToolChangeCommand(1);
       return true;
     }
-    if (inRect(screenX, screenY, 165, 40, 145, 32)) {
+    if (inRect(screenX, screenY, 113, 40, 94, 32)) {
       sendToolChangeCommand(2);
       return true;
     }
-    if (inRect(screenX, screenY, 10, 78, 145, 32)) {
+    if (inRect(screenX, screenY, 217, 40, 93, 32)) {
       sendToolChangeCommand(3);
       return true;
     }
-    if (inRect(screenX, screenY, 165, 78, 145, 32)) {
+    if (inRect(screenX, screenY, 10, 78, 93, 32)) {
       sendToolChangeCommand(4);
       return true;
     }
-    if (inRect(screenX, screenY, 10, 116, 145, 32)) {
+    if (inRect(screenX, screenY, 113, 78, 94, 32)) {
       sendToolChangeCommand(5);
       return true;
     }
-    if (inRect(screenX, screenY, 165, 116, 145, 32)) {
+    if (inRect(screenX, screenY, 217, 78, 93, 32)) {
       sendToolChangeCommand(6);
       return true;
     }
-    if (inRect(screenX, screenY, 10, 154, 145, 32)) {
+    if (inRect(screenX, screenY, 10, 116, 145, 32)) {
       sendToolChangeCommand(0);
       return true;
     }
-    if (inRect(screenX, screenY, 165, 154, 145, 32)) {
+    if (inRect(screenX, screenY, 165, 116, 145, 32)) {
       sendToolChangeCommand(999990);
       return true;
     }
-    if (inRect(screenX, screenY, 10, 192, 145, 32)) {
+    if (inRect(screenX, screenY, 10, 154, 93, 32)) {
       sendToolDropCommand();
+      return true;
+    }
+    if (inRect(screenX, screenY, 113, 154, 94, 32)) {
+      sendToolClampCommand(true);
+      return true;
+    }
+    if (inRect(screenX, screenY, 217, 154, 93, 32)) {
+      sendToolClampCommand(false);
       return true;
     }
     return false;
@@ -1135,16 +1393,28 @@ bool handleTouchButton(uint16_t screenX, uint16_t screenY) {
   }
 
   if (currentPage == UiPage::ProbeBore) {
-    if (inRect(screenX, screenY, 10, 56, 145, 40)) {
+    if (inRect(screenX, screenY, 10, 48, 145, 40)) {
       openProbeEditor(ProbeField::BoreX, UiPage::ProbeBore);
       return true;
     }
-    if (inRect(screenX, screenY, 165, 56, 145, 40)) {
+    if (inRect(screenX, screenY, 165, 48, 145, 40)) {
       openProbeEditor(ProbeField::BoreY, UiPage::ProbeBore);
       return true;
     }
-    if (inRect(screenX, screenY, 165, 120, 145, 40)) {
+    if (inRect(screenX, screenY, 165, 104, 145, 40)) {
       openPage(UiPage::ProbeMenu);
+      return true;
+    }
+    if (inRect(screenX, screenY, 10, 160, 93, 40)) {
+      sendGcodeCommand("M461 X" + String(boreProbeX, 1) + " S1");
+      return true;
+    }
+    if (inRect(screenX, screenY, 113, 160, 94, 40)) {
+      sendGcodeCommand("M461 Y" + String(boreProbeY, 1) + " S1");
+      return true;
+    }
+    if (inRect(screenX, screenY, 217, 160, 93, 40)) {
+      sendGcodeCommand("M461 X" + String(boreProbeX, 1) + " Y" + String(boreProbeY, 1) + " S1");
       return true;
     }
     return false;
@@ -1167,7 +1437,15 @@ bool handleTouchButton(uint16_t screenX, uint16_t screenY) {
       openPage(UiPage::ProbeMenu);
       return true;
     }
-    if (inRect(screenX, screenY, 10, 160, 300, 40)) {
+    if (inRect(screenX, screenY, 10, 160, 93, 40)) {
+      sendGcodeCommand("M462 X" + String(bossProbeX, 1) + " E" + String(bossProbeDepth, 1) + " S1");
+      return true;
+    }
+    if (inRect(screenX, screenY, 113, 160, 94, 40)) {
+      sendGcodeCommand("M462 Y" + String(bossProbeY, 1) + " E" + String(bossProbeDepth, 1) + " S1");
+      return true;
+    }
+    if (inRect(screenX, screenY, 217, 160, 93, 40)) {
       sendGcodeCommand("M462 X" + String(bossProbeX, 1) + " Y" + String(bossProbeY, 1) + " E" + String(bossProbeDepth, 1) + " S1");
       return true;
     }
@@ -1269,6 +1547,8 @@ void updateConnectionUi(bool connected) {
     stopContinuousJog("disconnect");
     controllerJogAllowed = false;
     jogEnabled = false;
+    programRunning = false;
+    programPaused = false;
     controllerState = "disconnected";
     controllerActivity = "disconnected";
     refreshTopBar();
@@ -1334,6 +1614,16 @@ lv_color_t buttonBgColor(ButtonStyle style, bool enabled) {
       return lv_color_hex(0x8A6A00);
     case ButtonStyle::Save:
       return lv_color_hex(0x1F7A3A);
+    case ButtonStyle::RuntimeNormal:
+      return lv_color_hex(0xE6EAF0);
+    case ButtonStyle::RuntimeSelected:
+      return lv_color_hex(0x0066AA);
+    case ButtonStyle::Warning:
+      return lv_color_hex(0xB87800);
+    case ButtonStyle::Danger:
+      return lv_color_hex(0xB3261E);
+    case ButtonStyle::AirOn:
+      return lv_color_hex(0x1F7A3A);
     case ButtonStyle::Normal:
     default:
       return lv_color_hex(0x1E5A7A);
@@ -1349,10 +1639,30 @@ lv_color_t buttonBorderColor(ButtonStyle style, bool enabled) {
       return lv_color_hex(0xFFD34D);
     case ButtonStyle::Save:
       return lv_color_hex(0x67D98D);
+    case ButtonStyle::RuntimeNormal:
+      return lv_color_hex(0xB8C2CF);
+    case ButtonStyle::RuntimeSelected:
+      return lv_color_hex(0x68BCE0);
+    case ButtonStyle::Warning:
+      return lv_color_hex(0xFFD34D);
+    case ButtonStyle::Danger:
+      return lv_color_hex(0xFF8A80);
+    case ButtonStyle::AirOn:
+      return lv_color_hex(0x67D98D);
     case ButtonStyle::Normal:
     default:
       return lv_color_hex(0x68BCE0);
   }
+}
+
+lv_color_t buttonTextColor(ButtonStyle style, bool enabled) {
+  if (!enabled) {
+    return lv_color_hex(0x999999);
+  }
+  if (style == ButtonStyle::RuntimeNormal) {
+    return lv_color_hex(0x17212B);
+  }
+  return lv_color_white();
 }
 
 lv_obj_t* createButton(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const char* text, bool enabled = true, ButtonStyle buttonStyle = ButtonStyle::Normal) {
@@ -1372,7 +1682,7 @@ lv_obj_t* createButton(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const cha
   lv_obj_set_width(label, w - 8);
   lv_label_set_long_mode(label, LV_LABEL_LONG_CLIP);
   lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, 0);
-  lv_obj_set_style_text_color(label, enabled ? lv_color_white() : lv_color_hex(0x999999), 0);
+  lv_obj_set_style_text_color(label, buttonTextColor(buttonStyle, enabled), 0);
   lv_label_set_text(label, text);
   lv_obj_center(label);
   return label;
@@ -1428,6 +1738,25 @@ void renderHomePage() {
   refreshJogUi();
 }
 
+void renderRuntimeHomePage() {
+  const ButtonStyle feedStyle = runtimeTarget == RuntimeTarget::Feed ? ButtonStyle::RuntimeSelected : ButtonStyle::RuntimeNormal;
+  const ButtonStyle spindleStyle = runtimeTarget == RuntimeTarget::Spindle ? ButtonStyle::RuntimeSelected : ButtonStyle::RuntimeNormal;
+
+  lblRuntimeFeed = createButton(10, 48, 145, 54, runtimeFeedText().c_str(), true, feedStyle);
+  lblRuntimeSpindle = createButton(165, 48, 145, 54, runtimeSpindleText().c_str(), true, spindleStyle);
+  lblRuntimePause = createButton(10, 112, 145, 40, runtimePauseText().c_str(), true, programPaused ? ButtonStyle::Save : ButtonStyle::Warning);
+  lblRuntimeAir = createButton(165, 112, 145, 40, runtimeAirText().c_str(), true, airOn ? ButtonStyle::AirOn : ButtonStyle::RuntimeNormal);
+  createButton(10, 160, 145, 46, "Stop", true, ButtonStyle::Danger);
+
+  lv_obj_t* note = lv_label_create(lv_scr_act());
+  lv_obj_set_style_text_font(note, &lv_font_montserrat_14, 0);
+  lv_obj_set_style_text_color(note, lv_color_hex(0x17212B), 0);
+  lv_obj_align(note, LV_ALIGN_TOP_LEFT, 165, 170);
+  lv_obj_set_width(note, 145);
+  lv_label_set_long_mode(note, LV_LABEL_LONG_WRAP);
+  lv_label_set_text(note, "Hold Stop");
+}
+
 void renderMainMenuPage() {
   createButton(85, 40, 150, 40, "Probing");
   createButton(85, 88, 150, 40, "ATC");
@@ -1436,15 +1765,17 @@ void renderMainMenuPage() {
 }
 
 void renderAtcMenuPage() {
-  createButton(10, 40, 145, 32, "T1");
-  createButton(165, 40, 145, 32, "T2");
-  createButton(10, 78, 145, 32, "T3");
-  createButton(165, 78, 145, 32, "T4");
-  createButton(10, 116, 145, 32, "T5");
-  createButton(165, 116, 145, 32, "T6");
-  createButton(10, 154, 145, 32, "Probe");
-  createButton(165, 154, 145, 32, "3D Probe");
-  createButton(10, 192, 145, 32, "Drop");
+  createButton(10, 40, 93, 32, "T1");
+  createButton(113, 40, 94, 32, "T2");
+  createButton(217, 40, 93, 32, "T3");
+  createButton(10, 78, 93, 32, "T4");
+  createButton(113, 78, 94, 32, "T5");
+  createButton(217, 78, 93, 32, "T6");
+  createButton(10, 116, 145, 32, "Probe");
+  createButton(165, 116, 145, 32, "3D Probe");
+  createButton(10, 154, 93, 32, "Drop");
+  createButton(113, 154, 94, 32, "Clamp", true, ButtonStyle::Save);
+  createButton(217, 154, 93, 32, "Unclamp", true, ButtonStyle::Warning);
   createButton(165, 192, 145, 32, "Back", true, ButtonStyle::Back);
 }
 
@@ -1487,10 +1818,12 @@ void renderSingleProbePage() {
 }
 
 void renderBoreProbePage() {
-  lblProbeValue1 = createButton(10, 56, 145, 40, probeValueText("X", boreProbeX).c_str());
-  lblProbeValue2 = createButton(165, 56, 145, 40, probeValueText("Y", boreProbeY).c_str());
-  createButton(10, 120, 145, 40, "Run later", false);
-  createButton(165, 120, 145, 40, "Back", true, ButtonStyle::Back);
+  lblProbeValue1 = createButton(10, 48, 145, 40, probeValueText("X", boreProbeX).c_str());
+  lblProbeValue2 = createButton(165, 48, 145, 40, probeValueText("Y", boreProbeY).c_str());
+  createButton(165, 104, 145, 40, "Back", true, ButtonStyle::Back);
+  createButton(10, 160, 93, 40, "Probe X");
+  createButton(113, 160, 94, 40, "Probe Y");
+  createButton(217, 160, 93, 40, "Probe X/Y");
 }
 
 void renderBossProbePage() {
@@ -1498,7 +1831,9 @@ void renderBossProbePage() {
   lblProbeValue2 = createButton(165, 48, 145, 40, probeValueText("Y", bossProbeY).c_str());
   lblProbeValue3 = createButton(10, 104, 145, 40, probeValueText("Depth", bossProbeDepth).c_str());
   createButton(165, 104, 145, 40, "Back", true, ButtonStyle::Back);
-  createButton(10, 160, 300, 40, "Run");
+  createButton(10, 160, 93, 40, "Probe X");
+  createButton(113, 160, 94, 40, "Probe Y");
+  createButton(217, 160, 93, 40, "Probe X/Y");
 }
 
 void renderEditProbePage() {
@@ -1510,6 +1845,22 @@ void renderEditProbePage() {
   createButton(244, 106, 66, 40, "+1");
   createButton(10, 170, 145, 40, "Save", true, ButtonStyle::Save);
   createButton(165, 170, 145, 40, "Back", true, ButtonStyle::Back);
+}
+
+void renderProbeRunningPage() {
+  lv_obj_t* title = lv_label_create(lv_scr_act());
+  lv_obj_set_style_text_font(title, &lv_font_montserrat_14, 0);
+  lv_obj_set_style_text_color(title, lv_color_hex(0x17212B), 0);
+  lv_label_set_text(title, "PROBING");
+  lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 54);
+
+  lv_obj_t* body = lv_label_create(lv_scr_act());
+  lv_obj_set_style_text_font(body, &lv_font_montserrat_14, 0);
+  lv_obj_set_style_text_color(body, lv_color_hex(0x394552), 0);
+  lv_label_set_text(body, probeMotionSeen ? "Running..." : "Starting...");
+  lv_obj_align(body, LV_ALIGN_TOP_MID, 0, 86);
+
+  createButton(85, 122, 150, 54, "Cancel", true, ButtonStyle::Danger);
 }
 
 void renderPage() {
@@ -1528,14 +1879,22 @@ void renderPage() {
   lblProbeValue2 = nullptr;
   lblProbeValue3 = nullptr;
   lblEditValue = nullptr;
+  lblRuntimeFeed = nullptr;
+  lblRuntimeSpindle = nullptr;
+  lblRuntimePause = nullptr;
+  lblRuntimeAir = nullptr;
 
-  lv_obj_set_style_bg_color(lv_scr_act(), lv_color_hex(0x101820), 0);
+  const bool lightPage = currentPage == UiPage::RuntimeHome || currentPage == UiPage::ProbeRunning;
+  lv_obj_set_style_bg_color(lv_scr_act(), lightPage ? lv_color_hex(0xF7F7F2) : lv_color_hex(0x101820), 0);
   lv_obj_set_style_bg_opa(lv_scr_act(), LV_OPA_COVER, 0);
   createHeader();
 
   switch (currentPage) {
     case UiPage::Home:
       renderHomePage();
+      break;
+    case UiPage::RuntimeHome:
+      renderRuntimeHomePage();
       break;
     case UiPage::MainMenu:
       renderMainMenuPage();
@@ -1560,6 +1919,9 @@ void renderPage() {
       break;
     case UiPage::ProbeEdit:
       renderEditProbePage();
+      break;
+    case UiPage::ProbeRunning:
+      renderProbeRunningPage();
       break;
   }
 
@@ -1595,10 +1957,17 @@ void handleIncomingJson(const String& line) {
   }
 
   if (type == "machine_state") {
+    const bool wasRuntimeActive = runtimeActive();
     controllerState = String(doc["state"] | "unknown");
     controllerActivity = String(doc["activity"] | "unknown");
     toolLabel = String(doc["tool_label"] | "");
     targetToolLabel = String(doc["target_tool_label"] | "");
+    programRunning = doc["program_running"] | false;
+    programPaused = doc["program_paused"] | false;
+    feedOverridePct = doc["feed_override"] | feedOverridePct;
+    spindleOverridePct = doc["spindle_override"] | spindleOverridePct;
+    airOn = doc["air_on"] | airOn;
+    playedPercent = doc["playedpercent"] | playedPercent;
     if (toolLabel.length() == 0) {
       toolLabel = localToolLabel(doc["tool"] | -1);
     }
@@ -1611,7 +1980,36 @@ void handleIncomingJson(const String& line) {
       refreshJogUi();
     }
 
+    String stateLower = controllerState;
+    stateLower.toLowerCase();
+    const bool controllerIdle = stateLower == "idle" || stateLower.length() == 0;
+    if (currentPage == UiPage::ProbeRunning) {
+      if (!controllerIdle && !probeMotionSeen) {
+        probeMotionSeen = true;
+        renderPage();
+        return;
+      }
+      if (probeCommandActive && probeMotionSeen && controllerIdle) {
+        probeCommandActive = false;
+        probeMotionSeen = false;
+        openPage(probeReturnPage);
+        return;
+      }
+      refreshTopBar();
+      return;
+    }
+
+    if (runtimeActive() && currentPage != UiPage::RuntimeHome) {
+      openPage(UiPage::RuntimeHome);
+      return;
+    }
+    if (!runtimeActive() && wasRuntimeActive && currentPage == UiPage::RuntimeHome) {
+      openPage(UiPage::Home);
+      return;
+    }
+
     refreshTopBar();
+    refreshRuntimeUi();
     return;
   }
 
@@ -1628,6 +2026,11 @@ void handleIncomingJson(const String& line) {
     const bool ok = doc["ok"] | false;
     const String reason = String(doc["reason"] | "");
     if (!ok) {
+      probeCommandActive = false;
+      probeMotionSeen = false;
+      if (currentPage == UiPage::ProbeRunning) {
+        openPage(probeReturnPage);
+      }
       setLabelText(lblHint, "Probe rejected: " + reason);
     } else {
       setLabelText(lblHint, "Probe running...");
@@ -1674,6 +2077,18 @@ void handleIncomingJson(const String& line) {
     const bool ok = doc["ok"] | false;
     const String reason = String(doc["reason"] | "");
     setLabelText(lblHint, ok ? "Macro sent" : "Macro rejected: " + reason);
+    return;
+  }
+
+  if (type == "runtime_result") {
+    const bool ok = doc["ok"] | false;
+    const String reason = String(doc["reason"] | "");
+    const String action = String(doc["action"] | "");
+    if (action == "probe_cancel") {
+      setLabelText(lblHint, ok ? "Cancel sent" : "Cancel rejected: " + reason);
+    } else {
+      setLabelText(lblHint, ok ? "Runtime command sent" : "Runtime rejected: " + reason);
+    }
     return;
   }
 
@@ -1755,6 +2170,7 @@ void processTouchTest() {
   if (!touched) {
     touchCapturedUntilRelease = false;
     releaseBackButtonHold();
+    releaseRuntimeStopHold();
     editSwipeTracking = false;
     return;
   }
@@ -1780,6 +2196,9 @@ void processTouchTest() {
     uint16_t screenY = 0;
     mapTouchToScreen(rawX, rawY, screenX, screenY);
     if (handleBackButtonHold(screenX, screenY)) {
+      return;
+    }
+    if (handleRuntimeStopHold(screenX, screenY)) {
       return;
     }
     if (handleProbeEditSwipe(screenX, screenY)) {
@@ -1866,9 +2285,15 @@ void handleMpgEvent(int32_t position, int32_t delta) {
     return;
   }
 
-  if (!sendJogDelta(delta)) {
-    setLabelText(lblHint, "Step jog not sent: controller busy");
+  if (jogHybridMode) {
+    if (!sendJogDelta(delta)) {
+      setLabelText(lblHint, "Step jog not sent: controller busy");
+    }
+    return;
   }
+
+  queueStepJogDelta(delta);
+  servicePendingStepJog(false);
 }
 
 void handleMpgStartEvent(int32_t direction) {
@@ -1903,6 +2328,8 @@ bool handleRpEvent(const String& line) {
   if (sscanf(line.c_str(), "ENC_TICK %ld", &delta) == 1) {
     if (currentPage == UiPage::ProbeEdit) {
       adjustProbeEditValue(static_cast<float>(delta));
+    } else if (currentPage == UiPage::RuntimeHome) {
+      sendRuntimeOverride(delta > 0 ? 1 : -1);
     } else if (currentPage == UiPage::Home) {
       adjustJogStep(static_cast<int32_t>(delta));
     }
@@ -1910,7 +2337,9 @@ bool handleRpEvent(const String& line) {
   }
 
   if (line == "ENC_PRESS") {
-    if (currentPage == UiPage::Home) {
+    if (currentPage == UiPage::RuntimeHome) {
+      sendRuntimeOverride(0, true);
+    } else if (currentPage == UiPage::Home) {
       toggleJogMode();
     }
     return true;
@@ -2130,6 +2559,7 @@ void loop() {
   processTouchTest();
   updateConnectionState();
   serviceContinuousJog();
+  servicePendingStepJog(false);
   lv_timer_handler();
   delay(5);
 }

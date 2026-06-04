@@ -32,6 +32,13 @@ class OverrideController:
         new_value = max(self._get_value() - self._step, self._min_limit)
         self._set_value(new_value)
 
+    def get_value(self) -> float:
+        return self._get_value()
+
+    def set_value(self, value: float) -> None:
+        new_value = min(max(value, self._min_limit), self._max_limit)
+        self._set_value(new_value)
+
 class Pendant:
     """
     Base class for pendant devices.

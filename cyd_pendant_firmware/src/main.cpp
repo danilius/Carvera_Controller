@@ -74,6 +74,7 @@ lv_obj_t* lblHint = nullptr;
 lv_obj_t* lblJogButton = nullptr;
 lv_obj_t* lblStepButton = nullptr;
 lv_obj_t* lblModeButton = nullptr;
+lv_obj_t* lblCoordButton = nullptr;
 lv_obj_t* lblAxisX = nullptr;
 lv_obj_t* lblAxisY = nullptr;
 lv_obj_t* lblAxisZ = nullptr;
@@ -92,11 +93,16 @@ String rpRxLine;
 float mx = 0.0f;
 float my = 0.0f;
 float mz = 0.0f;
+float wx = 0.0f;
+float wy = 0.0f;
+float wz = 0.0f;
 
 enum class UiPage {
   Home,
   RuntimeHome,
   MainMenu,
+  PositionMenu,
+  SetOriginMenu,
   AtcMenu,
   MacroMenu,
   ProbeMenu,
@@ -125,6 +131,7 @@ enum class ButtonStyle {
   Warning,
   Danger,
   AirOn,
+  CoordWork,
 };
 
 enum class RuntimeTarget {
@@ -158,6 +165,7 @@ int32_t pendingStepJogDetents = 0;
 uint32_t lastStepJogSendMs = 0;
 bool jogEnabled = false;
 bool jogHybridMode = true;
+bool showWorkCoordinates = false;
 const char* jogAxis = "X";
 const float JOG_STEPS[JOG_STEP_COUNT] = {0.001f, 0.010f, 0.100f, 1.000f};
 size_t jogStepIndex = 1;
@@ -392,9 +400,12 @@ void refreshTopBar() {
 }
 
 void refreshPositionLabel() {
-  setLabelText(lblAxisX, "X     " + String(mx, 3));
-  setLabelText(lblAxisY, "Y     " + String(my, 3));
-  setLabelText(lblAxisZ, "Z     " + String(mz, 3));
+  const float x = showWorkCoordinates ? wx : mx;
+  const float y = showWorkCoordinates ? wy : my;
+  const float z = showWorkCoordinates ? wz : mz;
+  setLabelText(lblAxisX, "X     " + String(x, 3));
+  setLabelText(lblAxisY, "Y     " + String(y, 3));
+  setLabelText(lblAxisZ, "Z     " + String(z, 3));
 }
 
 String jogStepText() {
@@ -474,6 +485,17 @@ void refreshJogUi() {
   styleBottomButton(lblStepButton, wasControllerConnected);
   styleBottomButton(lblModeButton, wasControllerConnected);
   refreshAxisTiles();
+}
+
+void refreshCoordinateButton() {
+  setLabelText(lblCoordButton, showWorkCoordinates ? "WORK" : "MACHINE");
+}
+
+void toggleCoordinateDisplay() {
+  showWorkCoordinates = !showWorkCoordinates;
+  refreshPositionLabel();
+  renderPage();
+  setLabelText(lblHint, showWorkCoordinates ? "Showing work coordinates" : "Showing machine coordinates");
 }
 
 bool isJogAmountAllowed(const String& axis, float amount) {
@@ -722,6 +744,31 @@ void sendRuntimeAirToggle() {
   doc["on"] = !airOn;
   if (!sendJson(doc)) {
     setLabelText(lblHint, "Air command not sent");
+  }
+}
+
+void sendPositionGotoCommand(const char* target) {
+  StaticJsonDocument<128> doc;
+  doc["type"] = "position";
+  doc["action"] = "goto";
+  doc["target"] = target;
+  if (!sendJson(doc)) {
+    setLabelText(lblHint, "Position command not sent");
+  } else {
+    setLabelText(lblHint, "Position command sent");
+  }
+}
+
+void sendSetOriginCommand(const char* axes) {
+  StaticJsonDocument<128> doc;
+  doc["type"] = "position";
+  doc["action"] = "set_origin";
+  doc["axes"] = axes;
+  if (!sendJson(doc)) {
+    setLabelText(lblHint, "Origin command not sent");
+  } else {
+    setLabelText(lblHint, String("Set origin ") + axes + " sent");
+    openPage(UiPage::PositionMenu);
   }
 }
 
@@ -1016,8 +1063,19 @@ bool backButtonRect(UiPage page, uint16_t& x, uint16_t& y, uint16_t& w, uint16_t
   switch (page) {
     case UiPage::MainMenu:
       x = 85;
-      y = 184;
+      y = 196;
       w = 150;
+      h = 32;
+      return true;
+    case UiPage::PositionMenu:
+      x = 165;
+      y = 160;
+      w = 145;
+      return true;
+    case UiPage::SetOriginMenu:
+      x = 165;
+      y = 160;
+      w = 145;
       return true;
     case UiPage::AtcMenu:
       x = 165;
@@ -1062,7 +1120,10 @@ UiPage shortBackTarget(UiPage page) {
       return UiPage::Home;
     case UiPage::AtcMenu:
     case UiPage::MacroMenu:
+    case UiPage::PositionMenu:
       return UiPage::MainMenu;
+    case UiPage::SetOriginMenu:
+      return UiPage::PositionMenu;
     case UiPage::ProbeMenu:
     case UiPage::ProbeSingle:
     case UiPage::ProbeBore:
@@ -1262,20 +1323,60 @@ bool handleTouchButton(uint16_t screenX, uint16_t screenY) {
   }
 
   if (currentPage == UiPage::MainMenu) {
-    if (inRect(screenX, screenY, 85, 40, 150, 40)) {
+    if (inRect(screenX, screenY, 10, 48, 145, 40)) {
       openPage(UiPage::ProbeMenu);
       return true;
     }
-    if (inRect(screenX, screenY, 85, 88, 150, 40)) {
+    if (inRect(screenX, screenY, 165, 48, 145, 40)) {
       openPage(UiPage::AtcMenu);
       return true;
     }
-    if (inRect(screenX, screenY, 85, 136, 150, 40)) {
+    if (inRect(screenX, screenY, 10, 104, 145, 40)) {
       openPage(UiPage::MacroMenu);
       return true;
     }
-    if (inRect(screenX, screenY, 85, 184, 150, 40)) {
+    if (inRect(screenX, screenY, 165, 104, 145, 40)) {
+      openPage(UiPage::PositionMenu);
+      return true;
+    }
+    if (inRect(screenX, screenY, 85, 196, 150, 32)) {
       openPage(UiPage::Home);
+      return true;
+    }
+    return false;
+  }
+
+  if (currentPage == UiPage::PositionMenu) {
+    if (inRect(screenX, screenY, 10, 48, 145, 40)) {
+      sendPositionGotoCommand("work_origin");
+      return true;
+    }
+    if (inRect(screenX, screenY, 165, 48, 145, 40)) {
+      sendPositionGotoCommand("path_origin");
+      return true;
+    }
+    if (inRect(screenX, screenY, 10, 104, 145, 40)) {
+      openPage(UiPage::SetOriginMenu);
+      return true;
+    }
+    if (inRect(screenX, screenY, 165, 160, 145, 40)) {
+      openPage(UiPage::MainMenu);
+      return true;
+    }
+    return false;
+  }
+
+  if (currentPage == UiPage::SetOriginMenu) {
+    if (inRect(screenX, screenY, 10, 96, 145, 48)) {
+      sendSetOriginCommand("xy");
+      return true;
+    }
+    if (inRect(screenX, screenY, 165, 96, 145, 48)) {
+      sendSetOriginCommand("xyz");
+      return true;
+    }
+    if (inRect(screenX, screenY, 165, 160, 145, 40)) {
+      openPage(UiPage::PositionMenu);
       return true;
     }
     return false;
@@ -1510,6 +1611,12 @@ bool handleTouchButton(uint16_t screenX, uint16_t screenY) {
       openPage(UiPage::MainMenu);
       return true;
     }
+    const uint16_t coordX = BOTTOM_BUTTON_FIRST_X + (BOTTOM_BUTTON_W + BOTTOM_BUTTON_GAP) * 2;
+    const uint16_t coordY = BOTTOM_BUTTON_Y - BOTTOM_BUTTON_H - 8;
+    if (inRect(screenX, screenY, coordX, coordY, BOTTOM_BUTTON_W, BOTTOM_BUTTON_H)) {
+      toggleCoordinateDisplay();
+      return true;
+    }
     return false;
   }
 
@@ -1624,6 +1731,8 @@ lv_color_t buttonBgColor(ButtonStyle style, bool enabled) {
       return lv_color_hex(0xB3261E);
     case ButtonStyle::AirOn:
       return lv_color_hex(0x1F7A3A);
+    case ButtonStyle::CoordWork:
+      return lv_color_hex(0x255D4A);
     case ButtonStyle::Normal:
     default:
       return lv_color_hex(0x1E5A7A);
@@ -1649,6 +1758,8 @@ lv_color_t buttonBorderColor(ButtonStyle style, bool enabled) {
       return lv_color_hex(0xFF8A80);
     case ButtonStyle::AirOn:
       return lv_color_hex(0x67D98D);
+    case ButtonStyle::CoordWork:
+      return lv_color_hex(0x6FAF9B);
     case ButtonStyle::Normal:
     default:
       return lv_color_hex(0x68BCE0);
@@ -1733,9 +1844,18 @@ void renderHomePage() {
   lblJogButton = createBottomButton(BOTTOM_BUTTON_FIRST_X, "Jog OFF");
   lblStepButton = createBottomButton(BOTTOM_BUTTON_FIRST_X + (BOTTOM_BUTTON_W + BOTTOM_BUTTON_GAP), "0.010");
   lblModeButton = createBottomButton(BOTTOM_BUTTON_FIRST_X + (BOTTOM_BUTTON_W + BOTTOM_BUTTON_GAP) * 2, "Hybrid");
+  lblCoordButton = createButton(
+      BOTTOM_BUTTON_FIRST_X + (BOTTOM_BUTTON_W + BOTTOM_BUTTON_GAP) * 2,
+      BOTTOM_BUTTON_Y - BOTTOM_BUTTON_H - 8,
+      BOTTOM_BUTTON_W,
+      BOTTOM_BUTTON_H,
+      showWorkCoordinates ? "WORK" : "MACHINE",
+      true,
+      showWorkCoordinates ? ButtonStyle::CoordWork : ButtonStyle::Normal);
 
   refreshPositionLabel();
   refreshJogUi();
+  refreshCoordinateButton();
 }
 
 void renderRuntimeHomePage() {
@@ -1758,10 +1878,38 @@ void renderRuntimeHomePage() {
 }
 
 void renderMainMenuPage() {
-  createButton(85, 40, 150, 40, "Probing");
-  createButton(85, 88, 150, 40, "ATC");
-  createButton(85, 136, 150, 40, "Macros");
-  createButton(85, 184, 150, 40, "Back", true, ButtonStyle::Back);
+  createButton(10, 48, 145, 40, "Probing");
+  createButton(165, 48, 145, 40, "ATC");
+  createButton(10, 104, 145, 40, "Macros");
+  createButton(165, 104, 145, 40, "Position");
+  createButton(85, 196, 150, 32, "Back", true, ButtonStyle::Back);
+}
+
+void renderPositionMenuPage() {
+  createButton(10, 48, 145, 40, LV_SYMBOL_RIGHT " Work Origin");
+  createButton(165, 48, 145, 40, LV_SYMBOL_RIGHT " Path Origin");
+  createButton(10, 104, 145, 40, "Set Origin Here", true, ButtonStyle::Warning);
+  createButton(165, 160, 145, 40, "Back", true, ButtonStyle::Back);
+}
+
+void renderSetOriginMenuPage() {
+  lv_obj_t* title = lv_label_create(lv_scr_act());
+  lv_obj_set_width(title, 300);
+  lv_obj_set_style_text_font(title, &lv_font_montserrat_14, 0);
+  lv_obj_set_style_text_color(title, lv_color_white(), 0);
+  lv_label_set_long_mode(title, LV_LABEL_LONG_WRAP);
+  lv_label_set_text(title, "Set origin from current position");
+  lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 48);
+
+  lv_obj_t* prompt = lv_label_create(lv_scr_act());
+  lv_obj_set_style_text_font(prompt, &lv_font_montserrat_14, 0);
+  lv_obj_set_style_text_color(prompt, lv_color_hex(0xB7C3CC), 0);
+  lv_label_set_text(prompt, "Choose axes");
+  lv_obj_align(prompt, LV_ALIGN_TOP_MID, 0, 72);
+
+  createButton(10, 96, 145, 48, "X/Y", true, ButtonStyle::Warning);
+  createButton(165, 96, 145, 48, "X/Y/Z", true, ButtonStyle::Danger);
+  createButton(165, 160, 145, 40, "Back", true, ButtonStyle::Back);
 }
 
 void renderAtcMenuPage() {
@@ -1871,6 +2019,7 @@ void renderPage() {
   lblJogButton = nullptr;
   lblStepButton = nullptr;
   lblModeButton = nullptr;
+  lblCoordButton = nullptr;
   lblAxisX = nullptr;
   lblAxisY = nullptr;
   lblAxisZ = nullptr;
@@ -1898,6 +2047,12 @@ void renderPage() {
       break;
     case UiPage::MainMenu:
       renderMainMenuPage();
+      break;
+    case UiPage::PositionMenu:
+      renderPositionMenuPage();
+      break;
+    case UiPage::SetOriginMenu:
+      renderSetOriginMenuPage();
       break;
     case UiPage::AtcMenu:
       renderAtcMenuPage();
@@ -1949,9 +2104,17 @@ void handleIncomingJson(const String& line) {
 
   const String type = String(doc["type"] | "");
   if (type == "pos") {
-    mx = doc["x"] | mx;
-    my = doc["y"] | my;
-    mz = doc["z"] | mz;
+    mx = doc["mx"] | mx;
+    my = doc["my"] | my;
+    mz = doc["mz"] | mz;
+    if (!doc.containsKey("mx")) {
+      mx = doc["x"] | mx;
+      my = doc["y"] | my;
+      mz = doc["z"] | mz;
+    }
+    wx = doc["wx"] | wx;
+    wy = doc["wy"] | wy;
+    wz = doc["wz"] | wz;
     refreshPositionLabel();
     return;
   }
@@ -2088,6 +2251,18 @@ void handleIncomingJson(const String& line) {
       setLabelText(lblHint, ok ? "Cancel sent" : "Cancel rejected: " + reason);
     } else {
       setLabelText(lblHint, ok ? "Runtime command sent" : "Runtime rejected: " + reason);
+    }
+    return;
+  }
+
+  if (type == "position_result") {
+    const bool ok = doc["ok"] | false;
+    const String reason = String(doc["reason"] | "");
+    const String message = String(doc["message"] | "");
+    if (ok) {
+      setLabelText(lblHint, message.length() > 0 ? message : "Position command sent");
+    } else {
+      setLabelText(lblHint, "Position rejected: " + reason);
     }
     return;
   }

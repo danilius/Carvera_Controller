@@ -133,25 +133,36 @@ class CYD:
             mx = self._round3(self._cnc.vars.get("mx", 0.0))
             my = self._round3(self._cnc.vars.get("my", 0.0))
             mz = self._round3(self._cnc.vars.get("mz", 0.0))
+            wx = self._round3(self._cnc.vars.get("wx", 0.0))
+            wy = self._round3(self._cnc.vars.get("wy", 0.0))
+            wz = self._round3(self._cnc.vars.get("wz", 0.0))
         except Exception:
             return
 
         changed = (
-            mx != self._last_sent.get("x") or
-            my != self._last_sent.get("y") or
-            mz != self._last_sent.get("z")
+            mx != self._last_sent.get("mx") or
+            my != self._last_sent.get("my") or
+            mz != self._last_sent.get("mz") or
+            wx != self._last_sent.get("wx") or
+            wy != self._last_sent.get("wy") or
+            wz != self._last_sent.get("wz")
         )
         if not force and not changed:
             return
 
-        self._last_sent.update({"x": mx, "y": my, "z": mz})
+        self._last_sent.update({"mx": mx, "my": my, "mz": mz, "wx": wx, "wy": wy, "wz": wz})
         self._client.send_json({
             "type": "pos",
-            "coord": "machine",
             "units": "mm",
             "x": mx,
             "y": my,
             "z": mz,
+            "mx": mx,
+            "my": my,
+            "mz": mz,
+            "wx": wx,
+            "wy": wy,
+            "wz": wz,
         })
 
     def _poll_positions(self, *_args) -> None:
@@ -321,6 +332,77 @@ class CYD:
             })
         except Exception:
             pass
+
+    def _send_position_result(self, ok: bool, reason: str = "", action: str = "", message: str = "") -> None:
+        try:
+            self._client.send_json({
+                "type": "position_result",
+                "ok": ok,
+                "reason": reason,
+                "action": action,
+                "message": message,
+                "ts": int(time.time()),
+            })
+        except Exception:
+            pass
+
+    def _position_action_allowed(self) -> bool:
+        state = str(self._cnc.vars.get("state", "")).lower()
+        return state in ("idle", "")
+
+    def _path_origin_available(self) -> bool:
+        try:
+            xmin = abs(float(self._cnc.vars.get("xmin", 0)))
+            ymin = abs(float(self._cnc.vars.get("ymin", 0)))
+            worksize_x = float(self._cnc.vars.get("worksize_x", 0))
+            worksize_y = float(self._cnc.vars.get("worksize_y", 0))
+            return xmin <= worksize_x and ymin <= worksize_y
+        except Exception:
+            return False
+
+    def _handle_position_request(self, msg: dict) -> None:
+        action = str(msg.get("action", "")).lower()
+        if not self._position_action_allowed():
+            state = str(self._cnc.vars.get("state", "")).lower()
+            self._send_position_result(False, f"machine_not_idle:{state}", action)
+            return
+
+        try:
+            if action == "goto":
+                target = str(msg.get("target", "")).lower()
+                if target == "work_origin":
+                    self._controller.gotoWorkOrigin()
+                    self._send_position_result(True, action=action, message="Going to work origin")
+                    return
+                if target == "path_origin":
+                    if not self._path_origin_available():
+                        self._send_position_result(False, "path_origin_unavailable", action)
+                        return
+                    self._controller.gotoPathOrigin()
+                    self._send_position_result(True, action=action, message="Going to path origin")
+                    return
+                self._send_position_result(False, "unsupported_target", action)
+                return
+
+            if action == "set_origin":
+                axes = str(msg.get("axes", "")).lower()
+                if axes == "xy":
+                    self._controller.wcsSet(x=0, y=0)
+                    self._send_position_result(True, action=action, message="Origin set: X/Y")
+                    self._send_machine_state(force=True)
+                    return
+                if axes == "xyz":
+                    self._controller.wcsSet(x=0, y=0, z=0)
+                    self._send_position_result(True, action=action, message="Origin set: X/Y/Z")
+                    self._send_machine_state(force=True)
+                    return
+                self._send_position_result(False, "unsupported_axes", action)
+                return
+
+            self._send_position_result(False, "unsupported_action", action)
+        except Exception as e:
+            logger.error(f"CYD: Failed position action {action!r}: {e}")
+            self._send_position_result(False, f"error:{e}", action)
 
     def _handle_runtime_request(self, msg: dict) -> None:
         action = str(msg.get("action", "")).lower()
@@ -658,6 +740,10 @@ class CYD:
 
             if msg_type == "runtime":
                 self._handle_runtime_request(msg)
+                return
+
+            if msg_type == "position":
+                self._handle_position_request(msg)
                 return
 
             if msg_type == "ping":

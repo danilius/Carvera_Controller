@@ -1,5 +1,15 @@
 # Community Carvera Controller
 
+## CYD Pendant Fork
+
+This branch is focused on experimental CYD touchscreen pendant support for Carvera Controller Community. It includes the controller-side CYD bridge plus firmware for the two pendant boards:
+
+* ESP32/CYD touchscreen firmware: `cyd_pendant_firmware/`
+* RP2040 MPG/input firmware: `cyd_pendant_firmware/rp2040_mpg_firmware/`
+* Controller bridge: `carveracontroller/addons/pendant/cyd.py`
+
+The pendant work is under active development and may require matching controller and firmware builds.
+
 The Community developed version of the Carvera Controller has a number of benefits and fixes above and beyond the Makera software. See the [online Documentation site](https://carvera-community.gitbook.io/docs/controller/about) for installation and usage details.
 
 ## Functionality Summary

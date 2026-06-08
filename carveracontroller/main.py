@@ -912,17 +912,14 @@ class FilePopup(ModalView):
 
     # -----------------------------------------------------------------------
     def update_remote_buttons(self):
-        has_select = False
-        select_dir = False
-        for key in self.remote_rv.view_adapter.views:
-            if self.remote_rv.view_adapter.views[key].selected:
-                has_select = True
-                if self.remote_rv.view_adapter.views[key].selected_dir:
-                    select_dir = True
-                break
+        selected_files = self.remote_rv.get_selected_files()
+        selected_infos = self.remote_rv.get_selected_file_infos()
+        has_select = len(selected_files) > 0
+        single_select = len(selected_files) == 1
+        select_dir = single_select and selected_infos[0].get('is_dir', False)
         self.btn_delete.disabled = not has_select
-        self.btn_rename.disabled = not has_select
-        self.btn_select.disabled = (not has_select) or select_dir
+        self.btn_rename.disabled = not single_select
+        self.btn_select.disabled = (not single_select) or select_dir
 
 class CoordPopup(ModalView):
     config = {}
@@ -2187,14 +2184,53 @@ class SelectableBoxLayout(RecycleDataViewBehavior, BoxLayout):
         if super(SelectableBoxLayout, self).on_touch_down(touch):
             return True
         if self.collide_point(*touch.pos) and self.selectable:
+            rv = self.parent.recycleview
             if touch.is_double_tap:
-                rv = self.parent.recycleview
                 if rv.data[self.index]['is_dir']:
                     rv.child_dir(rv.data[self.index]['filename'])
                 else:
                     rv.dispatch('on_double_tap')
                 return True
+            if getattr(rv, 'multi_select_enabled', False):
+                self.select_with_desktop_modifiers(rv, touch)
+                return True
             return self.parent.select_with_touch(self.index, touch)
+
+    def select_with_desktop_modifiers(self, rv, touch):
+        layout = self.parent
+        modifiers = set()
+        for source in (
+            getattr(touch, 'modifiers', None),
+            getattr(Window, 'modifiers', None),
+            getattr(Window, '_modifiers', None),
+        ):
+            if callable(source):
+                source = source()
+            if source:
+                modifiers.update(source)
+        ctrl_down = bool({'ctrl', 'control', 'meta'} & modifiers)
+        shift_down = 'shift' in modifiers
+
+        if shift_down and rv.last_selected_index >= 0:
+            if not ctrl_down:
+                layout.clear_selection()
+            start = min(rv.last_selected_index, self.index)
+            end = max(rv.last_selected_index, self.index)
+            for index in range(start, end + 1):
+                layout.select_node(index)
+        elif ctrl_down:
+            if self.index in layout.selected_nodes:
+                layout.deselect_node(self.index)
+            else:
+                layout.select_node(self.index)
+            rv.last_selected_index = self.index
+        else:
+            layout.clear_selection()
+            layout.select_node(self.index)
+            rv.last_selected_index = self.index
+
+        rv.update_selected_files_from_layout(current_index=self.index)
+        rv.dispatch('on_select')
 
     def apply_selection(self, rv, index, is_selected):
         ''' Respond to the selection of items in the view. '''
@@ -2205,6 +2241,8 @@ class SelectableBoxLayout(RecycleDataViewBehavior, BoxLayout):
             else:
                 self.selected_dir = False
             rv.set_curr_selected_file(rv.data[self.index]['filename'], rv.data[self.index]['intsize'])
+        if not getattr(rv, 'multi_select_enabled', False):
+            rv.update_selected_files_from_layout(current_index=self.index if self.selected else None)
             rv.dispatch('on_select')
 
 # -----------------------------------------------------------------------
@@ -2231,6 +2269,10 @@ class DataRV(RecycleView):
     curr_selected_file = StringProperty('')
     curr_selected_filesize = NumericProperty(0)
     curr_selected_is_dir = BooleanProperty(False)
+    curr_selected_files = ListProperty([])
+    curr_selected_file_infos = ListProperty([])
+    multi_select_enabled = BooleanProperty(False)
+    last_selected_index = NumericProperty(-1)
 
     def __init__(self, **kwargs):
         super(DataRV, self).__init__(**kwargs)
@@ -2250,11 +2292,62 @@ class DataRV(RecycleView):
         self.curr_selected_filesize = filesize
         self.curr_selected_is_dir = os.path.isdir(self.curr_selected_file)
 
+    def get_selected_files(self):
+        return list(self.curr_selected_files)
+
+    def get_selected_file_infos(self):
+        return list(self.curr_selected_file_infos)
+
+    def file_info_for_index(self, index):
+        if index < 0 or index >= len(self.data):
+            return None
+        item = self.data[index]
+        path = os.path.join(self.curr_dir, item['filename'])
+        return {
+            'path': path,
+            'filename': item['filename'],
+            'filesize': item['intsize'],
+            'is_dir': item['is_dir'],
+            'index': index,
+        }
+
+    def update_selected_files_from_layout(self, current_index=None):
+        layout = getattr(self, 'layout_manager', None)
+        selected_nodes = getattr(layout, 'selected_nodes', [])
+        selected_indices = sorted(index for index in selected_nodes if 0 <= index < len(self.data))
+        infos = [info for info in (self.file_info_for_index(index) for index in selected_indices) if info is not None]
+        self.curr_selected_file_infos = infos
+        self.curr_selected_files = [info['path'] for info in infos]
+
+        current_info = None
+        if current_index is not None and current_index in selected_indices:
+            current_info = self.file_info_for_index(current_index)
+        elif infos:
+            current_info = infos[-1]
+
+        if current_info:
+            self.curr_selected_file = current_info['path']
+            self.curr_selected_filesize = current_info['filesize']
+            self.curr_selected_is_dir = current_info['is_dir']
+        else:
+            self.curr_selected_file = ''
+            self.curr_selected_filesize = 0
+            self.curr_selected_is_dir = False
+
     # -----------------------------------------------------------------------
     def clear_selection(self):
+        layout = getattr(self, 'layout_manager', None)
+        if layout is not None:
+            layout.clear_selection()
         for key in self.view_adapter.views:
             if self.view_adapter.views[key].selected != None:
                 self.view_adapter.views[key].selected = False
+        self.curr_selected_files = []
+        self.curr_selected_file_infos = []
+        self.curr_selected_file = ''
+        self.curr_selected_filesize = 0
+        self.curr_selected_is_dir = False
+        self.last_selected_index = -1
 
     # -----------------------------------------------------------------------
     def child_dir(self, child_dir):
@@ -2293,6 +2386,7 @@ class DataRV(RecycleView):
 
         # fill out the list
         self.clear_selection()
+        self.last_selected_index = -1
         self.data = []
         rv_key = 0
         for file in filtered_list:
@@ -3674,14 +3768,21 @@ class Makera(RelativeLayout):
                     self.process_loaded_dir(self.fill_remote_dir)
             if self.controller.loadNUM == LOAD_RM:
                 if self.controller.loadEOF or self.controller.loadERR or t - self.short_load_time > SHORT_LOAD_TIMEOUT:
+                    deleting_file = getattr(self, 'deleting_remote_file', self.file_popup.remote_rv.curr_selected_file)
+                    delete_failed = self.controller.loadERR or t - self.short_load_time > SHORT_LOAD_TIMEOUT
                     if self.controller.loadERR:
-                        Clock.schedule_once(partial(self.loadError, tr._('Error deleting') + ' \'%s\'!' % (self.file_popup.remote_rv.curr_selected_file)), 0)
+                        Clock.schedule_once(partial(self.loadError, tr._('Error deleting') + ' \'%s\'!' % (deleting_file)), 0)
                     elif t - self.short_load_time > SHORT_LOAD_TIMEOUT:
-                        Clock.schedule_once(partial(self.loadError, tr._('Timeout deleting') + '\'%s\'!' % (self.file_popup.remote_rv.curr_selected_file)), 0)
+                        Clock.schedule_once(partial(self.loadError, tr._('Timeout deleting') + '\'%s\'!' % (deleting_file)), 0)
                     self.controller.loadNUM = 0
                     self.controller.loadEOF = False
                     self.controller.loadERR = False
-                    Clock.schedule_once(self.file_popup.remote_rv.current_dir, 0)
+                    if not delete_failed and getattr(self, 'pending_remote_delete_files', []):
+                        Clock.schedule_once(self.removeNextRemoteFile, 0)
+                    else:
+                        self.pending_remote_delete_files = []
+                        self.deleting_remote_file = ''
+                        Clock.schedule_once(self.file_popup.remote_rv.current_dir, 0)
             if self.controller.loadNUM == LOAD_MV:
                 if self.controller.loadEOF or self.controller.loadERR or t - self.short_load_time > SHORT_LOAD_TIMEOUT:
                     if self.controller.loadERR:
@@ -3727,9 +3828,20 @@ class Makera(RelativeLayout):
 
     # -----------------------------------------------------------------------
     def open_del_confirm_popup(self):
+        selected_files = self.file_popup.remote_rv.get_selected_files()
+        if not selected_files:
+            return
         self.confirm_popup.lb_title.text = tr._('Delete File or Dir')
-        self.confirm_popup.lb_content.text = tr._('Confirm to delete file or dir') + '\'%s\'?' % (self.file_popup.remote_rv.curr_selected_file)
-        self.confirm_popup.confirm = partial(self.removeRemoteFile, self.file_popup.remote_rv.curr_selected_file)
+        if len(selected_files) == 1:
+            self.confirm_popup.lb_content.text = tr._('Confirm to delete file or dir') + '\'%s\'?' % (selected_files[0])
+            self.confirm_popup.confirm = partial(self.removeRemoteFile, selected_files[0])
+        else:
+            preview = '\n'.join(selected_files[:5])
+            if len(selected_files) > 5:
+                preview += '\n...'
+            self.confirm_popup.lb_content.text = tr._('Confirm to delete %d selected files or dirs?') % len(selected_files)
+            self.confirm_popup.lb_content.text += '\n\n%s' % preview
+            self.confirm_popup.confirm = partial(self.removeRemoteFiles, selected_files)
         self.confirm_popup.cancel = None
         self.confirm_popup.open(self)
 
@@ -4363,6 +4475,26 @@ class Makera(RelativeLayout):
 
     # -----------------------------------------------------------------------
     def removeRemoteFile(self, filename):
+        self.pending_remote_delete_files = []
+        self.startRemoteDelete(filename)
+
+    # -----------------------------------------------------------------------
+    def removeRemoteFiles(self, filenames):
+        self.pending_remote_delete_files = list(filenames)
+        self.removeNextRemoteFile()
+
+    # -----------------------------------------------------------------------
+    def removeNextRemoteFile(self, *args):
+        if not getattr(self, 'pending_remote_delete_files', []):
+            self.deleting_remote_file = ''
+            Clock.schedule_once(self.file_popup.remote_rv.current_dir, 0)
+            return
+        filename = self.pending_remote_delete_files.pop(0)
+        self.startRemoteDelete(filename)
+
+    # -----------------------------------------------------------------------
+    def startRemoteDelete(self, filename):
+        self.deleting_remote_file = filename
         self.controller.sendNUM = 0
         self.controller.loadNUM = LOAD_RM
         self.controller.readEOF = False

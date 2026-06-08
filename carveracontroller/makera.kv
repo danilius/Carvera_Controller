@@ -2593,6 +2593,7 @@
                     id: remote_rv
                     root: root
                     app_root: app.root
+                    multi_select_enabled: True
                     scroll_type: ['bars', 'content']
                     scroll_wheel_distance: dp(114)
                     bar_width: dp(10)
@@ -2605,7 +2606,7 @@
                         height: self.minimum_height
                         orientation: 'vertical'
                         spacing: '0.5dp'
-                        multiselect: False
+                        multiselect: True
                         touch_multiselect: False
                 BoxLayout:
                     size_hint_y: None

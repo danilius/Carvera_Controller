@@ -2185,6 +2185,9 @@ class SelectableBoxLayout(RecycleDataViewBehavior, BoxLayout):
             return True
         if self.collide_point(*touch.pos) and self.selectable:
             rv = self.parent.recycleview
+            if getattr(rv, 'multi_select_enabled', False) and self.touch_has_desktop_modifier(touch):
+                self.select_with_desktop_modifiers(rv, touch)
+                return True
             if touch.is_double_tap:
                 if rv.data[self.index]['is_dir']:
                     rv.child_dir(rv.data[self.index]['filename'])
@@ -2196,8 +2199,7 @@ class SelectableBoxLayout(RecycleDataViewBehavior, BoxLayout):
                 return True
             return self.parent.select_with_touch(self.index, touch)
 
-    def select_with_desktop_modifiers(self, rv, touch):
-        layout = self.parent
+    def touch_desktop_modifiers(self, touch):
         modifiers = set()
         for source in (
             getattr(touch, 'modifiers', None),
@@ -2208,6 +2210,15 @@ class SelectableBoxLayout(RecycleDataViewBehavior, BoxLayout):
                 source = source()
             if source:
                 modifiers.update(source)
+        return modifiers
+
+    def touch_has_desktop_modifier(self, touch):
+        modifiers = self.touch_desktop_modifiers(touch)
+        return bool({'ctrl', 'control', 'meta', 'shift'} & modifiers)
+
+    def select_with_desktop_modifiers(self, rv, touch):
+        layout = self.parent
+        modifiers = self.touch_desktop_modifiers(touch)
         ctrl_down = bool({'ctrl', 'control', 'meta'} & modifiers)
         shift_down = 'shift' in modifiers
 

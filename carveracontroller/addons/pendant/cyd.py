@@ -700,7 +700,11 @@ class CYD:
         direction = "-" if direction_value < 0 else ""
         command = f"{axis}{direction}1"
 
-        self._stop_continuous_jog()
+        # A CYD hybrid jog may have sent step jogs just before promoting to
+        # continuous jog. Send a real jog cancel here, even if the controller
+        # is still in step mode, so stale step jogs cannot leak across the mode
+        # boundary and execute after continuous jogging stops.
+        self._stop_continuous_jog(force=True)
         self._mark_cyd_jogging(hold_s=1.0)
         self._controller.setJogMode(self._controller.JOG_MODE_CONTINUOUS)
         self._controller.startContinuousJog(command, feed)

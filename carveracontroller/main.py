@@ -2283,6 +2283,7 @@ class DataRV(RecycleView):
     curr_selected_files = ListProperty([])
     curr_selected_file_infos = ListProperty([])
     multi_select_enabled = BooleanProperty(False)
+    auto_select_first_file = BooleanProperty(False)
     last_selected_index = NumericProperty(-1)
 
     def __init__(self, **kwargs):
@@ -2344,6 +2345,20 @@ class DataRV(RecycleView):
             self.curr_selected_file = ''
             self.curr_selected_filesize = 0
             self.curr_selected_is_dir = False
+
+    def select_first_file(self):
+        for index, item in enumerate(self.data):
+            if item['is_dir']:
+                continue
+
+            layout = getattr(self, 'layout_manager', None)
+            if layout is not None:
+                layout.clear_selection()
+                layout.select_node(index)
+            self.last_selected_index = index
+            self.update_selected_files_from_layout(current_index=index)
+            return True
+        return False
 
     # -----------------------------------------------------------------------
     def clear_selection(self):
@@ -2408,6 +2423,8 @@ class DataRV(RecycleView):
             except IndexError:
                 logger.error("Tried to write to recycle view data at same time as reading, ignore (indexError)")
             rv_key += 1
+        if self.auto_select_first_file:
+            self.select_first_file()
         # trigger
         self.dispatch('on_select')
 
@@ -2530,9 +2547,9 @@ class LocalRV(DataRV):
                                        'is_dir': False, 'size': file_size, 'date': file_time})
             break
 
+        self.curr_dir = os.path.normpath(new_dir)
         self.fill_dir(switch_reverse = False)
 
-        self.curr_dir = os.path.normpath(new_dir)
         win_drivers = ['%s:' % d for d in string.ascii_uppercase]
         win_drivers_slash = ['%s:\\' % d for d in string.ascii_uppercase]
         if self.curr_dir in win_drivers or self.curr_dir in win_drivers_slash:
@@ -2724,6 +2741,8 @@ class Makera(RelativeLayout):
     uploading = False
     uploading_size = 0
     uploading_file = ''
+    uploading_source_filepath = ''
+    uploading_remote_dir = ''
 
     downloading = False
     downloading_size = 0
@@ -4084,6 +4103,22 @@ class Makera(RelativeLayout):
         else:
             self.uploadLocalFile(filepath, self.select_file)
 
+    def reupload_last_file(self):
+        app = App.get_running_app()
+        filepath = app.last_uploaded_local_filepath
+        if not filepath:
+            return
+
+        if not os.path.exists(filepath):
+            Clock.schedule_once(partial(self.show_message_popup, tr._('Last uploaded file no longer exists:') + '\n%s' % filepath, False), 0)
+            app.last_uploaded_local_filepath = ''
+            app.last_uploaded_remote_dir = ''
+            return
+
+        remote_dir = app.last_uploaded_remote_dir or self.file_popup.remote_rv.curr_dir
+        self.file_popup.firmware_mode = False
+        self.uploadLocalFile(filepath, self.select_file, remote_dir=remote_dir)
+
     # -----------------------------------------------------------------------
     def view_local_file(self):
         filepath = self.file_popup.local_rv.curr_selected_file
@@ -4664,9 +4699,11 @@ class Makera(RelativeLayout):
                 os.remove(output_filename)
             return False
     # -----------------------------------------------------------------------
-    def uploadLocalFile(self, filepath, callback=None):
+    def uploadLocalFile(self, filepath, callback=None, remote_dir=None):
         self.controller.sendNUM = SEND_FILE
         self.uploading_file = filepath
+        self.uploading_source_filepath = filepath
+        self.uploading_remote_dir = remote_dir or self.file_popup.remote_rv.curr_dir
         self.original_upload_filepath = filepath  # Store original path for recent directory tracking
         if 'lz' in self.filetype:               #如果固件支持的上传文件类型为.lz，则进行压缩
             qlzfilename = self.compress_file(filepath)
@@ -4677,7 +4714,8 @@ class Makera(RelativeLayout):
     # -----------------------------------------------------------------------
     def doUpload(self, callback):
         self.uploading_size = os.path.getsize(self.uploading_file)
-        remotename = os.path.join(self.file_popup.remote_rv.curr_dir, os.path.basename(os.path.normpath(self.uploading_file)))
+        upload_remote_dir = self.uploading_remote_dir or self.file_popup.remote_rv.curr_dir
+        remotename = os.path.join(upload_remote_dir, os.path.basename(os.path.normpath(self.uploading_file)))
         if self.file_popup.firmware_mode:
             remotename = '/sd/firmware.bin'
         displayname = self.uploading_file
@@ -4717,8 +4755,12 @@ class Makera(RelativeLayout):
             # show message popup
             Clock.schedule_once(partial(self.show_message_popup, tr._("Upload file error!"), False), 0)
         else:
+            app = App.get_running_app()
+            if not self.file_popup.firmware_mode:
+                app.last_uploaded_local_filepath = self.uploading_source_filepath
+                app.last_uploaded_remote_dir = upload_remote_dir
             # copy file to application directory if needed
-            remote_path = os.path.join(self.file_popup.remote_rv.curr_dir, os.path.basename(os.path.normpath(self.uploading_file)))
+            remote_path = os.path.join(upload_remote_dir, os.path.basename(os.path.normpath(self.uploading_file)))
             remote_post_path = remote_path.replace('/sd/', '').replace('\\sd\\', '')
             local_path = os.path.join(self.temp_dir, remote_post_path)
             if self.uploading_file != local_path and not self.file_popup.firmware_mode:
@@ -6446,6 +6488,8 @@ class MakeraApp(App):
     ctl_has_update = BooleanProperty(False)
     selected_local_filename = StringProperty('')
     selected_remote_filename = StringProperty('')
+    last_uploaded_local_filepath = StringProperty('')
+    last_uploaded_remote_dir = StringProperty('')
     tool = NumericProperty(-1)
     curr_page = NumericProperty(1)
     total_pages = NumericProperty(1)
@@ -6489,6 +6533,9 @@ class MakeraApp(App):
         return Makera(ctl_version=__version__)
 
     def on_start(self):
+        if not kivy_platform in ['android', 'ios'] and hasattr(Window, 'maximize'):
+            Window.maximize()
+
         # Workaround for Android blank screen issue
         # https://github.com/kivy/python-for-android/issues/2720
         viewport_update_count = 0
@@ -6558,6 +6605,7 @@ def set_config_defaults(default_lang):
     if not Config.has_option('carvera', 'high_precision_reamining_time_estimate'): Config.set('carvera', 'high_precision_reamining_time_estimate', '1')
     if not Config.has_option('carvera', 'background_image'): Config.set('carvera', 'background_image', 'None')
     if not Config.has_option('graphics', 'allow_screensaver'): Config.set('graphics', 'allow_screensaver', '0')
+    Config.set('graphics', 'window_state', 'maximized')
     if not Config.has_option('graphics', 'height'): Config.set('graphics', 'height', '1440')
     if not Config.has_option('graphics', 'width'): Config.set('graphics', 'width',  '900')
     if not Config.has_option('carvera', 'instantFSoverride'): Config.set('carvera','instantFSoverride','1')

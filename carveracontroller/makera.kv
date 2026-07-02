@@ -2839,6 +2839,7 @@
                 LocalRV:
                     id: local_rv
                     root: root
+                    auto_select_first_file: True
                     scroll_type: ['bars', 'content']
                     scroll_wheel_distance: dp(114)
                     bar_width: dp(10)
@@ -4379,6 +4380,13 @@
                         root.file_popup.open()
                         if app.state == 'Idle':\
                         root.file_popup.load_remote_root()
+                IconButton:
+                    icon: 'data/upgrade.png'
+                    tooltip_txt: tr._('Re-upload Last File')
+                    icon_size: 21
+                    disabled: app.state != 'Idle' or app.playing or app.last_uploaded_local_filepath == ''
+                    on_release:
+                        app.root.reupload_last_file()
                 Label:
                     size_hint_x: None
                     width: '3dp'

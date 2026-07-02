@@ -636,7 +636,7 @@ class CYD:
             self._send_jog_result(False, "invalid_delta")
             return
 
-        max_delta = 1.000
+        max_delta = 2.000
         tolerance = 0.0005
         if abs(delta) <= 0.0 or abs(delta) > (max_delta + tolerance):
             logger.warning(f"CYD: Ignored jog request outside first-test limit: {delta}")

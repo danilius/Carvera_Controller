@@ -14,7 +14,7 @@ constexpr uint16_t SCREEN_HEIGHT = 240;
 constexpr uint16_t DRAW_BUF_LINES = 24;
 constexpr uint32_t BUTTON_DEBOUNCE_MS = 120;
 constexpr uint32_t TOUCH_BUTTON_DEBOUNCE_MS = 250;
-constexpr size_t JOG_STEP_COUNT = 4;
+constexpr size_t JOG_STEP_COUNT = 5;
 
 #ifndef PENDANT_DISPLAY_TEST
 #define PENDANT_DISPLAY_TEST 0
@@ -164,16 +164,13 @@ int32_t mpgBurstDirection = 0;
 int32_t pendingStepJogDetents = 0;
 uint32_t lastStepJogSendMs = 0;
 bool jogEnabled = false;
-bool jogHybridMode = true;
+bool jogContinuousMode = false;
 bool showWorkCoordinates = false;
 const char* jogAxis = "X";
-const float JOG_STEPS[JOG_STEP_COUNT] = {0.001f, 0.010f, 0.100f, 1.000f};
+const float JOG_STEPS[JOG_STEP_COUNT] = {0.001f, 0.010f, 0.100f, 1.000f, 2.000f};
 size_t jogStepIndex = 1;
-const float MAX_JOG_COMMAND_MM = 1.000f;
+const float MAX_JOG_COMMAND_MM = 2.000f;
 const uint32_t CONTINUOUS_JOG_TIMEOUT_MS = 250;
-const uint32_t CONTINUOUS_PROMOTE_WINDOW_MS = 1000;
-const uint16_t CONTINUOUS_PROMOTE_DETENTS = 10;
-const uint32_t CONTINUOUS_DEMOTE_DETENT_GAP_MS = 250;
 const uint32_t STEP_JOG_COALESCE_MS = 60;
 const int32_t STEP_JOG_MAX_PENDING_DETENTS = 20;
 constexpr uint16_t BOTTOM_BUTTON_Y = 196;
@@ -480,7 +477,7 @@ void refreshAxisTiles() {
 void refreshJogUi() {
   setLabelText(lblJogButton, jogEnabled ? "Jog ON" : "Jog OFF");
   setLabelText(lblStepButton, jogStepText());
-  setLabelText(lblModeButton, jogHybridMode ? "Hybrid" : "Step");
+  setLabelText(lblModeButton, jogContinuousMode ? "Cont" : "Step");
   styleBottomButton(lblJogButton, wasControllerConnected);
   styleBottomButton(lblStepButton, wasControllerConnected);
   styleBottomButton(lblModeButton, wasControllerConnected);
@@ -550,7 +547,7 @@ bool sendJogDelta(int32_t delta) {
     return true;
   }
 
-  String blocked = "Jog blocked: max 1.000";
+  String blocked = "Jog blocked: max 2.000";
   setLabelText(lblHint, blocked);
   return false;
 #else
@@ -804,8 +801,10 @@ uint16_t continuousJogFeed() {
       return zAxis ? 120 : 300;
     case 2:
       return zAxis ? 300 : 800;
-    default:
+    case 3:
       return zAxis ? 500 : 1200;
+    default:
+      return zAxis ? 800 : 2400;
   }
 }
 
@@ -857,6 +856,7 @@ void startOrRefreshContinuousJog(int32_t delta) {
 
   const int32_t direction = delta > 0 ? 1 : -1;
   lastMpgDetentMs = millis();
+  pendingStepJogDetents = 0;
 
   if (continuousJogActive && continuousJogDirection == direction) {
     return;
@@ -902,7 +902,7 @@ void setJogEnabled(bool enabled) {
   }
   refreshJogUi();
 #if PENDANT_REAL_JOG_ENABLE
-  setLabelText(lblHint, enabled ? "Jog enabled: max 1.000" : "Jog disabled: no motion");
+  setLabelText(lblHint, enabled ? "Jog enabled: max 2.000" : "Jog disabled: no motion");
 #else
   setLabelText(lblHint, enabled ? "Jog enabled: display-only" : "Jog disabled: no motion");
 #endif
@@ -934,7 +934,7 @@ void setJogAxis(char axis) {
 
 void setJogStepIndex(long index) {
   if (index < 0 || index >= static_cast<long>(JOG_STEP_COUNT)) {
-    setLabelText(lblHint, "Use: step 0, 1, 2, or 3");
+    setLabelText(lblHint, "Use: step 0, 1, 2, 3, or 4");
     return;
   }
 
@@ -964,21 +964,22 @@ void adjustJogStep(int32_t direction) {
   setJogStepIndex(next);
 }
 
-void setJogHybridMode(bool enabled) {
-  if (jogHybridMode == enabled) {
+void setJogContinuousMode(bool enabled) {
+  if (jogContinuousMode == enabled) {
     refreshJogUi();
     return;
   }
 
   stopContinuousJog("mode change");
   resetMpgBurst();
-  jogHybridMode = enabled;
+  pendingStepJogDetents = 0;
+  jogContinuousMode = enabled;
   refreshJogUi();
-  setLabelText(lblHint, jogHybridMode ? "Jog mode: Hybrid" : "Jog mode: Step only");
+  setLabelText(lblHint, jogContinuousMode ? "Jog mode: Continuous" : "Jog mode: Step");
 }
 
 void toggleJogMode() {
-  setJogHybridMode(!jogHybridMode);
+  setJogContinuousMode(!jogContinuousMode);
 }
 
 void resetTouchCalibration() {
@@ -1843,7 +1844,7 @@ void renderHomePage() {
 
   lblJogButton = createBottomButton(BOTTOM_BUTTON_FIRST_X, "Jog OFF");
   lblStepButton = createBottomButton(BOTTOM_BUTTON_FIRST_X + (BOTTOM_BUTTON_W + BOTTOM_BUTTON_GAP), "0.010");
-  lblModeButton = createBottomButton(BOTTOM_BUTTON_FIRST_X + (BOTTOM_BUTTON_W + BOTTOM_BUTTON_GAP) * 2, "Hybrid");
+  lblModeButton = createBottomButton(BOTTOM_BUTTON_FIRST_X + (BOTTOM_BUTTON_W + BOTTOM_BUTTON_GAP) * 2, "Step");
   lblCoordButton = createButton(
       BOTTOM_BUTTON_FIRST_X + (BOTTOM_BUTTON_W + BOTTOM_BUTTON_GAP) * 2,
       BOTTOM_BUTTON_Y - BOTTOM_BUTTON_H - 8,
@@ -2437,33 +2438,8 @@ void handleMpgEvent(int32_t position, int32_t delta) {
     return;
   }
 
-  const uint32_t now = millis();
-  const int32_t direction = delta > 0 ? 1 : -1;
-  if (continuousJogActive && now - lastMpgDetentMs > CONTINUOUS_DEMOTE_DETENT_GAP_MS) {
-    stopContinuousJog("slow detents");
-    mpgBurstStartMs = now;
-    mpgBurstDetents = 0;
-    mpgBurstDirection = direction;
-  }
-
-  if (mpgBurstStartMs == 0 ||
-      now - mpgBurstStartMs > CONTINUOUS_PROMOTE_WINDOW_MS ||
-      mpgBurstDirection != direction) {
-    mpgBurstStartMs = now;
-    mpgBurstDetents = 0;
-    mpgBurstDirection = direction;
-  }
-
-  mpgBurstDetents += abs(delta);
-  if (jogHybridMode && jogStepIndex < 3 && (continuousJogActive || mpgBurstDetents >= CONTINUOUS_PROMOTE_DETENTS)) {
+  if (jogContinuousMode) {
     startOrRefreshContinuousJog(delta);
-    return;
-  }
-
-  if (jogHybridMode) {
-    if (!sendJogDelta(delta)) {
-      setLabelText(lblHint, "Step jog not sent: controller busy");
-    }
     return;
   }
 
@@ -2488,6 +2464,10 @@ void handleMpgStartEvent(int32_t direction) {
   mpgBurstStartMs = millis();
   mpgBurstDetents = 0;
   mpgBurstDirection = normalizedDirection;
+
+  if (jogEnabled && jogContinuousMode) {
+    startOrRefreshContinuousJog(normalizedDirection);
+  }
 }
 
 void handleMpgStopEvent() {

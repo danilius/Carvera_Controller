@@ -1,5 +1,6 @@
 #:include addons/probing/preview/ProbingPreviewPopup.kv
 #:include addons/probing/ProbingControls.kv
+#:include addons/probing/RingGaugeDriftPopup.kv
 #:include addons/probing/operations/OutsideCorner/OutsideCornerSettings.kv
 #:include addons/probing/operations/InsideCorner/InsideCornerSettings.kv
 #:include addons/probing/operations/SingleAxis/SingleAxisProbeSettings.kv
@@ -352,36 +353,54 @@
                         spacing:dp(10)
                         padding:dp(10)
 
-                        GridLayout:
+                        BoxLayout:
                             size_hint_x: 0.4
-                            cols: 2
-                            rows: 2
                             spacing: dp(8)
                             padding: 10
 
-                            ProbeButton:
-                                
-                                tooltip_txt: tr._('Calibrate probe tip using a known bore diameter')
-                                tooltip_image: ''
-                                on_press: root.on_probeTip_probing_pressed("Bore")
-                                image: 'addons/probing/data/icons_1024x768/calibration/Calibrate_BoreX.png'
-                            ProbeButton:
-                                
-                                tooltip_txt: tr._('Calibrate probe tip using a known boss in the X direction')
-                                tooltip_image: ''
-                                on_press: root.on_probeTip_probing_pressed("BossX")
-                                image: 'addons/probing/data/icons_1024x768/calibration/Calibrate_BossX.png'
-                            ProbeButton:
-                                tooltip_txt: tr._('Calibrate probe tip using anchor 2. This uses the config value Anchor Width and will move to position on its own')
-                                tooltip_image: ''
-                                on_press: root.on_probeTip_probing_pressed("Anchor2")
-                                image: 'addons/probing/data/icons_1024x768/calibration/Calibrate_On_Anchor_2.png'
-                            ProbeButton:
-                                
-                                tooltip_txt: tr._('Calibrate probe tip using a known boss in the Y direction')
-                                tooltip_image: ''
-                                on_press: root.on_probeTip_probing_pressed("BossY")
-                                image: 'addons/probing/data/icons_1024x768/calibration/Calibrate_BossY.png'
+                            GridLayout:
+                                size_hint_x: 0.68
+                                cols: 2
+                                rows: 2
+                                spacing: dp(8)
+
+                                ProbeButton:
+                                    
+                                    tooltip_txt: tr._('Calibrate probe tip using a known bore diameter')
+                                    tooltip_image: ''
+                                    on_press: root.on_probeTip_probing_pressed("Bore")
+                                    image: 'addons/probing/data/icons_1024x768/calibration/Calibrate_BoreX.png'
+                                ProbeButton:
+                                    
+                                    tooltip_txt: tr._('Calibrate probe tip using a known boss in the X direction')
+                                    tooltip_image: ''
+                                    on_press: root.on_probeTip_probing_pressed("BossX")
+                                    image: 'addons/probing/data/icons_1024x768/calibration/Calibrate_BossX.png'
+                                ProbeButton:
+                                    tooltip_txt: tr._('Calibrate probe tip using anchor 2. This uses the config value Anchor Width and will move to position on its own')
+                                    tooltip_image: ''
+                                    on_press: root.on_probeTip_probing_pressed("Anchor2")
+                                    image: 'addons/probing/data/icons_1024x768/calibration/Calibrate_On_Anchor_2.png'
+                                ProbeButton:
+                                    
+                                    tooltip_txt: tr._('Calibrate probe tip using a known boss in the Y direction')
+                                    tooltip_image: ''
+                                    on_press: root.on_probeTip_probing_pressed("BossY")
+                                    image: 'addons/probing/data/icons_1024x768/calibration/Calibrate_BossY.png'
+
+                            GridLayout:
+                                size_hint_x: 0.32
+                                cols: 1
+                                rows: 2
+                                spacing: dp(8)
+
+                                Widget:
+                                BoxLayout:
+                                    Button:
+                                        size_hint_y: None
+                                        height: self.parent.height
+                                        text: tr._('Ring Gauge Drift')
+                                        on_press: root.open_ring_gauge_drift_popup()
 
                         BoxLayout:
                             size_hint_x: 0.6

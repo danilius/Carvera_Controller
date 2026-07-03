@@ -1,0 +1,109 @@
+<RingGaugeDriftPopup>:
+    size_hint: 0.52, 0.58
+    pos_hint: {"center_x": 0.5, "center_y": 0.5}
+    auto_dismiss: False
+    overlay_color: 0,0,0,0.3
+
+    GridLayout:
+        cols: 1
+        rows: 5
+        spacing: dp(8)
+        padding: dp(12)
+
+        Label:
+            size_hint_y: None
+            height: dp(34)
+            text: tr._('Ring Gauge Drift')
+            bold: True
+            font_size: '18dp'
+
+        Label:
+            size_hint_y: None
+            height: dp(110)
+            text: root.step_text
+            halign: 'left'
+            valign: 'middle'
+            text_size: self.size
+
+        GridLayout:
+            cols: 2
+            rows: 4
+            size_hint_y: None
+            height: dp(128)
+            spacing: dp(6)
+
+            Label:
+                opacity: 0 if root.step_index >= root.step_count else 1
+                text: tr._('Use tip diameter (D):')
+                halign: 'right'
+                valign: 'middle'
+                text_size: self.size
+            ToolTipSwitch:
+                opacity: 0 if root.step_index >= root.step_count else 1
+                disabled: root.step_index >= root.step_count
+                id: apply_probe_correction
+                active: root.apply_probe_correction
+                tooltip_txt: tr._('Include the configured probe tip diameter in each ring probing command')
+                on_active: root.apply_probe_correction = self.active
+
+            Label:
+                opacity: 1 if root.step_index >= root.step_count else 0
+                text: tr._('Store/use correction:')
+                halign: 'right'
+                valign: 'middle'
+                text_size: self.size
+            ToolTipSwitch:
+                opacity: 1 if root.step_index >= root.step_count else 0
+                disabled: root.step_index < root.step_count
+                id: persist_correction
+                active: root.persist_correction
+                tooltip_txt: tr._('Store the calculated center-position correction and apply it to future XY-zeroing probe jobs')
+                on_active: root.persist_correction = self.active
+
+            Label:
+                text: tr._('Measured centers:')
+                halign: 'right'
+                valign: 'middle'
+                text_size: self.size
+            Label:
+                text: root.points_text if root.step_index < root.step_count else root.points_text + '\n' + root.stored_correction_text
+                halign: 'left'
+                valign: 'middle'
+                text_size: self.size
+
+            Label:
+                opacity: 0 if root.step_index >= root.step_count else 1
+                text: tr._('Current command:')
+                halign: 'right'
+                valign: 'middle'
+                text_size: self.size
+            Label:
+                opacity: 0 if root.step_index >= root.step_count else 1
+                text: root.command_text
+                halign: 'left'
+                valign: 'middle'
+                text_size: self.size
+
+        Label:
+            text: root.result_text
+            halign: 'left'
+            valign: 'top'
+            text_size: self.size
+
+        BoxLayout:
+            size_hint_y: None
+            height: dp(42)
+            spacing: dp(8)
+
+            Button:
+                text: tr._('Back')
+                disabled: root.step_index <= 0 or root.is_running
+                on_release: root.previous_step()
+            Button:
+                text: root.primary_button_text
+                disabled: root.is_running
+                on_release: root.primary_action()
+            Button:
+                text: tr._('Close')
+                disabled: root.is_running
+                on_release: root.dismiss()

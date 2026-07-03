@@ -32,6 +32,13 @@ class OverrideController:
         new_value = max(self._get_value() - self._step, self._min_limit)
         self._set_value(new_value)
 
+    def get_value(self) -> float:
+        return self._get_value()
+
+    def set_value(self, value: float) -> None:
+        new_value = min(max(value, self._min_limit), self._max_limit)
+        self._set_value(new_value)
+
 class Pendant:
     """
     Base class for pendant devices.
@@ -99,6 +106,28 @@ class Pendant:
         except Exception as e:
             logger.error(f"Failed to run macro {macro_id}: {e}")
 
+    def notify_tool_action(self, action: str, tool: int, message: str) -> None:
+        """
+        Notify pendant about a tool change action.
+        Override in subclasses to implement specific behavior (e.g., CYD pendant).
+        Default no-op implementation for pendants that don't support tool notifications.
+        
+        :param action: "clamp" or "unclamp"
+        :param tool: Tool number
+        :param message: Original firmware message
+        """
+        pass
+
+    def forward_mdi_line(self, line: str, level: int) -> None:
+        """
+        Forward an MDI line to the pendant. Default no-op.
+        Subclasses may use this to inspect or relay messages externally.
+
+        :param line: The MDI line text
+        :param level: Message level (Controller.MSG_NORMAL/MSG_ERROR)
+        """
+        pass
+
 
 class NonePendant(Pendant):
     def __init__(self, *args, **kwargs) -> None:
@@ -111,6 +140,13 @@ try:
 except Exception as e:
     logger.warning(f"WHB04 pendant not supported: {e}")
     WHB04_SUPPORTED = False
+
+try:
+    from .cyd import CYD
+    CYD_SUPPORTED = True
+except Exception as e:
+    logger.warning(f"CYD pendant not supported: {e}")
+    CYD_SUPPORTED = False
 
 if WHB04_SUPPORTED:
     class WHB04(Pendant):
@@ -142,9 +178,7 @@ if WHB04_SUPPORTED:
             daemon.set_display_position(whb04.Axis.X, self._cnc.vars["wx"])
             daemon.set_display_position(whb04.Axis.Y, self._cnc.vars["wy"])
             daemon.set_display_position(whb04.Axis.Z, self._cnc.vars["wz"])
-            # There are no absolute positions for the rotational axis, hence ma
-            # instead of wa is used.
-            daemon.set_display_position(whb04.Axis.A, self._cnc.vars["ma"])
+            daemon.set_display_position(whb04.Axis.A, self._cnc.vars["wa"])
             daemon.set_display_feedrate(self._cnc.vars["curfeed"])
             daemon.set_display_spindle_speed(self._cnc.vars["curspindle"])
             
@@ -317,6 +351,9 @@ SUPPORTED_PENDANTS = {
 
 if WHB04_SUPPORTED:
     SUPPORTED_PENDANTS["WHB04"] = WHB04
+
+if CYD_SUPPORTED:
+    SUPPORTED_PENDANTS["CYD"] = CYD
 
 
 class SettingPendantSelector(SettingItem):

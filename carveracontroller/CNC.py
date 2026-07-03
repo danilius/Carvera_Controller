@@ -84,6 +84,7 @@ class CNC:
         "cutter"     : "",
         "tlo"        : 0.0,
         "target_tool": -1,
+        "target_collet_type": 0,
         "program"    : "M0",
         "spindle"    : "M5",
         "coolant"    : "M9",
@@ -248,7 +249,7 @@ class CNC:
                 if xyz != self.last_xyz:
                     self.last_xyz = xyz
                     self.coordinates.append(
-                        [xyz[0], xyz[1], xyz[2], xyz[3], 0 if self.gcode == 0 or self.speed < 0.001 else 1, line_no, self.tool])
+                        [xyz[0], xyz[1], xyz[2], xyz[3], 0 if self.gcode == 0 or self.speed < 0.001 else 1, line_no, self.tool, self.feed])
                     # self.coordinates.append('X: {} Y: {} Z: {} A: {} Color: {} Line: {} Tool: {}'.format(
                     #     xyz[0],
                     #     xyz[1],

@@ -5921,6 +5921,7 @@ class Makera(RelativeLayout):
     def _global_keyboard_keydown(self, window, key, scancode, codepoint, modifiers):
         COMMA_KEY = 44
         M_KEY = 109
+        U_KEY = 117
         cmd_mod = 'meta' if sys.platform == 'darwin' else 'ctrl'
 
         # Cmd+Comma (macOS) or Ctrl+Comma (Windows/Linux) to open settings
@@ -5936,6 +5937,14 @@ class Makera(RelativeLayout):
             self.cmd_manager.transition.direction = 'left'
             self.cmd_manager.current = 'manual_cmd_page'
             self.manual_cmd.focus = True
+            return True
+
+        # Ctrl+Shift+U to re-upload the last uploaded file
+        if key == U_KEY and 'ctrl' in modifiers and 'shift' in modifiers:
+            app = App.get_running_app()
+            if not self.manual_cmd.focus and app.state == 'Idle' and not app.playing and app.last_uploaded_local_filepath:
+                self.reupload_last_file()
+                return True
 
         return False
 
